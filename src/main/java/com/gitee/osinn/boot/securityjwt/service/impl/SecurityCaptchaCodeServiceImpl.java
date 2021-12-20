@@ -8,7 +8,6 @@ import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
 import com.gitee.osinn.boot.securityjwt.utils.RedisUtils;
 import com.wf.captcha.SpecCaptcha;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 /**
  * 图形验证码服务
@@ -52,7 +51,7 @@ public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeServi
     public String getCaptchaCode(String codeKey) {
         SecurityJwtProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
         // 从redis取出验证码
-        String code = (String) redisUtils.get(captchaCode.getCodeKey().concat(codeKey));
+        String code = redisUtils.get(captchaCode.getCodeKey().concat(codeKey));
         return code;
     }
 

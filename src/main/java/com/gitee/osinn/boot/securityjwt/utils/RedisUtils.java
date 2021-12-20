@@ -156,8 +156,8 @@ public class RedisUtils {
      * @param key 键
      * @return 值
      */
-    public Object get(String key) {
-        return key == null ? null : redisTemplate.opsForValue().get(key);
+    public <T> T get(String key) {
+        return key == null ? null : (T) redisTemplate.opsForValue().get(key);
     }
 
     /**
@@ -166,9 +166,9 @@ public class RedisUtils {
      * @param keys
      * @return
      */
-    public List<Object> multiGet(List<String> keys) {
+    public <T> List<T> multiGet(List<String> keys) {
         Object obj = redisTemplate.opsForValue().multiGet(Collections.singleton(keys));
-        return null;
+        return (List<T>) obj;
     }
 
     /**
@@ -242,8 +242,8 @@ public class RedisUtils {
      * @param item 项 不能为null
      * @return 值
      */
-    public Object hget(String key, String item) {
-        return redisTemplate.opsForHash().get(key, item);
+    public <T> T hget(String key, String item) {
+        return (T) redisTemplate.opsForHash().get(key, item);
     }
 
     /**
@@ -252,7 +252,7 @@ public class RedisUtils {
      * @param key 键
      * @return 对应的多个键值
      */
-    public Map<Object, Object> hmget(String key) {
+    public <T> Map<T, T> hmget(String key) {
         return redisTemplate.opsForHash().entries(key);
 
     }
@@ -388,7 +388,7 @@ public class RedisUtils {
      * @param key 键
      * @return
      */
-    public Set<Object> sGet(String key) {
+    public <T> Set<T> sGet(String key) {
         try {
             return redisTemplate.opsForSet().members(key);
         } catch (Exception e) {
@@ -492,7 +492,7 @@ public class RedisUtils {
      * @param end   结束 0 到 -1代表所有值
      * @return
      */
-    public List<Object> lGet(String key, long start, long end) {
+    public <T> List<T> lGet(String key, long start, long end) {
         try {
             return redisTemplate.opsForList().range(key, start, end);
         } catch (Exception e) {
@@ -523,9 +523,9 @@ public class RedisUtils {
      * @param index 索引 index>=0时， 0 表头，1 第二个元素，依次类推；index<0时，-1，表尾，-2倒数第二个元素，依次类推
      * @return
      */
-    public Object lGetIndex(String key, long index) {
+    public <T> T lGetIndex(String key, long index) {
         try {
-            return redisTemplate.opsForList().index(key, index);
+            return (T) redisTemplate.opsForList().index(key, index);
         } catch (Exception e) {
             e.printStackTrace();
             return null;

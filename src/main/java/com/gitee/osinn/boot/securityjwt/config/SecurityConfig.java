@@ -33,11 +33,9 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import com.gitee.osinn.boot.securityjwt.enums.AuthType;
+import org.springframework.web.util.pattern.PathPattern;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -95,10 +93,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // 基于注解排除路径
             AnonymousAccess anonymousAccess = handlerMethod.getMethodAnnotation(AnonymousAccess.class);
             if (null != anonymousAccess) {
-                Set<String> patterns = infoEntry.getKey().getPatternsCondition().getPatterns();
-                patterns.forEach(p -> {
-                    anonymousUrls.add(contextPath + p);
-                });
+                if(infoEntry.getKey().getPatternsCondition() == null) {
+                    assert infoEntry.getKey().getPathPatternsCondition() != null;
+                    Set<PathPattern> patterns = infoEntry.getKey().getPathPatternsCondition().getPatterns();
+                    patterns.forEach(p -> {
+                        anonymousUrls.add(contextPath + p.getPatternString());
+                    });
+                } else {
+                    Set<String> patterns = infoEntry.getKey().getPatternsCondition().getPatterns();
+                    patterns.forEach(p -> {
+                        anonymousUrls.add(contextPath + p);
+                    });
+                }
+
             } else {
                 AutoAccess autoAccess = handlerMethod.getMethodAnnotation(AutoAccess.class);
                 if (null != autoAccess) {

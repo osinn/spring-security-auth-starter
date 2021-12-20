@@ -137,7 +137,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         Collections.reverse(keys);
         List<OnlineUser> onlineUsers = new ArrayList<>();
         for (String key : keys) {
-            OnlineUser onlineUser = (OnlineUser) redisUtils.get(key);
+            OnlineUser onlineUser = redisUtils.get(key);
             if (onlineUser == null) {
                 continue;
             }
@@ -190,7 +190,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      */
     @Override
     public OnlineUser getOne(String key) {
-        return (OnlineUser) redisUtils.get(key);
+        return redisUtils.get(key);
     }
 
     /**
