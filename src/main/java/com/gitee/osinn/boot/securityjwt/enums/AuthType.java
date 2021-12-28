@@ -15,5 +15,10 @@ public enum AuthType {
     /**
      * 请求权限编码认证方式
      */
-    CODE
+    CODE,
+
+    /**
+     * 基于服务名称请求权限编码认证方式
+     */
+    SERVICE
 }

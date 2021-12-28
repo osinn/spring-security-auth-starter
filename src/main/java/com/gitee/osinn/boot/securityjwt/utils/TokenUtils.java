@@ -96,6 +96,39 @@ public class TokenUtils {
         return null;
     }
 
+    /**
+     * 支持从请求头、get请求、post表单JSON数据中获取token
+     *
+     * @param request
+     * @return
+     */
+    public static String getServiceName(HttpServletRequest request) {
+        String serviceName = request.getHeader(securityJwtProperties.getServiceName());
+        if (StringUtils.isEmpty(serviceName)) {
+            serviceName = request.getParameter(securityJwtProperties.getServiceName());
+            if (StringUtils.isEmpty(serviceName)) {
+                try {
+                    BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
+                    StringBuffer body = new StringBuffer();
+                    String inputStr = null;
+                    while ((inputStr = streamReader.readLine()) != null) {
+                        body.append(inputStr);
+                    }
+                    String bodyStr = body.toString();
+                    if (!StringUtils.isEmpty(bodyStr)) {
+                        JSONObject jsonObject = JSONUtil.parseObj(bodyStr);
+                        if (!jsonObject.isEmpty()) {
+                            serviceName = jsonObject.get(securityJwtProperties.getServiceName()) + "";
+                        }
+                    }
+                } catch (IOException e) {
+                    log.debug("获取服务名称-HttpServletRequest 尝试解析表单请求json数据失败：" + e.getMessage(), e);
+                }
+            }
+        }
+
+        return serviceName;
+    }
 
     /**
      * 获取当前在线用户

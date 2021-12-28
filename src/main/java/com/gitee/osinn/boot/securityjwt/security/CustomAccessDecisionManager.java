@@ -1,8 +1,12 @@
 package com.gitee.osinn.boot.securityjwt.security;
 
-import com.gitee.osinn.boot.securityjwt.security.dto.PermissionAnonymousUri;
+import com.gitee.osinn.boot.securityjwt.annotation.API;
+import com.gitee.osinn.boot.securityjwt.enums.JwtHttpStatus;
+import com.gitee.osinn.boot.securityjwt.exception.SecurityJwtException;
+import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
 import com.gitee.osinn.boot.securityjwt.security.dto.ResourcePermission;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.ConfigAttribute;
@@ -17,9 +21,7 @@ import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -34,7 +36,7 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
     /**
      * 白名单
      */
-    private PermissionAnonymousUri permissionAnonymousUri;
+    private SecurityStorage securityStorage;
 
     private ISecurityService securityService;
 
@@ -46,10 +48,10 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
 
     }
 
-    public CustomAccessDecisionManager(PermissionAnonymousUri permissionAnonymousUri,
+    public CustomAccessDecisionManager(SecurityStorage securityStorage,
                                        ISecurityService securityService,
                                        AuthType authType) {
-        this.permissionAnonymousUri = permissionAnonymousUri;
+        this.securityStorage = securityStorage;
         this.securityService = securityService;
         this.authType = authType;
     }
@@ -59,20 +61,27 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
 
         FilterInvocation filterInvocation = (FilterInvocation) object;
         HttpServletRequest request = filterInvocation.getRequest();
+        List<ConfigAttribute> configAttributeList;
+        if (AuthType.SERVICE.equals(authType)) {
 
-        if (permissionAnonymousUri.isAnonymousUri(request)) {
-            // 放行白名单
-            return;
+            Map<String, API> apiServiceMap = securityStorage.getApiServiceMap();
+            String serviceName = securityService.getServiceName(request);
+            API api = apiServiceMap.get(serviceName);
+            if (!api.needPermission()) {
+                // 不需要权限认证-放行
+                return;
+            }
+            configAttributeList = getAPIConfigAttribute(api, request);
+
+        } else {
+            if (securityStorage.isAnonymousUri(request)) {
+                // 放行白名单
+                return;
+            }
+
+            configAttributeList = getConfigAttribute(request.getRequestURI(), request);
+
         }
-//
-//        String tokenError = (String) request.getAttribute(JwtHttpStatus.TOKEN_EXPIRE.name());
-//        if (tokenError != null) {
-//            throw new AccessDeniedException(tokenError);
-//        }
-
-        String requestURI = request.getRequestURI();
-
-        List<ConfigAttribute> configAttributeList = getConfigAttribute(requestURI, request);
 
         /**
          * 判断是否有权限访问
@@ -109,6 +118,23 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
                 for (ResourcePermission resourcePermission : resourcePermissionList) {
                     if (!StringUtils.isEmpty(resourcePermission.getUriPath())
                             && antPathMatcher.match(resourcePermission.getUriPath(), requestURI)) {
+                        request.setAttribute("accessDecisionMenuName", resourcePermission.getMenuName());
+                        return SecurityConfig.createList(resourcePermission.getPermissionCode());
+                    }
+                }
+            }
+        }
+        throw new AccessDeniedException("当前访问没有权限");
+    }
+
+    private List<ConfigAttribute> getAPIConfigAttribute(API api, HttpServletRequest request) {
+
+        if (AuthType.SERVICE.equals(authType)) {
+            //从数据库加载全部权限配置
+            List<ResourcePermission> resourcePermissionList = securityService.fetchResourcePermissionAll();
+            if (resourcePermissionList != null) {
+                for (ResourcePermission resourcePermission : resourcePermissionList) {
+                    if (!StringUtils.isEmpty(resourcePermission.getUriPath()) && api.permission().equals(resourcePermission.getPermissionCode())) {
                         request.setAttribute("accessDecisionMenuName", resourcePermission.getMenuName());
                         return SecurityConfig.createList(resourcePermission.getPermissionCode());
                     }

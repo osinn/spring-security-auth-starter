@@ -127,6 +127,12 @@ public class SecurityJwtProperties {
      */
     private CaptchaCode captchaCode = new CaptchaCode();
 
+    /**
+     * 可选- @API： 前端传服务名称之属性名称
+     * 用于基于服务名称(@API)调用业务接口
+     */
+    private String serviceName = "service";
+
     public void setDesPassword(String desPassword) {
         this.desPassword = desPassword;
         DesEncryptUtils.setDesPassword(desPassword);

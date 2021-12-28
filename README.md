@@ -94,8 +94,57 @@ sysUserMapper.insert(userEntity);
 > 实现 ISecurityCaptchaCodeService 接口里面的方法即可
 
 # 权限认证方式
-- 基于url路径授权
-- 在配置文件中如果不将`security.config.auth-type`指定为`URL`,那么使用security默认的 `@PreAuthorize`注解方式路径授权，例如：`@PreAuthorize("hasAuthority('system:sysMenu:details')")`，默认为`URL`
+- 在配置文件中如果不将`security.config.auth-type`指定为`URL`,那么使用security默认的 `@PreAuthorize`注解方式路径授权，例如：`@PreAuthorize("hasAuthority('system:sysMenu:details')")`
+- 默认为`URL`，即为基于url路径授权
+- `SERVICE`方式结合@API注解使用，用于通过服务名称来请求业务接口
+
+## 关于@API注解
+```
+/**
+ * 服务API注解，在类上添加此注解
+ * <p>
+ * 有时候我们调用的接口是通过注解指定服务名称
+ * 前端通过指定服务名称调用接口
+ * 此设计约束一个类对应一个业务接口请求
+ * </p>
+ *
+ * @author wency_cai
+ **/
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface API {
+
+    /**
+     * 服务名称-应用场景：用于通过服务名称调用接口指定的服务名称
+     *
+     * @return 服务名称
+     */
+    String service();
+
+    /**
+     * 是否需要认证登录
+     *
+     * @return true 需要认证登录，false 不需要认证登录
+     */
+    boolean needLogin() default false;
+
+    /**
+     * 接口拥有的权限
+     *
+     * @return 权限code
+     */
+    String permission() default "";
+
+
+    /**
+     * 是否需要权限认证
+     *
+     * @return true 需要认证权限，false 不需要认证权限
+     */
+    boolean needPermission() default false;
+}
+
+```
 
 # `IOnlineUserService`接口
 - 在需要的地方直接注入

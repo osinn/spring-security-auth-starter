@@ -1,10 +1,14 @@
 package com.gitee.osinn.boot.securityjwt.security.filter;
 
+import com.gitee.osinn.boot.securityjwt.annotation.API;
 import com.gitee.osinn.boot.securityjwt.constants.JwtConstant;
+import com.gitee.osinn.boot.securityjwt.enums.AuthType;
 import com.gitee.osinn.boot.securityjwt.enums.JwtHttpStatus;
+import com.gitee.osinn.boot.securityjwt.exception.SecurityJwtException;
 import com.gitee.osinn.boot.securityjwt.security.dto.OnlineUser;
-import com.gitee.osinn.boot.securityjwt.security.dto.PermissionAnonymousUri;
+import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
 import com.gitee.osinn.boot.securityjwt.service.IOnlineUserService;
+import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
 import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
 import com.gitee.osinn.boot.securityjwt.utils.DesEncryptUtils;
 import com.gitee.osinn.boot.securityjwt.utils.TokenUtils;
@@ -26,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * token的校验
@@ -44,14 +49,17 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     @Autowired
     private IOnlineUserService onlineUserService;
 
+    @Autowired
+    private ISecurityService securityService;
+
     /**
      * 白名单
      */
-    private PermissionAnonymousUri permissionAnonymousUri;
+    private SecurityStorage securityStorage;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, PermissionAnonymousUri permissionAnonymousUri) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, SecurityStorage securityStorage) {
         super(authenticationManager);
-        this.permissionAnonymousUri = permissionAnonymousUri;
+        this.securityStorage = securityStorage;
     }
 
     @Override
@@ -66,10 +74,26 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
      * @param request
      */
     private void checkAuthentication(HttpServletRequest request) {
-        boolean anonymousUrs = permissionAnonymousUri.isAnonymousUri(request);
+        boolean anonymousUrs = securityStorage.isAnonymousUri(request);
         //OPTIONS请求或白名单直接放行
         if (request.getMethod().equals(HttpMethod.OPTIONS.toString()) || anonymousUrs) {
             return;
+        }
+        if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
+            // 判断基于API服务名称请求是否白名单
+            Map<String, API> apiServiceMap = securityStorage.getApiServiceMap();
+            String serviceName = securityService.getServiceName(request);
+            if (StringUtils.isEmpty(serviceName)) {
+                throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "未找到服务名称参数");
+            }
+            API api = apiServiceMap.get(serviceName);
+            if (api == null) {
+                throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "服务不存在");
+            }
+            if (!api.needLogin()) {
+                // 不需要登录认证-放行
+                return;
+            }
         }
 
         // 获取令牌并根据令牌获取登录认证信息

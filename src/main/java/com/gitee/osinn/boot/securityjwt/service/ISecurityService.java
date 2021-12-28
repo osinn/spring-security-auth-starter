@@ -4,6 +4,7 @@ import com.gitee.osinn.boot.securityjwt.security.dto.JwtRoleInfo;
 import com.gitee.osinn.boot.securityjwt.security.dto.JwtUser;
 import com.gitee.osinn.boot.securityjwt.security.dto.OnlineUser;
 import com.gitee.osinn.boot.securityjwt.security.dto.ResourcePermission;
+import com.gitee.osinn.boot.securityjwt.utils.TokenUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -66,4 +67,15 @@ public interface ISecurityService<T, E> {
      * @param loginUser
      */
     void logoutBeforeHandler(HttpServletRequest request, HttpServletResponse response, OnlineUser loginUser);
+
+    /**
+     * 获取服务名称 配合@API使用
+     *
+     * @param request
+     * @return 返回服务名称
+     */
+    default String getServiceName(HttpServletRequest request) {
+        String serviceName = TokenUtils.getServiceName(request);
+        return serviceName;
+    }
 }

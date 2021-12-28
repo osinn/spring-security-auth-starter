@@ -1,16 +1,18 @@
 package com.gitee.osinn.boot.securityjwt.config;
 
+import com.gitee.osinn.boot.securityjwt.annotation.API;
 import com.gitee.osinn.boot.securityjwt.annotation.AnonymousAccess;
 import com.gitee.osinn.boot.securityjwt.annotation.AutoAccess;
 import com.gitee.osinn.boot.securityjwt.security.CustomAccessDecisionManager;
 import com.gitee.osinn.boot.securityjwt.security.CustomLogoutSuccessHandler;
 import com.gitee.osinn.boot.securityjwt.security.JwtAccessDeniedHandler;
 import com.gitee.osinn.boot.securityjwt.security.JwtAuthenticationEntryPoint;
-import com.gitee.osinn.boot.securityjwt.security.dto.PermissionAnonymousUri;
+import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
 import com.gitee.osinn.boot.securityjwt.security.filter.JwtAuthenticationFilter;
 import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
 import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -63,7 +65,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private SecurityJwtProperties securityJwtProperties;
 
     @Autowired
-    private PermissionAnonymousUri permissionAnonymousUri;
+    private SecurityStorage securityStorage;
 
     @Autowired
     private ISecurityService securityService;
@@ -74,7 +76,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * 权限白名单urls
      */
-    private List<String> anonymousUrs = Lists.newArrayList();
+    private Set<String> anonymousUrs = Sets.newHashSet();
 
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
@@ -83,6 +85,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         Map<RequestMappingInfo, HandlerMethod> handlerMethodMap = applicationContext.getBean(RequestMappingHandlerMapping.class).getHandlerMethods();
         Set<String> anonymousUrls = new HashSet<>();
         Set<String> authUrlsPrefix = new HashSet<>();
+        Map<String, API> apiServices = new HashMap<>();
+
         // 默认拦截 /** 下所有路径
         authUrlsPrefix.add("/**");
         if ("/".equals(contextPath)) {
@@ -90,8 +94,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         }
         for (Map.Entry<RequestMappingInfo, HandlerMethod> infoEntry : handlerMethodMap.entrySet()) {
             HandlerMethod handlerMethod = infoEntry.getValue();
+
             // 基于注解排除路径
             AnonymousAccess anonymousAccess = handlerMethod.getMethodAnnotation(AnonymousAccess.class);
+
+            if(AuthType.SERVICE.equals(securityJwtProperties.getAuthType())){
+                // 基于服务名称请求业务接口权限认证
+                API apiAnnotation = handlerMethod.getBeanType().getAnnotation(API.class);
+                if (apiAnnotation != null) {
+                    apiServices.put(apiAnnotation.service(), apiAnnotation);
+                }
+            }
             if (null != anonymousAccess) {
                 if(infoEntry.getKey().getPatternsCondition() == null) {
                     assert infoEntry.getKey().getPathPatternsCondition() != null;
@@ -147,7 +160,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         anonymousUrs.addAll(Lists.newArrayList(staticFileUrl));
         anonymousUrs.addAll(Lists.newArrayList(pageAnonymousUrl));
         anonymousUrs.addAll(Lists.newArrayList(anonymousUrls));
-        permissionAnonymousUri.setPermissionAnonymousUrlList(anonymousUrs);
+        securityStorage.setPermissionAnonymousUrlList(anonymousUrs);
+        securityStorage.setApiServiceMap(apiServices);
 
 
         if (securityJwtProperties.isDisableHttpBasic()) {
@@ -220,13 +234,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     @ConditionalOnMissingBean
     public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-        return new JwtAuthenticationFilter(authenticationManager(), permissionAnonymousUri);
+        return new JwtAuthenticationFilter(authenticationManager(), securityStorage);
     }
 
     @Bean
     @ConditionalOnProperty(prefix = SecurityJwtProperties.PREFIX, name = {"auth-type"}, matchIfMissing = true)
     public CustomAccessDecisionManager accessDecisionManager() {
-        return new CustomAccessDecisionManager(permissionAnonymousUri,
+        return new CustomAccessDecisionManager(securityStorage,
                 securityService,
                 securityJwtProperties.getAuthType());
     }
