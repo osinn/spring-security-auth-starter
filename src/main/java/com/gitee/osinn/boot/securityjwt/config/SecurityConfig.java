@@ -3,6 +3,7 @@ package com.gitee.osinn.boot.securityjwt.config;
 import com.gitee.osinn.boot.securityjwt.annotation.API;
 import com.gitee.osinn.boot.securityjwt.annotation.AnonymousAccess;
 import com.gitee.osinn.boot.securityjwt.annotation.AutoAccess;
+import com.gitee.osinn.boot.securityjwt.constants.JwtConstant;
 import com.gitee.osinn.boot.securityjwt.security.CustomAccessDecisionManager;
 import com.gitee.osinn.boot.securityjwt.security.CustomLogoutSuccessHandler;
 import com.gitee.osinn.boot.securityjwt.security.JwtAccessDeniedHandler;
@@ -98,15 +99,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // 基于注解排除路径
             AnonymousAccess anonymousAccess = handlerMethod.getMethodAnnotation(AnonymousAccess.class);
 
-            if(AuthType.SERVICE.equals(securityJwtProperties.getAuthType())){
+            if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
                 // 基于服务名称请求业务接口权限认证
                 API apiAnnotation = handlerMethod.getBeanType().getAnnotation(API.class);
                 if (apiAnnotation != null) {
-                    apiServices.put(apiAnnotation.service(), apiAnnotation);
+                    if (securityJwtProperties.isApiService()) {
+                        apiServices.put(apiAnnotation.service() + JwtConstant.POINT + handlerMethod.getMethod().getName(), apiAnnotation);
+                    } else {
+                        apiServices.put(apiAnnotation.service(), apiAnnotation);
+                    }
                 }
             }
             if (null != anonymousAccess) {
-                if(infoEntry.getKey().getPatternsCondition() == null) {
+                if (infoEntry.getKey().getPatternsCondition() == null) {
                     assert infoEntry.getKey().getPathPatternsCondition() != null;
                     Set<PathPattern> patterns = infoEntry.getKey().getPathPatternsCondition().getPatterns();
                     patterns.forEach(p -> {

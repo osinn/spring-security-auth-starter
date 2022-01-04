@@ -1,11 +1,10 @@
 package com.gitee.osinn.boot.securityjwt.starter;
 
+import com.gitee.osinn.boot.securityjwt.enums.AuthType;
+import com.gitee.osinn.boot.securityjwt.utils.DesEncryptUtils;
 import com.google.common.collect.Sets;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.util.StringUtils;
-import com.gitee.osinn.boot.securityjwt.enums.AuthType;
-import com.gitee.osinn.boot.securityjwt.utils.DesEncryptUtils;
 
 import java.util.Set;
 
@@ -95,11 +94,11 @@ public class SecurityJwtProperties {
     /**
      * 当退出成功是否自动响应内容，内容格式如下
      * {
-     *   "code": 20000,
-     *   "message": "退出登录成功",
-     *   "error": null,
-     *   "path": "/logout",
-     *   "timestamp": "2021-06-29 12:16:28"
+     * "code": 20000,
+     * "message": "退出登录成功",
+     * "error": null,
+     * "path": "/logout",
+     * "timestamp": "2021-06-29 12:16:28"
      * }
      */
     private boolean loginOutResponse = true;
@@ -132,6 +131,20 @@ public class SecurityJwtProperties {
      * 用于基于服务名称(@API)调用业务接口
      */
     private String serviceName = "service";
+
+    /**
+     * 可选- @API： 前端传服务接口方法名称之属性名称
+     * 用于基于服务名称(@API)调用业务接口
+     * 指定要调用的接口方法名称handlerMethod
+     */
+    private String serviceHandlerMethod = "";
+
+    /**
+     * 可选- 如果是api服务层,前端需要传参数：接口方法名称
+     * 如果设置为true，需要serviceHandlerMethod 指定前端要调用的方法的参数名称
+     * 这时前端不只是传serviceName 需要调用的服务，还要传 serviceHandlerMethod具体要调用服务下的哪个接口方法
+     */
+    private boolean apiService;
 
     public void setDesPassword(String desPassword) {
         this.desPassword = desPassword;

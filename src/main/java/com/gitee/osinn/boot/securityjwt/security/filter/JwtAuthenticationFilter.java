@@ -80,18 +80,8 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             return;
         }
         if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
-            // 判断基于API服务名称请求是否白名单
-            Map<String, API> apiServiceMap = securityStorage.getApiServiceMap();
-            String serviceName = securityService.getServiceName(request);
-            if (StringUtils.isEmpty(serviceName)) {
-                throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "未找到服务名称参数");
-            }
-            API api = apiServiceMap.get(serviceName);
-            if (api == null) {
-                throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "服务不存在");
-            }
-            if (!api.needLogin()) {
-                // 不需要登录认证-放行
+            boolean anonymousService = this.checkAnonymousService(request);
+            if (anonymousService) {
                 return;
             }
         }
@@ -144,5 +134,23 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     private UsernamePasswordAuthenticationToken getAuthentication(String account, String password, String token, Collection<GrantedAuthority> authorities) {
         User principal = new User(account, password, authorities);
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+    }
+
+    /**
+     * @param request
+     * @return @return true-不需要登录认证，false-登录认证
+     */
+    private boolean checkAnonymousService(HttpServletRequest request) {
+        // 判断基于API服务名称请求是否白名单
+        Map<String, API> apiServiceMap = securityStorage.getApiServiceMap();
+        String serviceKey = securityService.getServiceName(request);
+        if (StringUtils.isEmpty(serviceKey)) {
+            throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "未找到服务名称参数");
+        }
+        API api = apiServiceMap.get(serviceKey);
+        if (api == null) {
+            throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "服务不存在");
+        }
+        return !api.needLogin();
     }
 }

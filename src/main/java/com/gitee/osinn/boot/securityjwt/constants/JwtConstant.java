@@ -36,4 +36,6 @@ public class JwtConstant {
      * 超级管理管理，角色编码
      */
     public final static String SUPER_ADMIN_ROLE = "admin";
+
+    public final static String POINT = ".";
 }

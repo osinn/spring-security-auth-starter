@@ -23,8 +23,8 @@ public class SecurityStorage {
     private Set<String> permissionAnonymousUrlList;
 
     /**
-     * @API 基于服务名称认证方式的所有请求接口权限编码
-     * key：service的服务名称，value：@API注解
+     * 基于服务名称认证方式的所有请求接口权限编码
+     * key：service的服务名称，value：@API注解或@APIHandlerMethod注解
      */
     private Map<String, API> apiServiceMap;
 

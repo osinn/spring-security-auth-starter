@@ -6,7 +6,6 @@ import com.gitee.osinn.boot.securityjwt.exception.SecurityJwtException;
 import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
 import com.gitee.osinn.boot.securityjwt.security.dto.ResourcePermission;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.ConfigAttribute;
@@ -67,11 +66,16 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
             Map<String, API> apiServiceMap = securityStorage.getApiServiceMap();
             String serviceName = securityService.getServiceName(request);
             API api = apiServiceMap.get(serviceName);
-            if (!api.needPermission()) {
-                // 不需要权限认证-放行
-                return;
+            if (api != null) {
+                if (!api.needPermission()) {
+                    // 不需要权限认证-放行
+                    return;
+                }
+            } else {
+                throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "服务不存在");
             }
-            configAttributeList = getAPIConfigAttribute(api, request);
+
+            configAttributeList = this.getApiConfigAttribute(api, request);
 
         } else {
             if (securityStorage.isAnonymousUri(request)) {
@@ -127,16 +131,18 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
         throw new AccessDeniedException("当前访问没有权限");
     }
 
-    private List<ConfigAttribute> getAPIConfigAttribute(API api, HttpServletRequest request) {
+    private List<ConfigAttribute> getApiConfigAttribute(API api, HttpServletRequest request) {
 
         if (AuthType.SERVICE.equals(authType)) {
             //从数据库加载全部权限配置
             List<ResourcePermission> resourcePermissionList = securityService.fetchResourcePermissionAll();
             if (resourcePermissionList != null) {
                 for (ResourcePermission resourcePermission : resourcePermissionList) {
-                    if (!StringUtils.isEmpty(resourcePermission.getUriPath()) && api.permission().equals(resourcePermission.getPermissionCode())) {
-                        request.setAttribute("accessDecisionMenuName", resourcePermission.getMenuName());
-                        return SecurityConfig.createList(resourcePermission.getPermissionCode());
+                    if (api != null) {
+                        if (api.permission().equals(resourcePermission.getPermissionCode())) {
+                            request.setAttribute("accessDecisionMenuName", resourcePermission.getMenuName());
+                            return SecurityConfig.createList(resourcePermission.getPermissionCode());
+                        }
                     }
                 }
             }

@@ -50,6 +50,14 @@ security:
     # com.gitee.osinn.boot.securityjwt.service.ISecurityService.fetchRolePermissionInfo()
     # 如果是URL方式调用fetchResourcePermissionAll()方法查询资源路径(UIR)以及资源路径权限编码
     auth-type: CODE
+     #  前端传服务名称之属性名称
+    service-name: service
+    # 前端传服务接口方法名称之属性名称
+    service-handler-method: methodName
+#    如果是api服务层,前端需要传参数：接口方法名称
+#    如果设置为true，需要service-handler-method 指定前端要调用的方法的参数名称
+#    这时前端不只是传serviceName 需要调用的服务，还要传 serviceHandlerMethod具体要调用服务下的哪个接口方法
+    api-service: true
 ```
 
 # 使用方式
@@ -105,13 +113,13 @@ sysUserMapper.insert(userEntity);
  * <p>
  * 有时候我们调用的接口是通过注解指定服务名称
  * 前端通过指定服务名称调用接口
- * 此设计约束一个类对应一个业务接口请求
  * </p>
  *
  * @author wency_cai
  **/
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@Component
 public @interface API {
 
     /**
@@ -135,7 +143,6 @@ public @interface API {
      */
     String permission() default "";
 
-
     /**
      * 是否需要权限认证
      *
@@ -143,7 +150,6 @@ public @interface API {
      */
     boolean needPermission() default false;
 }
-
 ```
 
 # `IOnlineUserService`接口

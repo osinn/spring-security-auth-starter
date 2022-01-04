@@ -9,7 +9,6 @@ import com.gitee.osinn.boot.securityjwt.security.dto.OnlineUser;
 import com.gitee.osinn.boot.securityjwt.service.IOnlineUserService;
 import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -104,8 +103,10 @@ public class TokenUtils {
      */
     public static String getServiceName(HttpServletRequest request) {
         String serviceName = request.getHeader(securityJwtProperties.getServiceName());
+        String serviceHandlerMethod = request.getHeader(securityJwtProperties.getServiceHandlerMethod());
         if (StringUtils.isEmpty(serviceName)) {
             serviceName = request.getParameter(securityJwtProperties.getServiceName());
+            serviceHandlerMethod = request.getHeader(securityJwtProperties.getServiceHandlerMethod());
             if (StringUtils.isEmpty(serviceName)) {
                 try {
                     BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
@@ -118,13 +119,20 @@ public class TokenUtils {
                     if (!StringUtils.isEmpty(bodyStr)) {
                         JSONObject jsonObject = JSONUtil.parseObj(bodyStr);
                         if (!jsonObject.isEmpty()) {
-                            serviceName = jsonObject.get(securityJwtProperties.getServiceName()) + "";
+                            serviceName = String.valueOf(jsonObject.get(securityJwtProperties.getServiceName()));
+                            if (!StringUtils.isEmpty(jsonObject.get(securityJwtProperties.getServiceHandlerMethod()))) {
+                                serviceHandlerMethod = (String)jsonObject.get(securityJwtProperties.getServiceHandlerMethod());
+                            }
                         }
                     }
                 } catch (IOException e) {
                     log.debug("获取服务名称-HttpServletRequest 尝试解析表单请求json数据失败：" + e.getMessage(), e);
                 }
             }
+        }
+
+        if (!StringUtils.isEmpty(serviceHandlerMethod)) {
+            serviceName = serviceName + JwtConstant.POINT + serviceHandlerMethod;
         }
 
         return serviceName;

@@ -1,6 +1,8 @@
 package com.gitee.osinn.boot.securityjwt.annotation;
 
 
+import org.springframework.stereotype.Component;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -11,13 +13,13 @@ import java.lang.annotation.Target;
  * <p>
  * 有时候我们调用的接口是通过注解指定服务名称
  * 前端通过指定服务名称调用接口
- * 此设计约束一个类对应一个业务接口请求
  * </p>
  *
  * @author wency_cai
  **/
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@Component
 public @interface API {
 
     /**
@@ -40,7 +42,6 @@ public @interface API {
      * @return 权限code
      */
     String permission() default "";
-
 
     /**
      * 是否需要权限认证
