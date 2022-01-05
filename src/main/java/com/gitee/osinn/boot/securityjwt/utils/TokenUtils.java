@@ -89,7 +89,7 @@ public class TokenUtils {
                 }
             }
         }
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(securityJwtProperties.getTokenStartWith())) {
+        if (!StringUtils.isEmpty(bearerToken) && bearerToken.startsWith(securityJwtProperties.getTokenStartWith())) {
             return bearerToken.replace(securityJwtProperties.getTokenStartWith(), "");
         }
         return null;

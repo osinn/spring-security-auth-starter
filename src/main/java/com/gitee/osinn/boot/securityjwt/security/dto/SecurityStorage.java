@@ -11,7 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 存储白名单url
+ * 存储
+ *
+ * @author wency_cai
  */
 @Data
 @Component

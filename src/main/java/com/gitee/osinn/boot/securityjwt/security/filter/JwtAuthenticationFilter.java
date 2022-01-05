@@ -18,9 +18,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.util.StringUtils;
 
@@ -29,7 +27,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -87,13 +85,9 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         }
 
         // 获取令牌并根据令牌获取登录认证信息
-        Authentication authentication = this.getAuthenticationeFromToken(request);
+        Authentication authentication = this.getAuthenticationFromToken(request);
         // 设置登录认证信息到上下文
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        // 是否刷新token缓存过期时间
-        if (securityJwtProperties.isDynamicRefreshToken()) {
-            TokenUtils.refreshToken();
-        }
     }
 
     /**
@@ -101,7 +95,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
      *
      * @return 用户名
      */
-    private Authentication getAuthenticationeFromToken(HttpServletRequest request) {
+    private Authentication getAuthenticationFromToken(HttpServletRequest request) {
         String token = TokenUtils.getToken(request);
         String requestUri = request.getRequestURI();
         if (StringUtils.isEmpty(token)) {
@@ -111,15 +105,21 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             // 验证 token 是否存在
             OnlineUser onlineUser = null;
             onlineUser = onlineUserService.getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
-
             if (onlineUser == null) {
                 request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "token已过期");
                 return null;
             } else {
-
                 try {
-                    UsernamePasswordAuthenticationToken authentication = this.getAuthentication(onlineUser.getAccount(), onlineUser.getPassword(), token, onlineUser.getAuthorities());
+                    UsernamePasswordAuthenticationToken authentication = this.getAuthentication(onlineUser, token);
                     log.debug("set Authentication to security context for '{}', uri: {}", authentication.getName(), requestUri);
+                    // 是否刷新token缓存过期时间
+                    if (securityJwtProperties.isDynamicRefreshToken()) {
+                        Date loginTime = onlineUser.getLoginTime();
+                        if (loginTime != null && (System.currentTimeMillis() - loginTime.getTime()) >= (securityJwtProperties.getTokenValidityInSeconds() * 1000) / 2) {
+                            // 过期时间过半刷新token缓存过期时间
+                            TokenUtils.refreshToken();
+                        }
+                    }
                     return authentication;
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -131,9 +131,8 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         }
     }
 
-    private UsernamePasswordAuthenticationToken getAuthentication(String account, String password, String token, Collection<GrantedAuthority> authorities) {
-        User principal = new User(account, password, authorities);
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+    private UsernamePasswordAuthenticationToken getAuthentication(OnlineUser onlineUser, String token) {
+        return new UsernamePasswordAuthenticationToken(onlineUser, token, onlineUser.getAuthorities());
     }
 
     /**

@@ -1,7 +1,5 @@
 package com.gitee.osinn.boot.securityjwt.security.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -73,12 +71,12 @@ public class OnlineUser implements Serializable {
      * 用户角色
      */
     private List<JwtRoleInfo.BaseRoleInfo> roles = Collections.emptyList();
-//
+    //
 //    @JsonIgnore
 //    @JSONField(serialize = false)
     private Collection<GrantedAuthority> authorities = Collections.emptyList();
 
     public List<String> getAuthority() {
-       return this.authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
+        return this.authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
     }
 }

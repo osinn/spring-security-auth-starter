@@ -117,7 +117,7 @@ public class SecurityJwtProperties {
     private AuthType authType = AuthType.URL;
 
     /**
-     * 是否动态刷新token
+     * 是否动态刷新token,若果要动态刷新token,需要在缓存对象OnlineUser中设置登录时间
      */
     private boolean dynamicRefreshToken;
 

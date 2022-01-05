@@ -7,6 +7,8 @@ import javax.validation.constraints.NotBlank;
 
 /**
  * 登录请求信息
+ *
+ * @author wency_cai
  */
 @Getter
 @Setter
@@ -15,13 +17,13 @@ public class AuthUser {
     /**
      * 登录用户名
      */
-    @NotBlank
+    @NotBlank(message = "登录账号不能为空")
     private String username;
 
     /**
      * 登录密码
      */
-    @NotBlank
+    @NotBlank(message = "登录密码不能为空")
     private String password;
 
     /**
@@ -36,6 +38,6 @@ public class AuthUser {
 
     @Override
     public String toString() {
-        return "{username=" + username  + ", password= ******}";
+        return "{username=" + username + ", password= ******}";
     }
 }

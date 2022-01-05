@@ -16,11 +16,16 @@ import java.util.stream.Collectors;
 /**
  * jwt token检验信息
  * 用户账号锁定、禁用等状态自行判断
+ *
+ * @author wency_cai
  */
 @Data
 @AllArgsConstructor
 public class JwtUser implements UserDetails, Serializable {
 
+    /**
+     * 用户ID
+     */
     private Object id;
 
     /**
@@ -37,6 +42,9 @@ public class JwtUser implements UserDetails, Serializable {
     @JSONField(serialize = false)
     private String password;
 
+    /**
+     * 权限
+     */
     @JsonIgnore
     @JSONField(serialize = false)
     private Collection<GrantedAuthority> authorities;

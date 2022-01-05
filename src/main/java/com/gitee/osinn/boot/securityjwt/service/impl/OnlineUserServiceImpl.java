@@ -1,6 +1,7 @@
 package com.gitee.osinn.boot.securityjwt.service.impl;
 
 import com.gitee.osinn.boot.securityjwt.constants.JwtConstant;
+import com.gitee.osinn.boot.securityjwt.enums.JwtHttpStatus;
 import com.gitee.osinn.boot.securityjwt.exception.SecurityJwtException;
 import com.gitee.osinn.boot.securityjwt.security.dto.AuthUser;
 import com.gitee.osinn.boot.securityjwt.security.dto.JwtRoleInfo;
@@ -23,7 +24,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import com.gitee.osinn.boot.securityjwt.enums.JwtHttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -55,8 +55,23 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     private ISecurityCaptchaCodeService securityCaptchaCodeService;
 
     @Override
+    public JwtUser customAuth(Object principal, HttpServletRequest request) {
+        JwtUser jwtUser = securityService.customAuth(principal);
+
+        if (jwtUser == null) {
+            return null;
+        }
+
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(jwtUser, null, jwtUser.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        // 生成token
+        this.generationToken(jwtUser, request);
+        return jwtUser;
+    }
+
+    @Override
     public JwtUser auth(AuthUser authUser, HttpServletRequest request) {
-        String token = null;
+
         SecurityJwtProperties.CaptchaCode captchaCode = securityJwtProperties.getCaptchaCode();
         if (captchaCode.isEnable()) {
             // 查询验证码
@@ -72,7 +87,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         }
 
         String password;
-        if(!StringUtils.isEmpty(securityJwtProperties.getRsaPrivateKey())) {
+        if (!StringUtils.isEmpty(securityJwtProperties.getRsaPrivateKey())) {
             try {
                 password = RsaEncryptUtils.decrypt(authUser.getPassword(), securityJwtProperties.getRsaPrivateKey());
 
@@ -85,25 +100,14 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         }
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(authUser.getUsername(), password);
-
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
         // 生成令牌
-
-
         JwtUser jwtUser = (JwtUser) authentication.getPrincipal();
-        // 获取自定义token
-        token = securityService.getCustomizeToken(jwtUser);
-        if (StringUtils.isEmpty(token)) {
-            token = TokenUtils.createToken();
-        }
-        jwtUser.setToken(securityJwtProperties.getTokenStartWith() + token);
-        // 保存在线信息
-        this.tokenSave(jwtUser, token, request);
-        // 检查是否登录过，踢出登录
-        if (securityJwtProperties.isSingleLogin()) {
-            this.checkLoginOnUser(authUser.getUsername(), token);
-        }
+
+        // 生成token
+        this.generationToken(jwtUser, request);
         return jwtUser;
 
     }
@@ -125,6 +129,11 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     }
 
+    @Override
+    public void saveToken(String token, OnlineUser onlineUser) {
+        redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
+    }
+
     /**
      * 查询全部数据
      *
@@ -132,7 +141,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      * @return
      */
     @Override
-    public List<OnlineUser> fetchOnlineUserAllByUserId(String filterUserId) {
+    public List<OnlineUser> fetchOnlineUserAllByUserId(Object filterUserId) {
         List<String> keys = redisUtils.scan(JwtConstant.ONLINE_TOKEN_KEY + "*");
         Collections.reverse(keys);
         List<OnlineUser> onlineUsers = new ArrayList<>();
@@ -256,7 +265,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      * @param userId     用户名
      * @param igoreToken 生成的token令牌
      */
-    private void checkLoginOnUser(String userId, String igoreToken) {
+    private void checkLoginOnUser(Object userId, String igoreToken) {
         List<OnlineUser> onlineUsers = fetchOnlineUserAllByUserId(userId);
         if (onlineUsers == null || onlineUsers.isEmpty()) {
             return;
@@ -289,9 +298,9 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         String browser = StrUtils.getBrowser(request);
         IpInfo ipInfo = regionSearcher.btreeSearch(ip);
         String address = "内网IP";
-        if(ipInfo != null) {
+        if (ipInfo != null) {
             String addressAndIsp = ipInfo.getAddressAndIsp();
-            if(!StringUtils.isEmpty(addressAndIsp)) {
+            if (!StringUtils.isEmpty(addressAndIsp)) {
                 address = addressAndIsp.replace("中国", "");
             }
         }
@@ -340,5 +349,27 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
         jwtUser.setAuthorities(permissions.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
 
+    }
+
+    /**
+     * 生成token并缓存用户信息
+     *
+     * @param jwtUser 用户信息
+     * @param request
+     */
+    private void generationToken(JwtUser jwtUser, HttpServletRequest request) {
+        String token = null;
+        // 获取自定义token
+        token = securityService.getCustomizeToken(jwtUser);
+        if (StringUtils.isEmpty(token)) {
+            token = TokenUtils.createToken();
+        }
+        jwtUser.setToken(securityJwtProperties.getTokenStartWith() + token);
+        // 保存在线信息
+        this.tokenSave(jwtUser, token, request);
+        // 检查是否登录过，踢出登录
+        if (securityJwtProperties.isSingleLogin()) {
+            this.checkLoginOnUser(jwtUser.getId(), token);
+        }
     }
 }

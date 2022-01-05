@@ -16,7 +16,16 @@ import java.util.List;
 public interface IOnlineUserService {
 
     /**
-     * 登录认证
+     * 自定义登录
+     *
+     * @param principal 登录请求信息
+     * @param request
+     * @return
+     */
+    JwtUser customAuth(Object principal, HttpServletRequest request);
+
+    /**
+     * 账号密码登录认证
      *
      * @param authUser
      * @param request
@@ -32,12 +41,20 @@ public interface IOnlineUserService {
     void logout() throws SecurityJwtException;
 
     /**
+     * 存储token
+     *
+     * @param token      token值
+     * @param onlineUser 登录用户的信息
+     */
+    void saveToken(String token, OnlineUser onlineUser);
+
+    /**
      * 根据用户id筛选在线的用户（多端登录，多个token对应一个用户）
      *
      * @param filterUserId
      * @return
      */
-    List<OnlineUser> fetchOnlineUserAllByUserId(String filterUserId);
+    List<OnlineUser> fetchOnlineUserAllByUserId(Object filterUserId);
 
     /**
      * 获取当前在线用户

@@ -20,6 +20,14 @@ import java.util.List;
 public interface ISecurityService<T, E> {
 
     /**
+     * 自定义登录认证,由内部接口 IOnlineUserService 调用
+     *
+     * @param principal
+     * @return
+     */
+    JwtUser customAuth(Object principal);
+
+    /**
      * 查询用户全部权限
      *
      * @param userId 用户id
