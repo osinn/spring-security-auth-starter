@@ -11,6 +11,7 @@ import com.gitee.osinn.boot.securityjwt.service.IOnlineUserService;
 import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
 import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
 import com.gitee.osinn.boot.securityjwt.utils.DesEncryptUtils;
+import com.gitee.osinn.boot.securityjwt.utils.StrUtils;
 import com.gitee.osinn.boot.securityjwt.utils.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -98,7 +98,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     private Authentication getAuthenticationFromToken(HttpServletRequest request) {
         String token = TokenUtils.getToken(request);
         String requestUri = request.getRequestURI();
-        if (StringUtils.isEmpty(token)) {
+        if (StrUtils.isEmpty(token)) {
             request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "token已过期");
             return null;
         } else {
@@ -143,7 +143,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         // 判断基于API服务名称请求是否白名单
         Map<String, API> apiServiceMap = securityStorage.getApiServiceMap();
         String serviceKey = securityService.getServiceName(request);
-        if (StringUtils.isEmpty(serviceKey)) {
+        if (StrUtils.isEmpty(serviceKey)) {
             throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "未找到服务名称参数");
         }
         API api = apiServiceMap.get(serviceKey);

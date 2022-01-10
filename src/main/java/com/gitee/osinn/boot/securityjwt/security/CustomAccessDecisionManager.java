@@ -1,10 +1,13 @@
 package com.gitee.osinn.boot.securityjwt.security;
 
 import com.gitee.osinn.boot.securityjwt.annotation.API;
+import com.gitee.osinn.boot.securityjwt.enums.AuthType;
 import com.gitee.osinn.boot.securityjwt.enums.JwtHttpStatus;
 import com.gitee.osinn.boot.securityjwt.exception.SecurityJwtException;
-import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
 import com.gitee.osinn.boot.securityjwt.security.dto.ResourcePermission;
+import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
+import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
+import com.gitee.osinn.boot.securityjwt.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDeniedException;
@@ -15,12 +18,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.util.AntPathMatcher;
-import com.gitee.osinn.boot.securityjwt.enums.AuthType;
-import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -120,7 +123,7 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
             List<ResourcePermission> resourcePermissionList = securityService.fetchResourcePermissionAll();
             if (resourcePermissionList != null) {
                 for (ResourcePermission resourcePermission : resourcePermissionList) {
-                    if (!StringUtils.isEmpty(resourcePermission.getUriPath())
+                    if (!StrUtils.isEmpty(resourcePermission.getUriPath())
                             && antPathMatcher.match(resourcePermission.getUriPath(), requestURI)) {
                         request.setAttribute("accessDecisionMenuName", resourcePermission.getMenuName());
                         return SecurityConfig.createList(resourcePermission.getPermissionCode());

@@ -78,7 +78,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             String code = securityCaptchaCodeService.getCaptchaCode(authUser.getUuid());
             // 清除验证码
             securityCaptchaCodeService.delete(authUser.getUuid());
-            if (StringUtils.isEmpty(code)) {
+            if (StrUtils.isEmpty(code)) {
                 throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND_CODE.getCode(), JwtHttpStatus.NOT_FOUND_CODE.getMessage());
             }
             if (!code.equalsIgnoreCase(authUser.getCode())) {
@@ -87,7 +87,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         }
 
         String password;
-        if (!StringUtils.isEmpty(securityJwtProperties.getRsaPrivateKey())) {
+        if (!StrUtils.isEmpty(securityJwtProperties.getRsaPrivateKey())) {
             try {
                 password = RsaEncryptUtils.decrypt(authUser.getPassword(), securityJwtProperties.getRsaPrivateKey());
 
@@ -150,7 +150,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             if (onlineUser == null) {
                 continue;
             }
-            if (!org.springframework.util.StringUtils.isEmpty(filterUserId)) {
+            if (!StrUtils.isEmpty(filterUserId)) {
                 if (filterUserId.equals(onlineUser.getId())) {
                     onlineUsers.add(onlineUser);
                 }
@@ -170,9 +170,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      */
     @Override
     public OnlineUser fetchOnlineUserCompleteInfo() {
-//        SecurityContextHolder.getContext().getAuthentication();
         String token = TokenUtils.getToken();
-        if (StringUtils.isEmpty(token)) {
+        if (StrUtils.isEmpty(token)) {
             return null;
         }
         OnlineUser onlineUserInfo = getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
@@ -181,7 +180,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     @Override
     public OnlineUser fetchOnlineUserCompleteInfoByToken(String token) {
-        if (StringUtils.isEmpty(token)) {
+        if (StrUtils.isEmpty(token)) {
             return null;
         }
         if (StringUtils.hasText(token) && token.startsWith(securityJwtProperties.getTokenStartWith())) {
@@ -274,7 +273,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             if (userId.equals(onlineUser.getId())) {
                 try {
                     String token = DesEncryptUtils.desDecrypt(onlineUser.getKey());
-                    if (!org.springframework.util.StringUtils.isEmpty(igoreToken) && !igoreToken.equals(token)) {
+                    if (!StrUtils.isEmpty(igoreToken) && !igoreToken.equals(token)) {
                         // 踢出用户
                         redisUtils.del(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
                     }
@@ -297,10 +296,10 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         String ip = StrUtils.getIp(request);
         String browser = StrUtils.getBrowser(request);
         IpInfo ipInfo = regionSearcher.btreeSearch(ip);
-        String address = "内网IP";
+        String address = JwtConstant.REGION;
         if (ipInfo != null) {
             String addressAndIsp = ipInfo.getAddressAndIsp();
-            if (!StringUtils.isEmpty(addressAndIsp)) {
+            if (!StrUtils.isEmpty(addressAndIsp)) {
                 address = addressAndIsp.replace("中国", "");
             }
         }
@@ -361,7 +360,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         String token = null;
         // 获取自定义token
         token = securityService.getCustomizeToken(jwtUser);
-        if (StringUtils.isEmpty(token)) {
+        if (StrUtils.isEmpty(token)) {
             token = TokenUtils.createToken();
         }
         jwtUser.setToken(securityJwtProperties.getTokenStartWith() + token);

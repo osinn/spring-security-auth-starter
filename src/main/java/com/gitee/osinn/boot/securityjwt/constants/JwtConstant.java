@@ -2,7 +2,6 @@ package com.gitee.osinn.boot.securityjwt.constants;
 
 /**
  * @author wency_cai
- * @description: 描述
  **/
 public class JwtConstant {
 
@@ -17,7 +16,7 @@ public class JwtConstant {
     /**
      * 用于IP定位转换
      */
-    public final static String REGION = "内网IP|内网IP";
+    public final static String REGION = "内网IP";
 
     public final static String ONLINE_USER_INFO_KEY_PREFIX = "online_user_info:key_";
     /**

@@ -10,7 +10,6 @@ import com.gitee.osinn.boot.securityjwt.service.IOnlineUserService;
 import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -21,8 +20,9 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 /**
+ * token工具类
+ *
  * @author wency_cai
- * @description: token工具类
  **/
 @Slf4j
 @Component
@@ -67,9 +67,9 @@ public class TokenUtils {
      */
     public static String getToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(securityJwtProperties.getHeader());
-        if (StringUtils.isEmpty(bearerToken)) {
+        if (StrUtils.isEmpty(bearerToken)) {
             bearerToken = request.getParameter(securityJwtProperties.getHeader());
-            if (StringUtils.isEmpty(bearerToken)) {
+            if (StrUtils.isEmpty(bearerToken)) {
                 try {
                     BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
                     StringBuffer body = new StringBuffer();
@@ -78,7 +78,7 @@ public class TokenUtils {
                         body.append(inputStr);
                     }
                     String bodyStr = body.toString();
-                    if (!StringUtils.isEmpty(bodyStr)) {
+                    if (!StrUtils.isEmpty(bodyStr)) {
                         JSONObject jsonObject = JSONUtil.parseObj(bodyStr);
                         if (!jsonObject.isEmpty()) {
                             bearerToken = jsonObject.get(securityJwtProperties.getHeader()) + "";
@@ -89,7 +89,7 @@ public class TokenUtils {
                 }
             }
         }
-        if (!StringUtils.isEmpty(bearerToken) && bearerToken.startsWith(securityJwtProperties.getTokenStartWith())) {
+        if (!StrUtils.isEmpty(bearerToken) && bearerToken.startsWith(securityJwtProperties.getTokenStartWith())) {
             return bearerToken.replace(securityJwtProperties.getTokenStartWith(), "");
         }
         return null;
@@ -104,10 +104,10 @@ public class TokenUtils {
     public static String getServiceName(HttpServletRequest request) {
         String serviceName = request.getHeader(securityJwtProperties.getServiceName());
         String serviceHandlerMethod = request.getHeader(securityJwtProperties.getServiceHandlerMethod());
-        if (StringUtils.isEmpty(serviceName)) {
+        if (StrUtils.isEmpty(serviceName)) {
             serviceName = request.getParameter(securityJwtProperties.getServiceName());
             serviceHandlerMethod = request.getHeader(securityJwtProperties.getServiceHandlerMethod());
-            if (StringUtils.isEmpty(serviceName)) {
+            if (StrUtils.isEmpty(serviceName)) {
                 try {
                     BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
                     StringBuffer body = new StringBuffer();
@@ -116,12 +116,12 @@ public class TokenUtils {
                         body.append(inputStr);
                     }
                     String bodyStr = body.toString();
-                    if (!StringUtils.isEmpty(bodyStr)) {
+                    if (!StrUtils.isEmpty(bodyStr)) {
                         JSONObject jsonObject = JSONUtil.parseObj(bodyStr);
                         if (!jsonObject.isEmpty()) {
                             serviceName = String.valueOf(jsonObject.get(securityJwtProperties.getServiceName()));
-                            if (!StringUtils.isEmpty(jsonObject.get(securityJwtProperties.getServiceHandlerMethod()))) {
-                                serviceHandlerMethod = (String)jsonObject.get(securityJwtProperties.getServiceHandlerMethod());
+                            if (!StrUtils.isEmpty(jsonObject.get(securityJwtProperties.getServiceHandlerMethod()))) {
+                                serviceHandlerMethod = (String) jsonObject.get(securityJwtProperties.getServiceHandlerMethod());
                             }
                         }
                     }
@@ -131,7 +131,7 @@ public class TokenUtils {
             }
         }
 
-        if (!StringUtils.isEmpty(serviceHandlerMethod)) {
+        if (!StrUtils.isEmpty(serviceHandlerMethod)) {
             serviceName = serviceName + JwtConstant.POINT + serviceHandlerMethod;
         }
 
@@ -187,5 +187,24 @@ public class TokenUtils {
      */
     public static void refreshToken() {
         onlineUserService.refreshToken();
+    }
+
+    /**
+     * 获取当前在线用户
+     *
+     * @return 返回在线用户信息
+     */
+    public static OnlineUser fetchOnlineUserCompleteInfo() {
+        return onlineUserService.fetchOnlineUserCompleteInfo();
+    }
+
+    /**
+     * 获取当前在线用户
+     *
+     * @return 返回在线用户信息
+     */
+    public static OnlineUser fetchOnlineUserCompleteInfo(HttpServletRequest request) {
+        String token = getToken(request);
+        return onlineUserService.fetchOnlineUserCompleteInfoByToken(token);
     }
 }

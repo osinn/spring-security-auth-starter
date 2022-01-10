@@ -10,7 +10,6 @@ import com.gitee.osinn.boot.securityjwt.utils.RedisUtils;
 
 /**
  * @author wency_cai
- * @description: 描述
  **/
 @Slf4j
 public class JwtAppRun implements CommandLineRunner {
