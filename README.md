@@ -1,6 +1,11 @@
 # spring-security-auth-starter
 > spring-security 权限认证自动配置，开箱即用
 
+# 集成演示地址
+> http://www.itczw.com/
+
+- 管理员账号：admin/123456
+- 权限测试账号： demo/123456
 # 快速开始
 - 在`Spring Boot`项目中引入以下依赖
 ```
