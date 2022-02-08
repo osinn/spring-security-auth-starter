@@ -45,12 +45,12 @@ public class SecurityJwtProperties {
     private Set<String> authUrlsPrefix = Sets.newLinkedHashSet();
 
     /**
-     * 必须-密码加密的私钥
+     * 可选-密码加密的私钥
      */
     private String rsaPrivateKey;
 
     /**
-     * 可选-应用启动删除旧的之前的toekn
+     * 可选-应用启动删除旧的之前的token
      */
     private boolean appRunDeleteHistoryToken;
 
