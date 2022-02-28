@@ -7,7 +7,7 @@
 - 管理员账号：admin/123456
 - 权限测试账号： demo/123456
 # 快速开始
-- 在`Spring Boot`项目中引入以下依赖
+- 在`Spring Boot`项目中引入以下依赖(未发布到maven中央仓库)
 ```
 <dependency>
     <groupId>com.gitee.osinn</groupId>
@@ -54,17 +54,19 @@ security:
     # 权限认证方式，CODE或URL,不管使用哪种方式调调用fetchRolePermissionInfo方法查询权限
     # com.gitee.osinn.boot.securityjwt.service.ISecurityService.fetchRolePermissionInfo()
     # 如果是URL方式调用fetchResourcePermissionAll()方法查询资源路径(UIR)以及资源路径权限编码
-    auth-type: CODE
+    auth-type: CODE  # 值为OFF 关闭权限认证¸只认证登录，不认证权限
      #  前端传服务名称之属性名称
     service-name: service
-    # 前端传服务接口方法名称之属性名称
-    service-handler-method: methodName
+    # 前端传服务接口方法名称之属性名称 可选（有一种架构请求服务只根据服务名称调用业务接口，此时service-handler-method可不指定）
+    service-handler-method: methodName # 参与权限认证
 #    如果是api服务层,前端需要传参数：接口方法名称
 #    如果设置为true，需要service-handler-method 指定前端要调用的方法的参数名称
 #    这时前端不只是传serviceName 需要调用的服务，还要传 serviceHandlerMethod具体要调用服务下的哪个接口方法
     api-service: true
     # 是否需要动态续租token过期时间
     dynamic-refresh-token: true
+    # 默认启用xss配置，web标签转义字符
+    enable-xss: true
     ...
 ```
 
@@ -113,6 +115,25 @@ sysUserMapper.insert(userEntity);
 - 在配置文件中如果不将`security.config.auth-type`指定为`URL`,那么使用security默认的 `@PreAuthorize`注解方式路径授权，例如：`@PreAuthorize("hasAuthority('system:sysMenu:details')")`
 - 默认为`URL`，即为基于url路径授权
 - `SERVICE`方式结合@API注解使用，用于通过服务名称来请求业务接口
+
+# xss
+> 默认`enable-xss: true`启用xss配置，web标签转义字符
+
+- 如果想要json也要xss配置转义web标签，需要配置如下
+
+```
+@Bean
+public HttpMessageConverters fastJsonHttpMessageConverters() {
+    MappingJackson2HttpMessageConverter jackson2HttpMessageConverter = new MappingJackson2HttpMessageConverter();
+    ObjectMapper objectMapper = new ObjectMapper();
+    SimpleModule simpleModule = new SimpleModule();
+    // 添加MyHttpServletRequestJacksonDeserializer解析器
+    simpleModule.addDeserializer(String.class, new MyHttpServletRequestJacksonDeserializer());
+    objectMapper.registerModule(simpleModule);
+    jackson2HttpMessageConverter.setObjectMapper(objectMapper);
+    return new HttpMessageConverters(jackson2HttpMessageConverter);
+}
+```
 
 ## 关于@API注解
 ```
@@ -246,4 +267,19 @@ private IOnlineUserService onlineUserService;
      * @param ids 用户id
      */
     void editUserInfoForciblyLogout(List<Object> ids);
+```
+# 手动获取权限编码
+- 获取当前用户拥有的权限
+
+```
+Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+for (GrantedAuthority authority : authorities) {
+    System.out.println(authority.getAuthority());
+}
+```
+- 系统全部权限
+
+```
+ISecurityService.fetchResourcePermissionAll();
 ```

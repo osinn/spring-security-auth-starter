@@ -79,6 +79,11 @@ public class SecurityJwtProperties {
     private boolean enableCors = true;
 
     /**
+     * 是否开启xss()
+     */
+    private boolean enableXss = true;
+
+    /**
      * 权限不足或认证失败是否抛出异常，true 抛出SecurityJwtException异常
      * false  http请求状态为200,输出以下格式内容
      * {

@@ -4,20 +4,20 @@ import com.gitee.osinn.boot.securityjwt.annotation.API;
 import com.gitee.osinn.boot.securityjwt.annotation.AnonymousAccess;
 import com.gitee.osinn.boot.securityjwt.annotation.AutoAccess;
 import com.gitee.osinn.boot.securityjwt.constants.JwtConstant;
+import com.gitee.osinn.boot.securityjwt.enums.AuthType;
 import com.gitee.osinn.boot.securityjwt.security.CustomAccessDecisionManager;
 import com.gitee.osinn.boot.securityjwt.security.CustomLogoutSuccessHandler;
 import com.gitee.osinn.boot.securityjwt.security.JwtAccessDeniedHandler;
 import com.gitee.osinn.boot.securityjwt.security.JwtAuthenticationEntryPoint;
 import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
 import com.gitee.osinn.boot.securityjwt.security.filter.JwtAuthenticationFilter;
+import com.gitee.osinn.boot.securityjwt.security.filter.request.MyRequestFilter;
 import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
 import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,10 +35,12 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
-import com.gitee.osinn.boot.securityjwt.enums.AuthType;
 import org.springframework.web.util.pattern.PathPattern;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -214,9 +216,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
                     @Override
                     public <O extends FilterSecurityInterceptor> O postProcess(O fsi) {
-                        if (AuthType.URL.equals(securityJwtProperties.getAuthType())) {
-                            fsi.setAccessDecisionManager(accessDecisionManager());
-                        }
+                        fsi.setAccessDecisionManager(accessDecisionManager());
 //                        fsi.setAccessDecisionManager(accessDecisionManager());
 //                        fsi.setSecurityMetadataSource(mySecurityMetadataSource(fsi.getSecurityMetadataSource()));
                         return fsi;
@@ -237,13 +237,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    @ConditionalOnMissingBean
     public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
         return new JwtAuthenticationFilter(authenticationManager(), securityStorage);
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = SecurityJwtProperties.PREFIX, name = {"auth-type"}, matchIfMissing = true)
     public CustomAccessDecisionManager accessDecisionManager() {
         return new CustomAccessDecisionManager(securityStorage,
                 securityService,
@@ -264,4 +262,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //        return securityMetadataSource;
 //    }
 
+
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public MyRequestFilter requestFilter() {
+        return new MyRequestFilter(securityJwtProperties.isEnableXss());
+    }
 }

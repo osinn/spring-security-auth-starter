@@ -21,7 +21,6 @@ import org.springframework.util.AntPathMatcher;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -61,9 +60,15 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
     @Override
     public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes) throws AccessDeniedException, InsufficientAuthenticationException {
 
+        if (AuthType.OFF.equals(authType)) {
+            // 权限认证关闭状态¸不需要认证权限，放行
+            return;
+        }
+
         FilterInvocation filterInvocation = (FilterInvocation) object;
         HttpServletRequest request = filterInvocation.getRequest();
         List<ConfigAttribute> configAttributeList;
+
         if (AuthType.SERVICE.equals(authType)) {
 
             Map<String, API> apiServiceMap = securityStorage.getApiServiceMap();
@@ -93,15 +98,13 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
         /**
          * 判断是否有权限访问
          */
-        Iterator<ConfigAttribute> iterator = configAttributeList.iterator();
-        while (iterator.hasNext()) {
+        for (ConfigAttribute attribute : configAttributeList) {
 
             if (authentication == null) {
                 throw new AccessDeniedException("当前访问没有权限");
             }
 
-            ConfigAttribute configAttribute = iterator.next();
-            String needCode = configAttribute.getAttribute();
+            String needCode = attribute.getAttribute();
             if (needCode != null) {
                 Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
                 for (GrantedAuthority authority : authorities) {

@@ -37,4 +37,6 @@ public class JwtConstant {
     public final static String SUPER_ADMIN_ROLE = "admin";
 
     public final static String POINT = ".";
+
+    public final static String CONTENT_TYPE = "Content-Type";
 }

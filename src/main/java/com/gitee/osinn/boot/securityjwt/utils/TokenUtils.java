@@ -8,6 +8,7 @@ import com.gitee.osinn.boot.securityjwt.security.dto.JwtRoleInfo;
 import com.gitee.osinn.boot.securityjwt.security.dto.OnlineUser;
 import com.gitee.osinn.boot.securityjwt.service.IOnlineUserService;
 import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
+import com.google.common.base.Charsets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -67,28 +68,6 @@ public class TokenUtils {
      */
     public static String getToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(securityJwtProperties.getHeader());
-        if (StrUtils.isEmpty(bearerToken)) {
-            bearerToken = request.getParameter(securityJwtProperties.getHeader());
-            if (StrUtils.isEmpty(bearerToken)) {
-                try {
-                    BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
-                    StringBuffer body = new StringBuffer();
-                    String inputStr = null;
-                    while ((inputStr = streamReader.readLine()) != null) {
-                        body.append(inputStr);
-                    }
-                    String bodyStr = body.toString();
-                    if (!StrUtils.isEmpty(bodyStr)) {
-                        JSONObject jsonObject = JSONUtil.parseObj(bodyStr);
-                        if (!jsonObject.isEmpty()) {
-                            bearerToken = jsonObject.get(securityJwtProperties.getHeader()) + "";
-                        }
-                    }
-                } catch (IOException e) {
-                    log.debug("HttpServletRequest 尝试解析表单请求json数据失败：" + e.getMessage(), e);
-                }
-            }
-        }
         if (!StrUtils.isEmpty(bearerToken) && bearerToken.startsWith(securityJwtProperties.getTokenStartWith())) {
             return bearerToken.replace(securityJwtProperties.getTokenStartWith(), "");
         }
@@ -106,10 +85,10 @@ public class TokenUtils {
         String serviceHandlerMethod = request.getHeader(securityJwtProperties.getServiceHandlerMethod());
         if (StrUtils.isEmpty(serviceName)) {
             serviceName = request.getParameter(securityJwtProperties.getServiceName());
-            serviceHandlerMethod = request.getHeader(securityJwtProperties.getServiceHandlerMethod());
+            serviceHandlerMethod = request.getParameter(securityJwtProperties.getServiceHandlerMethod());
             if (StrUtils.isEmpty(serviceName)) {
                 try {
-                    BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
+                    BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), Charsets.UTF_8));
                     StringBuffer body = new StringBuffer();
                     String inputStr = null;
                     while ((inputStr = streamReader.readLine()) != null) {
@@ -131,7 +110,7 @@ public class TokenUtils {
             }
         }
 
-        if (!StrUtils.isEmpty(serviceHandlerMethod)) {
+        if (!StrUtils.isEmpty(serviceHandlerMethod) && !StrUtils.isEmpty(serviceName)) {
             serviceName = serviceName + JwtConstant.POINT + serviceHandlerMethod;
         }
 

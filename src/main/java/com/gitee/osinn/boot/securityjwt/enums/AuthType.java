@@ -2,7 +2,6 @@ package com.gitee.osinn.boot.securityjwt.enums;
 
 /**
  * @author wency_cai
- * @description: 描述
  **/
 public enum AuthType {
 
@@ -10,7 +9,6 @@ public enum AuthType {
      * 请求url认证方式
      */
     URL,
-
 
     /**
      * 请求权限编码认证方式
@@ -20,5 +18,10 @@ public enum AuthType {
     /**
      * 基于服务名称请求权限编码认证方式
      */
-    SERVICE
+    SERVICE,
+
+    /**
+     * 关闭权限认证¸只认证登录，不认证权限
+     */
+    OFF
 }
