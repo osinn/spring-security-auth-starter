@@ -1,12 +1,11 @@
 package com.gitee.osinn.boot.securityjwt.security.filter;
 
-import com.gitee.osinn.boot.securityjwt.annotation.API;
 import com.gitee.osinn.boot.securityjwt.constants.JwtConstant;
 import com.gitee.osinn.boot.securityjwt.enums.AuthType;
 import com.gitee.osinn.boot.securityjwt.enums.JwtHttpStatus;
-import com.gitee.osinn.boot.securityjwt.exception.SecurityJwtException;
 import com.gitee.osinn.boot.securityjwt.security.dto.OnlineUser;
 import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
+import com.gitee.osinn.boot.securityjwt.service.IApiAuthService;
 import com.gitee.osinn.boot.securityjwt.service.IOnlineUserService;
 import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
 import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
@@ -28,7 +27,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Date;
-import java.util.Map;
 
 /**
  * token的校验
@@ -55,6 +53,9 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
      */
     private SecurityStorage securityStorage;
 
+    @Autowired
+    private IApiAuthService apiAuthService;
+
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager, SecurityStorage securityStorage) {
         super(authenticationManager);
         this.securityStorage = securityStorage;
@@ -62,7 +63,6 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-//        MyHttpServletRequestWrapper myHttpServletRequestWrapper = new MyHttpServletRequestWrapper(request);
         this.checkAuthentication(request);
         chain.doFilter(request, response);
     }
@@ -79,7 +79,8 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             return;
         }
         if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
-            boolean anonymousService = this.checkAnonymousService(request);
+            // 判断是否为匿名访问服务
+            boolean anonymousService = apiAuthService.checkAnonymousService(request);
             if (anonymousService) {
                 return;
             }
@@ -136,21 +137,4 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         return new UsernamePasswordAuthenticationToken(onlineUser, token, onlineUser.getAuthorities());
     }
 
-    /**
-     * @param request
-     * @return @return true-不需要登录认证，false-登录认证
-     */
-    private boolean checkAnonymousService(HttpServletRequest request) {
-        // 判断基于API服务名称请求是否白名单
-        Map<String, API> apiServiceMap = securityStorage.getApiServiceMap();
-        String serviceKey = securityService.getServiceName(request);
-        if (StrUtils.isEmpty(serviceKey)) {
-            throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "未找到服务名称参数");
-        }
-        API api = apiServiceMap.get(serviceKey);
-        if (api == null) {
-            throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "服务不存在");
-        }
-        return !api.needLogin();
-    }
 }

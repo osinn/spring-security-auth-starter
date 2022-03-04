@@ -1,9 +1,9 @@
 package com.gitee.osinn.boot.securityjwt.security.dto;
 
 import com.gitee.osinn.boot.securityjwt.annotation.API;
+import com.gitee.osinn.boot.securityjwt.annotation.APIMethodPermission;
 import lombok.Data;
 import org.springframework.http.HttpMethod;
-import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,7 +16,6 @@ import java.util.Set;
  * @author wency_cai
  */
 @Data
-@Component
 public class SecurityStorage {
 
     /**
@@ -28,7 +27,12 @@ public class SecurityStorage {
      * 基于服务名称认证方式的所有请求接口权限编码
      * key：service的服务名称，value：@API注解或@APIHandlerMethod注解
      */
-    private Map<String, API> apiServiceMap;
+    private Map<String, API> apiMap;
+
+    /**
+     * 配合@API 使用，如果存在则优先使用
+     */
+    private Map<String, APIMethodPermission> apiMethodPermissions;
 
 
     private AntPathMatcher antPathMatcher = new AntPathMatcher();

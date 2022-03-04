@@ -1,17 +1,15 @@
 package com.gitee.osinn.boot.securityjwt.config;
 
-import com.gitee.osinn.boot.securityjwt.annotation.API;
 import com.gitee.osinn.boot.securityjwt.annotation.AnonymousAccess;
 import com.gitee.osinn.boot.securityjwt.annotation.AutoAccess;
-import com.gitee.osinn.boot.securityjwt.constants.JwtConstant;
-import com.gitee.osinn.boot.securityjwt.enums.AuthType;
 import com.gitee.osinn.boot.securityjwt.security.CustomAccessDecisionManager;
 import com.gitee.osinn.boot.securityjwt.security.CustomLogoutSuccessHandler;
 import com.gitee.osinn.boot.securityjwt.security.JwtAccessDeniedHandler;
 import com.gitee.osinn.boot.securityjwt.security.JwtAuthenticationEntryPoint;
 import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
 import com.gitee.osinn.boot.securityjwt.security.filter.JwtAuthenticationFilter;
-import com.gitee.osinn.boot.securityjwt.security.filter.request.MyRequestFilter;
+import com.gitee.osinn.boot.securityjwt.security.filter.MyRequestFilter;
+import com.gitee.osinn.boot.securityjwt.service.IApiAuthService;
 import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
 import com.gitee.osinn.boot.securityjwt.starter.SecurityJwtProperties;
 import com.google.common.collect.Lists;
@@ -37,7 +35,6 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPattern;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -73,6 +70,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private ISecurityService securityService;
 
+    @Autowired
+    private IApiAuthService apiAuthService;
+
     @Value("${server.servlet.context-path:}")
     private String contextPath;
 
@@ -88,7 +88,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         Map<RequestMappingInfo, HandlerMethod> handlerMethodMap = applicationContext.getBean(RequestMappingHandlerMapping.class).getHandlerMethods();
         Set<String> anonymousUrls = new HashSet<>();
         Set<String> authUrlsPrefix = new HashSet<>();
-        Map<String, API> apiServices = new HashMap<>();
 
         // 默认拦截 /** 下所有路径
         authUrlsPrefix.add("/**");
@@ -101,17 +100,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // 基于注解排除路径
             AnonymousAccess anonymousAccess = handlerMethod.getMethodAnnotation(AnonymousAccess.class);
 
-            if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
-                // 基于服务名称请求业务接口权限认证
-                API apiAnnotation = handlerMethod.getBeanType().getAnnotation(API.class);
-                if (apiAnnotation != null) {
-                    if (securityJwtProperties.isApiService()) {
-                        apiServices.put(apiAnnotation.service() + JwtConstant.POINT + handlerMethod.getMethod().getName(), apiAnnotation);
-                    } else {
-                        apiServices.put(apiAnnotation.service(), apiAnnotation);
-                    }
-                }
-            }
+//            if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
+//                // 基于服务名称请求业务接口权限认证
+//                APIHandlerMethod apiAnnotation = handlerMethod.getMethodAnnotation(APIHandlerMethod.class);
+//                if (apiAnnotation != null) {
+//                    String serviceMethod = StrUtils.isEmpty(apiAnnotation.serviceMethod()) ? handlerMethod.getMethod().getName() : apiAnnotation.serviceMethod();
+//                    apiHandlerMethods.put(apiAnnotation.service() + JwtConstant.POINT + serviceMethod, apiAnnotation);
+//                }
+//            }
             if (null != anonymousAccess) {
                 if (infoEntry.getKey().getPatternsCondition() == null) {
                     assert infoEntry.getKey().getPathPatternsCondition() != null;
@@ -168,7 +164,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         anonymousUrs.addAll(Lists.newArrayList(pageAnonymousUrl));
         anonymousUrs.addAll(Lists.newArrayList(anonymousUrls));
         securityStorage.setPermissionAnonymousUrlList(anonymousUrs);
-        securityStorage.setApiServiceMap(apiServices);
 
 
         if (securityJwtProperties.isDisableHttpBasic()) {
@@ -228,10 +223,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(authUrlsPrefix.toArray(new String[0]))
                 .and().logout().logoutUrl("/logout").logoutSuccessHandler(customLogoutSuccessHandler()).permitAll();
 
-        // 添加CORS filter
-        if (securityJwtProperties.isEnableCors()) {
-            httpSecurity.addFilterBefore(new MyCorsFilter(), CorsFilter.class);
-        }
+        httpSecurity.addFilterBefore(new MyRequestFilter(securityJwtProperties.isEnableCors(),securityJwtProperties.isEnableXss(), securityJwtProperties.getAuthType()), CorsFilter.class);
         //单用户登录，如果有一个登录了，同一个用户在其他地方不能登录
         //httpSecurity.sessionManagement().maximumSessions(1).maxSessionsPreventsLogin(true);
     }
@@ -245,6 +237,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public CustomAccessDecisionManager accessDecisionManager() {
         return new CustomAccessDecisionManager(securityStorage,
                 securityService,
+                apiAuthService,
                 securityJwtProperties.getAuthType());
     }
 
@@ -262,10 +255,4 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //        return securityMetadataSource;
 //    }
 
-
-    @Bean
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    public MyRequestFilter requestFilter() {
-        return new MyRequestFilter(securityJwtProperties.isEnableXss());
-    }
 }

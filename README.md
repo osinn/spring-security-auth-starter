@@ -1,6 +1,11 @@
 # spring-security-auth-starter
 > spring-security 权限认证自动配置，开箱即用，支持动态续租token过期时间，支持统一API服务接口调用权限认证，支持基于`@PreAuthorize`注解方式授权认证，支持基于URL路径权限认证。登录接口前端可对密码进行rsa加密(前端公钥加密，后端私钥解密)，支持自定义登录接口(微信公众授权/小程序授权可选自定义登录接口)
 
+# 项目地址
+- gitee：[https://gitee.com/osinn/spring-security-auth-starter](https://gitee.com/osinn/spring-security-auth-starter)
+- github：[https://github.com/wency-cai/spring-security-auth-starter](https://github.com/wency-cai/spring-security-auth-starter)
+
+
 # 集成演示地址
 > http://www.itczw.com/
 
@@ -135,7 +140,10 @@ public HttpMessageConverters fastJsonHttpMessageConverters() {
 }
 ```
 
-## 关于@API注解
+# 关于@API注解、@APIMethodPermission注解
+> demo: [https://github.com/wency-cai/spring-security-auth-example.git](https://github.com/wency-cai/spring-security-auth-example.git)
+
+## @API注解
 ```
 /**
  * 服务API注解，在类上添加此注解
@@ -178,6 +186,61 @@ public @interface API {
      * @return true 需要认证权限，false 不需要认证权限
      */
     boolean needPermission() default false;
+}
+```
+## @APIMethodPermission注解
+```
+/**
+ * 服务API注解，在方法上添加此注解校验方法权限
+ *
+ * @author wency_cai
+ **/
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface APIMethodPermission {
+
+    /**
+     * 是否需要认证登录
+     *
+     * @return true 需要认证登录，false 不需要认证登录
+     */
+    boolean needLogin() default false;
+
+    /**
+     * 接口拥有的权限
+     *
+     * @return 权限code
+     */
+    String permission() default "";
+
+    /**
+     * 是否需要权限认证
+     *
+     * @return true 需要认证权限，false 不需要认证权限
+     */
+    boolean needPermission() default false;
+}
+```
+
+## 示例
+```
+@API(service = SERVICE_NAME)
+@Service(SERVICE_NAME)
+public class UserServiceImpl implements IUserService {
+
+    public static final String SERVICE_NAME = "userService";
+    
+    @Override
+    @APIMethodPermission(needLogin = true, permission = "test:111", needPermission = true)
+    public List<UserVO> getUserAll() {
+        List<UserVO> userVOList = new ArrayList<>();
+        UserVO userVO = new UserVO();
+        userVO.setId(1);
+        userVO.setName("测试");
+        userVOList.add(userVO);
+        return userVOList;
+    }
 }
 ```
 
@@ -277,9 +340,7 @@ Collection<? extends GrantedAuthority> authorities = authentication.getAuthoriti
 for (GrantedAuthority authority : authorities) {
     System.out.println(authority.getAuthority());
 }
-```
-- 系统全部权限
 
-```
-ISecurityService.fetchResourcePermissionAll();
+// 或者调用fetchOnlineUserCompleteInfo()方法获取当前在线用户信息从而获取用户拥有的权限
+IOnlineUserService.fetchOnlineUserCompleteInfo()
 ```

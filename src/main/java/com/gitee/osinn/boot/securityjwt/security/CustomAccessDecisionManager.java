@@ -1,28 +1,23 @@
 package com.gitee.osinn.boot.securityjwt.security;
 
 import com.gitee.osinn.boot.securityjwt.annotation.API;
+import com.gitee.osinn.boot.securityjwt.annotation.APIMethodPermission;
 import com.gitee.osinn.boot.securityjwt.enums.AuthType;
-import com.gitee.osinn.boot.securityjwt.enums.JwtHttpStatus;
-import com.gitee.osinn.boot.securityjwt.exception.SecurityJwtException;
-import com.gitee.osinn.boot.securityjwt.security.dto.ResourcePermission;
 import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
+import com.gitee.osinn.boot.securityjwt.service.IApiAuthService;
 import com.gitee.osinn.boot.securityjwt.service.ISecurityService;
-import com.gitee.osinn.boot.securityjwt.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.ConfigAttribute;
-import org.springframework.security.access.SecurityConfig;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.FilterInvocation;
-import org.springframework.util.AntPathMatcher;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -41,9 +36,9 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
 
     private ISecurityService securityService;
 
-    private AuthType authType;
+    private IApiAuthService apiAuthService;
 
-    private final AntPathMatcher antPathMatcher = new AntPathMatcher();
+    private AuthType authType;
 
     public CustomAccessDecisionManager() {
 
@@ -51,9 +46,11 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
 
     public CustomAccessDecisionManager(SecurityStorage securityStorage,
                                        ISecurityService securityService,
+                                       IApiAuthService apiAuthService,
                                        AuthType authType) {
         this.securityStorage = securityStorage;
         this.securityService = securityService;
+        this.apiAuthService = apiAuthService;
         this.authType = authType;
     }
 
@@ -69,92 +66,58 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
         HttpServletRequest request = filterInvocation.getRequest();
         List<ConfigAttribute> configAttributeList;
 
+        if (securityStorage.isAnonymousUri(request)) {
+            // 放行白名单
+            return;
+        }
+
+        if (authentication == null) {
+            throw new AccessDeniedException("当前访问没有权限");
+        }
+
         if (AuthType.SERVICE.equals(authType)) {
-
-            Map<String, API> apiServiceMap = securityStorage.getApiServiceMap();
-            String serviceName = securityService.getServiceName(request);
-            API api = apiServiceMap.get(serviceName);
-            if (api != null) {
-                if (!api.needPermission()) {
-                    // 不需要权限认证-放行
-                    return;
-                }
-            } else {
-                throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "服务不存在");
-            }
-
-            configAttributeList = this.getApiConfigAttribute(api, request);
-
-        } else {
-            if (securityStorage.isAnonymousUri(request)) {
-                // 放行白名单
+            API api = apiAuthService.getServiceApiAnnotation(request);
+            APIMethodPermission serviceApiMethodPermissionAnnotation = apiAuthService.getServiceApiMethodPermissionAnnotation(request);
+            if(serviceApiMethodPermissionAnnotation != null) {
+               if(!serviceApiMethodPermissionAnnotation.needPermission()) {
+                   return;
+               }
+            } else if (!api.needPermission()) {
                 return;
             }
+            // 获取接口访问权限
+//            configAttributeList = apiAuthService.getApiConfigAttribute(api, request);
+            // 检查是否有权限访问
+            apiAuthService.checkAttribute(api, request, authentication.getAuthorities());
+        } else {
 
-            configAttributeList = getConfigAttribute(request.getRequestURI(), request);
+            /**
+             * 后面将删除此方法，直接调用 authentication.getAuthorities()
+             */
+            configAttributeList = apiAuthService.getConfigAttribute(request.getRequestURI(), request);
 
-        }
-
-        /**
-         * 判断是否有权限访问
-         */
-        for (ConfigAttribute attribute : configAttributeList) {
-
-            if (authentication == null) {
-                throw new AccessDeniedException("当前访问没有权限");
-            }
-
-            String needCode = attribute.getAttribute();
-            if (needCode != null) {
-                Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-                for (GrantedAuthority authority : authorities) {
-                    if (authority.getAuthority().equals(needCode)) {
-                        return;
-                    }
-                }
-            }
-
-        }
-
-        throw new AccessDeniedException("当前访问没有权限");
-    }
-
-    private List<ConfigAttribute> getConfigAttribute(String requestURI, HttpServletRequest request) {
-
-        if (AuthType.URL.equals(authType)) {
-            //从数据库加载全部权限配置
-            List<ResourcePermission> resourcePermissionList = securityService.fetchResourcePermissionAll();
-            if (resourcePermissionList != null) {
-                for (ResourcePermission resourcePermission : resourcePermissionList) {
-                    if (!StrUtils.isEmpty(resourcePermission.getUriPath())
-                            && antPathMatcher.match(resourcePermission.getUriPath(), requestURI)) {
-                        request.setAttribute("accessDecisionMenuName", resourcePermission.getMenuName());
-                        return SecurityConfig.createList(resourcePermission.getPermissionCode());
-                    }
-                }
-            }
-        }
-        throw new AccessDeniedException("当前访问没有权限");
-    }
-
-    private List<ConfigAttribute> getApiConfigAttribute(API api, HttpServletRequest request) {
-
-        if (AuthType.SERVICE.equals(authType)) {
-            //从数据库加载全部权限配置
-            List<ResourcePermission> resourcePermissionList = securityService.fetchResourcePermissionAll();
-            if (resourcePermissionList != null) {
-                for (ResourcePermission resourcePermission : resourcePermissionList) {
-                    if (api != null) {
-                        if (api.permission().equals(resourcePermission.getPermissionCode())) {
-                            request.setAttribute("accessDecisionMenuName", resourcePermission.getMenuName());
-                            return SecurityConfig.createList(resourcePermission.getPermissionCode());
+            /**
+             * 判断是否有权限访问
+             */
+            for (ConfigAttribute attribute : configAttributeList) {
+                String needCode = attribute.getAttribute();
+                if (needCode != null) {
+                    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+                    for (GrantedAuthority authority : authorities) {
+                        if (authority.getAuthority().equals(needCode)) {
+                            return;
                         }
                     }
                 }
+
             }
+
+            throw new AccessDeniedException("当前访问没有权限");
         }
-        throw new AccessDeniedException("当前访问没有权限");
+
     }
+
+
 
     @Override
     public boolean supports(ConfigAttribute attribute) {

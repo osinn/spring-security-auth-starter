@@ -2,10 +2,13 @@ package com.gitee.osinn.boot.securityjwt.starter;
 
 import com.gitee.osinn.boot.securityjwt.security.JwtAccessDeniedHandler;
 import com.gitee.osinn.boot.securityjwt.security.JwtAuthenticationEntryPoint;
-import com.gitee.osinn.boot.securityjwt.security.crypto.Md5Sha512PasswordEncoder;
+import com.gitee.osinn.boot.securityjwt.security.dto.SecurityStorage;
+import com.gitee.osinn.boot.securityjwt.service.IApiAuthService;
 import com.gitee.osinn.boot.securityjwt.service.ISecurityCaptchaCodeService;
+import com.gitee.osinn.boot.securityjwt.service.impl.ApiAuthServiceImpl;
 import com.gitee.osinn.boot.securityjwt.service.impl.SecurityCaptchaCodeServiceImpl;
 import com.gitee.osinn.boot.securityjwt.utils.PasswordEncoderUtils;
+import com.gitee.osinn.boot.securityjwt.utils.SpringContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -13,13 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
-import com.gitee.osinn.boot.securityjwt.utils.SpringContextHolder;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author wency_cai
@@ -82,6 +79,21 @@ public class SecurityAutoConfigure {
     GrantedAuthorityDefaults grantedAuthorityDefaults() {
         // 去除 ROLE_ 前缀
         return new GrantedAuthorityDefaults("");
+    }
+
+    @Bean
+    public MyBeanPostProcessor myBeanPostProcessor() {
+        return new MyBeanPostProcessor(securityStorage(), securityJwtProperties.isApiService(), securityJwtProperties.getAuthType());
+    }
+
+    @Bean
+    public SecurityStorage securityStorage() {
+        return new SecurityStorage();
+    }
+
+    @Bean
+    public IApiAuthService apiAuthService() {
+        return new ApiAuthServiceImpl(securityJwtProperties.getAuthType(), securityJwtProperties.isApiService());
     }
 
 }

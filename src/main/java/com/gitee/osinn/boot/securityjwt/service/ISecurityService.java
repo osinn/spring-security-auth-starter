@@ -36,6 +36,8 @@ public interface ISecurityService<T, E> {
     JwtRoleInfo fetchRolePermissionInfo(E userId);
 
     /**
+     * 后面将被删除
+     *
      * security.config.auth-type=URL时使用，用于根据请求的URI判断权限code
      * security.config.auth-type=CODE时返回 null即可
      * 自行做缓存处理
@@ -43,6 +45,7 @@ public interface ISecurityService<T, E> {
      *
      * @return
      */
+    @Deprecated
     List<ResourcePermission> fetchResourcePermissionAll();
 
     /**

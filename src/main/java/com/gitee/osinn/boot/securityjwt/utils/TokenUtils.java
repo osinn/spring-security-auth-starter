@@ -4,6 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.gitee.osinn.boot.securityjwt.constants.JwtConstant;
+import com.gitee.osinn.boot.securityjwt.enums.AuthType;
 import com.gitee.osinn.boot.securityjwt.security.dto.JwtRoleInfo;
 import com.gitee.osinn.boot.securityjwt.security.dto.OnlineUser;
 import com.gitee.osinn.boot.securityjwt.service.IOnlineUserService;
@@ -31,6 +32,7 @@ public class TokenUtils {
 
     private static SecurityJwtProperties securityJwtProperties;
     private static IOnlineUserService onlineUserService;
+
 
     public TokenUtils(SecurityJwtProperties securityJwtProperties, IOnlineUserService onlineUserService) {
         TokenUtils.securityJwtProperties = securityJwtProperties;
@@ -81,14 +83,14 @@ public class TokenUtils {
      * @return
      */
     public static String getServiceName(HttpServletRequest request) {
+
         String serviceName = request.getHeader(securityJwtProperties.getServiceName());
         String serviceHandlerMethod = request.getHeader(securityJwtProperties.getServiceHandlerMethod());
         if (StrUtils.isEmpty(serviceName)) {
             serviceName = request.getParameter(securityJwtProperties.getServiceName());
             serviceHandlerMethod = request.getParameter(securityJwtProperties.getServiceHandlerMethod());
-            if (StrUtils.isEmpty(serviceName)) {
-                try {
-                    BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), Charsets.UTF_8));
+            if (StrUtils.isEmpty(serviceName) && AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
+                try(BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), Charsets.UTF_8))) {
                     StringBuffer body = new StringBuffer();
                     String inputStr = null;
                     while ((inputStr = streamReader.readLine()) != null) {
@@ -113,7 +115,6 @@ public class TokenUtils {
         if (!StrUtils.isEmpty(serviceHandlerMethod) && !StrUtils.isEmpty(serviceName)) {
             serviceName = serviceName + JwtConstant.POINT + serviceHandlerMethod;
         }
-
         return serviceName;
     }
 
@@ -186,4 +187,5 @@ public class TokenUtils {
         String token = getToken(request);
         return onlineUserService.fetchOnlineUserCompleteInfoByToken(token);
     }
+
 }
