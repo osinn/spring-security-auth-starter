@@ -5,19 +5,13 @@
 - gitee：[https://gitee.com/osinn/spring-security-auth-starter](https://gitee.com/osinn/spring-security-auth-starter)
 - github：[https://github.com/wency-cai/spring-security-auth-starter](https://github.com/wency-cai/spring-security-auth-starter)
 
-
-# 集成演示地址
-> http://www.itczw.com/
-
-- 管理员账号：admin/123456
-- 权限测试账号： demo/123456
 # 快速开始
-- 在`Spring Boot`项目中引入以下依赖(未发布到maven中央仓库)
+- 在`Spring Boot`项目中引入以下依赖
 ```
 <dependency>
-    <groupId>com.gitee.osinn</groupId>
-    <artifactId>spring-security-auth-starter</artifactId>
-    <version>1.0</version>
+  <groupId>io.github.osinn</groupId>
+  <artifactId>spring-security-auth-starter</artifactId>
+  <version>1.0</version>
 </dependency>
 ```
 # `application.yml`配置
@@ -72,6 +66,11 @@ security:
     dynamic-refresh-token: true
     # 默认启用xss配置，web标签转义字符
     enable-xss: true
+    # 自定义权限不足、认证失败、退出成功响应字段名
+    response-body:
+      - message: msg # 默认message
+      - error: error_msg # error
+      - code: code # 默认code
     ...
 ```
 
