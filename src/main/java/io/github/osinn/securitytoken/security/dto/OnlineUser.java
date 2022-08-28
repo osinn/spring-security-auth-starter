@@ -53,11 +53,6 @@ public class OnlineUser implements Serializable {
     private String ip;
 
     /**
-     * ip归属地
-     */
-    private String address;
-
-    /**
      * DES加密token
      */
     private String key;
@@ -73,7 +68,6 @@ public class OnlineUser implements Serializable {
     private List<JwtRoleInfo.BaseRoleInfo> roles = Collections.emptyList();
     //
 //    @JsonIgnore
-//    @JSONField(serialize = false)
     private Collection<GrantedAuthority> authorities = Collections.emptyList();
 
     public List<String> getAuthority() {

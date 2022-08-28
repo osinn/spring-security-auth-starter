@@ -57,8 +57,7 @@
         <java.version>1.8</java.version>
         <jjwt.version>0.10.6</jjwt.version>
         <fastjson.version>1.2.76</fastjson.version>
-        <guava.version>20.0</guava.version>
-        <mica-ip2region.version>2.5.2</mica-ip2region.version>
+        <guava.version>23.0</guava.version>
         <hutool.version>5.7.5</hutool.version>
         <easy-captcha.version>1.6.2</easy-captcha.version>
         <spring-boot.version>2.4.1</spring-boot.version>
@@ -116,20 +115,7 @@
         <dependency>
             <groupId>eu.bitwalker</groupId>
             <artifactId>UserAgentUtils</artifactId>
-            <version>1.20</version>
-        </dependency>
-
-        <!--        IP地址归属地查询-->
-        <dependency>
-            <groupId>net.dreamlu</groupId>
-            <artifactId>mica-ip2region</artifactId>
-            <version>${mica-ip2region.version}</version>
-        </dependency>
-        <!-- fastjson -->
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>${fastjson.version}</version>
+            <version>1.21</version>
         </dependency>
 
         <!--google guava-->

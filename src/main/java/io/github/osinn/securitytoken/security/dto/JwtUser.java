@@ -1,6 +1,5 @@
 package io.github.osinn.securitytoken.security.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,21 +38,18 @@ public class JwtUser implements UserDetails, Serializable {
     private String nickname;
 
     @JsonIgnore
-    @JSONField(serialize = false)
     private String password;
 
     /**
      * 权限
      */
     @JsonIgnore
-    @JSONField(serialize = false)
     private Collection<GrantedAuthority> authorities;
 
     /**
      * 用户角色
      */
     @JsonIgnore
-    @JSONField(serialize = false)
     private List<JwtRoleInfo.BaseRoleInfo> roles = Collections.emptyList();
 
     private String token;
@@ -62,42 +58,36 @@ public class JwtUser implements UserDetails, Serializable {
 
     }
 
-    @JSONField(serialize = false)
     @JsonIgnore
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
-    @JSONField(serialize = false)
     @JsonIgnore
     @Override
     public boolean isAccountNonLocked() {
         return true;
     }
 
-    @JSONField(serialize = false)
     @JsonIgnore
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
-    @JSONField(serialize = false)
     @JsonIgnore
     @Override
     public boolean isEnabled() {
         return true;
     }
 
-    @JSONField(serialize = false)
     @JsonIgnore
     @Override
     public String getPassword() {
         return password;
     }
 
-    @JSONField(serialize = false)
     @JsonIgnore
     @Override
     public String getUsername() {

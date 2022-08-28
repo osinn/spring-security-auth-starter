@@ -13,8 +13,6 @@ import io.github.osinn.securitytoken.service.ISecurityCaptchaCodeService;
 import io.github.osinn.securitytoken.service.ISecurityService;
 import io.github.osinn.securitytoken.utils.*;
 import lombok.extern.slf4j.Slf4j;
-import net.dreamlu.mica.ip2region.core.Ip2regionSearcher;
-import net.dreamlu.mica.ip2region.core.IpInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -47,9 +45,6 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     @Autowired
     private RedisUtils redisUtils;
-
-    @Autowired
-    private Ip2regionSearcher regionSearcher;
 
     @Autowired
     private ISecurityCaptchaCodeService securityCaptchaCodeService;
@@ -295,14 +290,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     private void tokenSave(JwtUser jwtUser, String token, HttpServletRequest request) {
         String ip = StrUtils.getIp(request);
         String browser = StrUtils.getBrowser(request);
-        IpInfo ipInfo = regionSearcher.btreeSearch(ip);
-        String address = JwtConstant.REGION;
-        if (ipInfo != null) {
-            String addressAndIsp = ipInfo.getAddressAndIsp();
-            if (!StrUtils.isEmpty(addressAndIsp)) {
-                address = addressAndIsp.replace("中国", "");
-            }
-        }
+
         OnlineUser onlineUser = null;
         try {
             // 用户权限赋值
@@ -313,7 +301,6 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     jwtUser.getNickname(),
                     browser,
                     ip,
-                    address,
                     DesEncryptUtils.desEncrypt(token),
                     new Date(),
                     jwtUser.getRoles(),
