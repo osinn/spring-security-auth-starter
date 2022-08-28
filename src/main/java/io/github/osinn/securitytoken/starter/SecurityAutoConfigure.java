@@ -24,7 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  **/
 @Configuration
 @EnableConfigurationProperties(SecurityJwtProperties.class)
-@ComponentScan("io.githuub.osinn.securitytoken")
+@ComponentScan("io.github.osinn.securitytoken")
 public class SecurityAutoConfigure {
 
     @Autowired
