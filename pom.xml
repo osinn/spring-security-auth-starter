@@ -32,7 +32,7 @@
     <scm>
         <connection>scm:git:git@github.com:osinn/spring-security-auth-starter.git</connection>
         <developerConnection>scm:git:git@github.com:osinn/spring-security-auth-starter.git</developerConnection>
-        <url>git@github.com:osinn/spring-security-auth-starter.gitt</url>
+        <url>git@github.com:osinn/spring-security-auth-starter.git</url>
     </scm>
 
     <profiles>
