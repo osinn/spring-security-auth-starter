@@ -99,8 +99,10 @@ public interface IOnlineUserService {
 
     /**
      * 刷新token缓存过期时间
+     *
+     * @param onlineUser 当前登陆用户
      */
-    void refreshToken();
+    void refreshToken(OnlineUser onlineUser);
 
     /**
      * 根据用户ID删除token

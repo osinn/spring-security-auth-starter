@@ -63,6 +63,11 @@ public class OnlineUser implements Serializable {
     private Date loginTime;
 
     /**
+     * 登陆来源，可根据需要使用
+     */
+    private String loginSource;
+
+    /**
      * 用户角色
      */
     private List<JwtRoleInfo.BaseRoleInfo> roles = Collections.emptyList();

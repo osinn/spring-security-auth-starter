@@ -165,8 +165,8 @@ public class TokenUtils {
     /**
      * 刷新token缓存过期时间
      */
-    public static void refreshToken() {
-        onlineUserService.refreshToken();
+    public static void refreshToken(OnlineUser onlineUser) {
+        onlineUserService.refreshToken(onlineUser);
     }
 
     /**

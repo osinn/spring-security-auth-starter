@@ -34,7 +34,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                          AuthenticationException authException) throws IOException {
         // 当用户尝试访问安全的REST资源而不提供任何凭据时，将调用此方法发送4001 响应
         String tokenError = (String) request.getAttribute(JwtHttpStatus.TOKEN_EXPIRE.name());
-        int statusCode = 200;
+        int statusCode;
         if (tokenError == null) {
             statusCode = JwtHttpStatus.TOKEN_UNAUTHORIZED.getCode();
         } else {

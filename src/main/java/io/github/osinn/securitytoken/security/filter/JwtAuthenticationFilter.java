@@ -119,7 +119,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
                         Date loginTime = onlineUser.getLoginTime();
                         if (loginTime != null && (System.currentTimeMillis() - loginTime.getTime()) >= (securityJwtProperties.getTokenValidityInSeconds() * 1000) / 2) {
                             // 过期时间过半刷新token缓存过期时间
-                            TokenUtils.refreshToken();
+                            TokenUtils.refreshToken(onlineUser);
                         }
                     }
                     return authentication;

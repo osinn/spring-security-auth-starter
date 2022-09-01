@@ -221,12 +221,11 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     }
 
     @Override
-    public void refreshToken() {
+    public void refreshToken(OnlineUser onlineUser) {
         String token = TokenUtils.getToken();
-        if (token != null) {
-            redisUtils.expire(
-                    JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token),
-                    securityJwtProperties.getTokenValidityInSeconds());
+        if (token != null || onlineUser != null) {
+            onlineUser.setLoginTime(new Date());
+            redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
         } else {
             log.warn("token 不存在无法刷新过期时间");
         }
@@ -303,6 +302,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     ip,
                     DesEncryptUtils.desEncrypt(token),
                     new Date(),
+                    securityJwtProperties.getLoginSource(),
                     jwtUser.getRoles(),
                     jwtUser.getAuthorities());
 
