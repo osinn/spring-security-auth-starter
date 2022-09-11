@@ -20,6 +20,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -37,7 +38,7 @@ import java.util.Date;
  * @author wency_cai
  */
 @Slf4j
-public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private SecurityJwtProperties securityJwtProperties;
@@ -56,8 +57,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     @Autowired
     private IApiAuthService apiAuthService;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, SecurityStorage securityStorage) {
-        super(authenticationManager);
+    public JwtAuthenticationFilter(SecurityStorage securityStorage) {
         this.securityStorage = securityStorage;
     }
 

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
@@ -26,9 +27,10 @@ import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -50,7 +52,7 @@ import java.util.Set;
         securedEnabled = true
 )
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationEntryPoint authenticationErrorHandler;
@@ -81,8 +83,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
      */
     private Set<String> anonymousUrs = Sets.newHashSet();
 
-    @Override
-    protected void configure(HttpSecurity httpSecurity) throws Exception {
+    @Bean
+    @Primary
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+
 
         // 搜寻匿名标记 url： @AnonymousAccess
         Map<RequestMappingInfo, HandlerMethod> handlerMethodMap = applicationContext.getBean(RequestMappingHandlerMapping.class).getHandlerMethods();
@@ -174,10 +178,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // 禁用 CSRF
             httpSecurity.csrf().disable();
         }
-
         httpSecurity
-                .addFilter(jwtAuthenticationFilter())
-
                 // 授权异常
                 .exceptionHandling()
                 .authenticationEntryPoint(authenticationErrorHandler)
@@ -223,15 +224,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(authUrlsPrefix.toArray(new String[0]))
                 .and().logout().logoutUrl("/logout").logoutSuccessHandler(customLogoutSuccessHandler()).permitAll();
 
-        httpSecurity.addFilterBefore(new MyRequestFilter(securityJwtProperties.isEnableCors(),securityJwtProperties.isEnableXss(), securityJwtProperties.getAuthType()), CorsFilter.class);
+        httpSecurity.addFilterBefore(new MyRequestFilter(securityJwtProperties.isEnableCors(), securityJwtProperties.isEnableXss(), securityJwtProperties.getAuthType()), CorsFilter.class);
+        httpSecurity.addFilterAfter(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
         //单用户登录，如果有一个登录了，同一个用户在其他地方不能登录
         //httpSecurity.sessionManagement().maximumSessions(1).maxSessionsPreventsLogin(true);
+
+        return httpSecurity.build();
     }
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-        return new JwtAuthenticationFilter(authenticationManager(), securityStorage);
+        return new JwtAuthenticationFilter(securityStorage);
     }
+
 
     @Bean
     public CustomAccessDecisionManager accessDecisionManager() {
