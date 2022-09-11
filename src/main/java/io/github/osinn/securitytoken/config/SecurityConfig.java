@@ -5,6 +5,7 @@ import io.github.osinn.securitytoken.security.CustomLogoutSuccessHandler;
 import io.github.osinn.securitytoken.security.JwtAccessDeniedHandler;
 import io.github.osinn.securitytoken.security.JwtAuthenticationEntryPoint;
 import io.github.osinn.securitytoken.service.IApiAuthService;
+import io.github.osinn.securitytoken.service.IOnlineUserService;
 import io.github.osinn.securitytoken.starter.SecurityJwtProperties;
 import io.github.osinn.securitytoken.annotation.AnonymousAccess;
 import io.github.osinn.securitytoken.annotation.AutoAccess;
@@ -16,21 +17,19 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -55,13 +54,10 @@ import java.util.Set;
 public class SecurityConfig {
 
     @Autowired
-    private JwtAuthenticationEntryPoint authenticationErrorHandler;
+    private JwtAuthenticationEntryPoint authenticationEntryPoint;
 
     @Autowired
     private JwtAccessDeniedHandler jwtAccessDeniedHandler;
-
-    @Autowired
-    private ApplicationContext applicationContext;
 
     @Autowired
     private SecurityJwtProperties securityJwtProperties;
@@ -75,6 +71,9 @@ public class SecurityConfig {
     @Autowired
     private IApiAuthService apiAuthService;
 
+    @Autowired
+    private IOnlineUserService onlineUserService;
+
     @Value("${server.servlet.context-path:}")
     private String contextPath;
 
@@ -84,12 +83,13 @@ public class SecurityConfig {
     private Set<String> anonymousUrs = Sets.newHashSet();
 
     @Bean
-    @Primary
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
+                                           AuthenticationManagerBuilder authenticationManagerBuilder,
+                                           RequestMappingHandlerMapping requestMappingHandlerMapping) throws Exception {
 
 
         // 搜寻匿名标记 url： @AnonymousAccess
-        Map<RequestMappingInfo, HandlerMethod> handlerMethodMap = applicationContext.getBean(RequestMappingHandlerMapping.class).getHandlerMethods();
+        Map<RequestMappingInfo, HandlerMethod> handlerMethodMap = requestMappingHandlerMapping.getHandlerMethods();
         Set<String> anonymousUrls = new HashSet<>();
         Set<String> authUrlsPrefix = new HashSet<>();
 
@@ -179,9 +179,14 @@ public class SecurityConfig {
             httpSecurity.csrf().disable();
         }
         httpSecurity
+                .addFilter(new JwtAuthenticationFilter(authenticationManagerBuilder.getObject(),
+                        securityStorage,
+                        apiAuthService,
+                        onlineUserService,
+                        securityJwtProperties))
                 // 授权异常
                 .exceptionHandling()
-                .authenticationEntryPoint(authenticationErrorHandler)
+                .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(jwtAccessDeniedHandler)
 
                 // 防止iframe 造成跨域
@@ -225,17 +230,11 @@ public class SecurityConfig {
                 .and().logout().logoutUrl("/logout").logoutSuccessHandler(customLogoutSuccessHandler()).permitAll();
 
         httpSecurity.addFilterBefore(new MyRequestFilter(securityJwtProperties.isEnableCors(), securityJwtProperties.isEnableXss(), securityJwtProperties.getAuthType()), CorsFilter.class);
-        httpSecurity.addFilterAfter(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         //单用户登录，如果有一个登录了，同一个用户在其他地方不能登录
         //httpSecurity.sessionManagement().maximumSessions(1).maxSessionsPreventsLogin(true);
 
         return httpSecurity.build();
-    }
-
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-        return new JwtAuthenticationFilter(securityStorage);
     }
 
 

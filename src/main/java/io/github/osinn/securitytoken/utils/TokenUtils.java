@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
@@ -79,18 +80,18 @@ public class TokenUtils {
     /**
      * 支持从请求头、get请求、post表单JSON数据中获取token
      *
-     * @param request
+     * @param httpServletRequest
      * @return
      */
-    public static String getServiceName(HttpServletRequest request) {
-
-        String serviceName = request.getHeader(securityJwtProperties.getServiceName());
-        String serviceHandlerMethod = request.getHeader(securityJwtProperties.getServiceHandlerMethod());
+    public static String getServiceName(HttpServletRequest httpServletRequest) {
+        ContentCachingRequestWrapper wrapper = new ContentCachingRequestWrapper(httpServletRequest);
+        String serviceName = wrapper.getHeader(securityJwtProperties.getServiceName());
+        String serviceHandlerMethod = wrapper.getHeader(securityJwtProperties.getServiceHandlerMethod());
         if (StrUtils.isEmpty(serviceName)) {
-            serviceName = request.getParameter(securityJwtProperties.getServiceName());
-            serviceHandlerMethod = request.getParameter(securityJwtProperties.getServiceHandlerMethod());
+            serviceName = wrapper.getParameter(securityJwtProperties.getServiceName());
+            serviceHandlerMethod = wrapper.getParameter(securityJwtProperties.getServiceHandlerMethod());
             if (StrUtils.isEmpty(serviceName) && AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
-                try(BufferedReader streamReader = new BufferedReader(new InputStreamReader(request.getInputStream(), Charsets.UTF_8))) {
+                try (BufferedReader streamReader = new BufferedReader(new InputStreamReader(wrapper.getInputStream(), Charsets.UTF_8))) {
                     StringBuffer body = new StringBuffer();
                     String inputStr = null;
                     while ((inputStr = streamReader.readLine()) != null) {

@@ -6,21 +6,18 @@ import io.github.osinn.securitytoken.enums.JwtHttpStatus;
 import io.github.osinn.securitytoken.security.dto.OnlineUser;
 import io.github.osinn.securitytoken.service.IApiAuthService;
 import io.github.osinn.securitytoken.service.IOnlineUserService;
-import io.github.osinn.securitytoken.service.ISecurityService;
 import io.github.osinn.securitytoken.starter.SecurityJwtProperties;
 import io.github.osinn.securitytoken.utils.DesEncryptUtils;
 import io.github.osinn.securitytoken.utils.StrUtils;
 import io.github.osinn.securitytoken.utils.TokenUtils;
 import io.github.osinn.securitytoken.security.dto.SecurityStorage;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -38,28 +35,31 @@ import java.util.Date;
  * @author wency_cai
  */
 @Slf4j
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
-    @Autowired
     private SecurityJwtProperties securityJwtProperties;
 
-    @Autowired
     private IOnlineUserService onlineUserService;
-
-    @Autowired
-    private ISecurityService securityService;
 
     /**
      * 白名单
      */
     private SecurityStorage securityStorage;
 
-    @Autowired
     private IApiAuthService apiAuthService;
 
-    public JwtAuthenticationFilter(SecurityStorage securityStorage) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
+                                   SecurityStorage securityStorage,
+                                   IApiAuthService apiAuthService,
+                                   IOnlineUserService onlineUserService,
+                                   SecurityJwtProperties securityJwtProperties) {
+        super(authenticationManager);
         this.securityStorage = securityStorage;
+        this.apiAuthService = apiAuthService;
+        this.onlineUserService = onlineUserService;
+        this.securityJwtProperties = securityJwtProperties;
     }
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {

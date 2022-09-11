@@ -10,7 +10,6 @@ import io.github.osinn.securitytoken.security.dto.SecurityStorage;
 import io.github.osinn.securitytoken.service.IApiAuthService;
 import io.github.osinn.securitytoken.service.ISecurityService;
 import io.github.osinn.securitytoken.utils.StrUtils;
-import io.github.osinn.securitytoken.utils.TokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.ConfigAttribute;
@@ -22,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class ApiAuthServiceImpl implements IApiAuthService {
 
@@ -46,7 +46,6 @@ public class ApiAuthServiceImpl implements IApiAuthService {
     private final boolean apiService;
 
 
-
     public ApiAuthServiceImpl(AuthType authType, boolean apiService) {
         this.authType = authType;
         this.apiService = apiService;
@@ -58,22 +57,19 @@ public class ApiAuthServiceImpl implements IApiAuthService {
         String serviceName = securityService.getServiceName(request);
         API api = apiMap.get(serviceName);
         if (api != null) {
-
             return api;
         } else {
             throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "服务不存在");
         }
-
     }
 
     @Override
-    public APIMethodPermission getServiceApiMethodPermissionAnnotation(HttpServletRequest request) {
-        String serviceName = TokenUtils.getServiceName(request);
-        if(StrUtils.isEmpty(serviceName)) {
+    public APIMethodPermission getServiceApiMethodPermissionAnnotation(String serviceName) {
+        if (StrUtils.isEmpty(serviceName)) {
             return null;
         }
         Map<String, APIMethodPermission> apiMethodPermissions = securityStorage.getApiMethodPermissions();
-        return apiMethodPermissions.get(serviceName);
+        return apiMethodPermissions == null ? null : apiMethodPermissions.get(serviceName);
     }
 
     @Override
@@ -83,8 +79,8 @@ public class ApiAuthServiceImpl implements IApiAuthService {
         if (serviceApiAnnotation == null) {
             throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND.getCode(), "服务不存在");
         }
-        APIMethodPermission serviceApiMethodPermissionAnnotation = getServiceApiMethodPermissionAnnotation(request);
-        if(serviceApiMethodPermissionAnnotation != null) {
+        APIMethodPermission serviceApiMethodPermissionAnnotation = getServiceApiMethodPermissionAnnotation(serviceApiAnnotation.service());
+        if (serviceApiMethodPermissionAnnotation != null) {
             return !serviceApiMethodPermissionAnnotation.needLogin();
         }
         return !serviceApiAnnotation.needLogin();
@@ -92,12 +88,12 @@ public class ApiAuthServiceImpl implements IApiAuthService {
 
     @Override
     public void checkAttribute(API api, HttpServletRequest request, Collection<? extends GrantedAuthority> authorities) {
-        if(api != null) {
-            APIMethodPermission serviceApiMethodPermissionAnnotation = this.getServiceApiMethodPermissionAnnotation(request);
-            if(serviceApiMethodPermissionAnnotation != null && serviceApiMethodPermissionAnnotation.needPermission()) {
+        if (api != null) {
+            APIMethodPermission serviceApiMethodPermissionAnnotation = this.getServiceApiMethodPermissionAnnotation(api.service());
+            if (serviceApiMethodPermissionAnnotation != null && serviceApiMethodPermissionAnnotation.needPermission()) {
                 this.checkAuthCode(serviceApiMethodPermissionAnnotation.permission(), request, authorities);
-            } else if(api.needPermission()) {
-                this.checkAuthCode(api.permission(), request,authorities);
+            } else if (api.needPermission()) {
+                this.checkAuthCode(api.permission(), request, authorities);
             }
         } else {
             request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "当前访问没有权限");
@@ -123,6 +119,7 @@ public class ApiAuthServiceImpl implements IApiAuthService {
         }
         throw new AccessDeniedException("当前访问没有权限");
     }
+
     @Override
     public boolean getIsApiService() {
         return apiService;
@@ -130,7 +127,7 @@ public class ApiAuthServiceImpl implements IApiAuthService {
 
     private void checkAuthCode(String needCode, HttpServletRequest request, Collection<? extends GrantedAuthority> authorities) {
         for (GrantedAuthority authority : authorities) {
-            if (authority.getAuthority().equals(needCode)) {
+            if (Objects.equals(needCode, authority.getAuthority())) {
                 return;
             }
         }

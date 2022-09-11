@@ -19,7 +19,13 @@ public interface IApiAuthService {
      */
     API getServiceApiAnnotation(HttpServletRequest request);
 
-    APIMethodPermission getServiceApiMethodPermissionAnnotation(HttpServletRequest request);
+    /**
+     * 获取服务API注解方法上的权限注解
+     *
+     * @param serviceName 服务名称
+     * @return 返回@APIHandlerMethod 或 @API
+     */
+    APIMethodPermission getServiceApiMethodPermissionAnnotation(String serviceName);
 
     /**
      * @param request

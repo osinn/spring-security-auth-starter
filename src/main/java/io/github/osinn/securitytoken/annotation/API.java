@@ -34,7 +34,7 @@ public @interface API {
      *
      * @return true 需要认证登录，false 不需要认证登录
      */
-    boolean needLogin() default false;
+    boolean needLogin() default true;
 
     /**
      * 接口拥有的权限
@@ -48,5 +48,5 @@ public @interface API {
      *
      * @return true 需要认证权限，false 不需要认证权限
      */
-    boolean needPermission() default false;
+    boolean needPermission() default true;
 }

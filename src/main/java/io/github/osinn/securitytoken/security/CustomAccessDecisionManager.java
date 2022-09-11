@@ -77,7 +77,7 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
 
         if (AuthType.SERVICE.equals(authType)) {
             API api = apiAuthService.getServiceApiAnnotation(request);
-            APIMethodPermission serviceApiMethodPermissionAnnotation = apiAuthService.getServiceApiMethodPermissionAnnotation(request);
+            APIMethodPermission serviceApiMethodPermissionAnnotation = apiAuthService.getServiceApiMethodPermissionAnnotation(api.service());
             if(serviceApiMethodPermissionAnnotation != null) {
                if(!serviceApiMethodPermissionAnnotation.needPermission()) {
                    return;
@@ -116,8 +116,6 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
         }
 
     }
-
-
 
     @Override
     public boolean supports(ConfigAttribute attribute) {
