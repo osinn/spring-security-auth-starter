@@ -1,8 +1,11 @@
 package io.github.osinn.securitytoken.security;
 
 
+import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.exception.SecurityJwtException;
+import io.github.osinn.securitytoken.service.ISecurityService;
 import io.github.osinn.securitytoken.starter.SecurityJwtProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -21,6 +24,8 @@ import java.io.IOException;
  */
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    @Autowired
+    private ISecurityService securityService;
 
     private SecurityJwtProperties securityJwtProperties;
 
@@ -45,7 +50,13 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             throw new SecurityJwtException(statusCode, authException.getMessage());
         } else {
             response.setStatus(HttpStatus.OK.value());
-            ResponseUtils.outWriter(statusCode, tokenError, authException.getMessage(), request, response);
+            String path;
+            if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
+                path = securityService.getServiceName(request);
+            } else {
+                path = request.getRequestURI();
+            }
+            ResponseUtils.outWriter(statusCode, tokenError, authException.getMessage(), path, request, response);
         }
 
     }

@@ -1,5 +1,6 @@
 package io.github.osinn.securitytoken.config;
 
+import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.security.CustomAccessDecisionManager;
 import io.github.osinn.securitytoken.security.CustomLogoutSuccessHandler;
 import io.github.osinn.securitytoken.security.JwtAccessDeniedHandler;
@@ -48,7 +49,8 @@ import java.util.Set;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(
         prePostEnabled = true, // 启用注解授权
-        securedEnabled = true
+        securedEnabled = true,
+        jsr250Enabled = true
 )
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SecurityConfig {
@@ -217,7 +219,9 @@ public class SecurityConfig {
                 .withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
                     @Override
                     public <O extends FilterSecurityInterceptor> O postProcess(O fsi) {
-                        fsi.setAccessDecisionManager(accessDecisionManager());
+                        if(!AuthType.CODE.equals(securityJwtProperties.getAuthType())){
+                            fsi.setAccessDecisionManager(accessDecisionManager());
+                        }
 //                        fsi.setAccessDecisionManager(accessDecisionManager());
 //                        fsi.setSecurityMetadataSource(mySecurityMetadataSource(fsi.getSecurityMetadataSource()));
                         return fsi;

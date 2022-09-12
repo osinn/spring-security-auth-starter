@@ -4,39 +4,64 @@ package io.github.osinn.securitytoken.enums;
 import org.springframework.lang.Nullable;
 
 /**
+ * 错误代码
+ *
  * @author wency_cai
- * @description: 描述
  **/
 public enum JwtHttpStatus {
 
     /**
+     * 用户名或密码错误
+     */
+    TOKEN_UNAUTHORIZED(4001, "账号或密码错误"),
+    /**
      * 验证码错误
      */
-    TOKEN_UNAUTHORIZED(4001, "用户名或密码错误"),
     CODE_UNAUTHORIZED(4002, "验证码错误"),
-    SC_FORBIDDEN(4003, "权限不足"),
-
-    NOT_FOUND(4004,"找不到资源"),
-
+    /**
+     * 访问权限不足
+     */
+    SC_FORBIDDEN(1003, "访问权限不足"),
+    /**
+     * 找不到资源
+     */
+    NOT_FOUND(4004, "找不到资源"),
+    /**
+     * 密码解密错误
+     */
     PASSWORD_ERROR(4005, "密码解密错误"),
     /**
      * 验证码过期或不存在
      */
     NOT_FOUND_CODE(4006, "验证码过期"),
-
-    TOKEN_EXPIRE(4007, "登录超时,请重新登录"),
-
-    NOT_FOUND_ACCOUNT(4008, "账户不存在"),
-
-    DISABLED_ACCOUNT(4009, "账户已被禁用"),
-
-    LOCK_ACCOUNT(4010, "账户已被锁定"),
-
+    /**
+     * 登录超时,请重新登录
+     */
+    TOKEN_EXPIRE(1001, "登录超时,请重新登录"),
+    /**
+     * 账户不存在
+     */
+    NOT_FOUND_ACCOUNT(4008, "账号不存在"),
+    /**
+     * 账户已被禁用
+     */
+    DISABLED_ACCOUNT(4009, "账号已被禁用"),
+    /**
+     * 账户已被锁定
+     */
+    LOCK_ACCOUNT(4010, "账号已被锁定"),
+    /**
+     * 退出登录失败
+     */
     LOGOUT_FAIL(4011, "退出登录失败"),
-
+    /**
+     * 退出登录成功
+     */
     LOGOUT_SUCCESS(20000, "退出登录成功"),
-
-    INTERNAL_SERVER_ERROR(5000,"服务异常");
+    /**
+     * 服务器异常，请联系管理员
+     */
+    INTERNAL_SERVER_ERROR(5000, "服务器异常，请联系管理员");
 
     private final String message;
 

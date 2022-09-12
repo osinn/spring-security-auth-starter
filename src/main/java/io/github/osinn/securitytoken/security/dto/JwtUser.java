@@ -3,14 +3,12 @@ package io.github.osinn.securitytoken.security.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * jwt token检验信息
@@ -44,7 +42,7 @@ public class JwtUser implements UserDetails, Serializable {
      * 权限
      */
     @JsonIgnore
-    private Collection<GrantedAuthority> authorities;
+    private Collection<? extends GrantedOfAuthority> authorities;
 
     /**
      * 用户角色
@@ -99,7 +97,7 @@ public class JwtUser implements UserDetails, Serializable {
      *
      * @return
      */
-    public Collection getPermissions() {
-        return authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
+    public Collection<? extends GrantedOfAuthority> getPermissions() {
+        return authorities;
     }
 }

@@ -2,8 +2,8 @@ package io.github.osinn.securitytoken.security.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
  *
  * @author wency_cai
  */
+@EqualsAndHashCode
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -73,9 +74,9 @@ public class OnlineUser implements Serializable {
     private List<JwtRoleInfo.BaseRoleInfo> roles = Collections.emptyList();
     //
 //    @JsonIgnore
-    private Collection<GrantedAuthority> authorities = Collections.emptyList();
+    private Collection<? extends GrantedOfAuthority> authorities = Collections.emptyList();
 
     public List<String> getAuthority() {
-        return this.authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
+        return this.authorities.stream().map(GrantedOfAuthority::getAuthority).collect(Collectors.toList());
     }
 }

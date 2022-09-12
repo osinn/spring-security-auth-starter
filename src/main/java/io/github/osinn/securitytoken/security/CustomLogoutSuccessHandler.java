@@ -3,6 +3,7 @@ package io.github.osinn.securitytoken.security;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.CharsetUtil;
 
+import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.security.dto.OnlineUser;
 import io.github.osinn.securitytoken.enums.JwtHttpStatus;
 import io.github.osinn.securitytoken.service.ISecurityService;
@@ -51,7 +52,13 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
         }
         if(securityJwtProperties.isLoginOutResponse()) {
             response.setCharacterEncoding(CharsetUtil.UTF_8);
-            ResponseUtils.outWriter(JwtHttpStatus.LOGOUT_SUCCESS.getCode(), JwtHttpStatus.LOGOUT_SUCCESS.getMessage(), null, request, response);
+            String path;
+            if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
+                path = securityService.getServiceName(request);
+            } else {
+                path = request.getRequestURI();
+            }
+            ResponseUtils.outWriter(JwtHttpStatus.LOGOUT_SUCCESS.getCode(), JwtHttpStatus.LOGOUT_SUCCESS.getMessage(), null, path, request, response);
         }
     }
 

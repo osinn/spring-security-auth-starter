@@ -84,14 +84,13 @@ public class TokenUtils {
      * @return
      */
     public static String getServiceName(HttpServletRequest httpServletRequest) {
-        ContentCachingRequestWrapper wrapper = new ContentCachingRequestWrapper(httpServletRequest);
-        String serviceName = wrapper.getHeader(securityJwtProperties.getServiceName());
-        String serviceHandlerMethod = wrapper.getHeader(securityJwtProperties.getServiceHandlerMethod());
+        String serviceName = httpServletRequest.getHeader(securityJwtProperties.getServiceName());
+        String serviceHandlerMethod = httpServletRequest.getHeader(securityJwtProperties.getServiceHandlerMethod());
         if (StrUtils.isEmpty(serviceName)) {
-            serviceName = wrapper.getParameter(securityJwtProperties.getServiceName());
-            serviceHandlerMethod = wrapper.getParameter(securityJwtProperties.getServiceHandlerMethod());
+            serviceName = httpServletRequest.getParameter(securityJwtProperties.getServiceName());
+            serviceHandlerMethod = httpServletRequest.getParameter(securityJwtProperties.getServiceHandlerMethod());
             if (StrUtils.isEmpty(serviceName) && AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
-                try (BufferedReader streamReader = new BufferedReader(new InputStreamReader(wrapper.getInputStream(), Charsets.UTF_8))) {
+                try (BufferedReader streamReader = new BufferedReader(new InputStreamReader(httpServletRequest.getInputStream(), Charsets.UTF_8))) {
                     StringBuffer body = new StringBuffer();
                     String inputStr = null;
                     while ((inputStr = streamReader.readLine()) != null) {

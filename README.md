@@ -1,5 +1,11 @@
 # spring-security-auth-starter
-> spring-security 权限认证自动配置，开箱即用，支持动态续租token过期时间，支持统一API服务接口调用权限认证，支持基于`@PreAuthorize`注解方式授权认证，支持基于URL路径权限认证。登录接口前端可对密码进行rsa加密(前端公钥加密，后端私钥解密)，支持自定义登录接口(微信公众授权/小程序授权可选自定义登录接口)
+- spring-security 权限认证自动配置，开箱即用
+- 支持动态续租token过期时间
+- 支持统一API服务接口调用权限认证
+- 支持基于`@PreAuthorize`注解方式授权认证
+- 支持基于URL路径权限认证。登录接口前端可对密码进行rsa加密(前端公钥加密，后端私钥解密)
+- 支持自定义登录接口(微信公众授权/小程序授权可选自定义登录接口)
+- 支持与Spring cloud集成
 
 # 项目地址
 - github：[https://github.com/wency-cai/spring-security-auth-starter](https://github.com/wency-cai/spring-security-auth-starter)
@@ -37,7 +43,7 @@
 <dependency>
   <groupId>io.github.osinn</groupId>
   <artifactId>spring-security-auth-starter</artifactId>
-  <version>1.0</version>
+  <version>1.0.3</version>
 </dependency>
 ```
 # `application.yml`配置

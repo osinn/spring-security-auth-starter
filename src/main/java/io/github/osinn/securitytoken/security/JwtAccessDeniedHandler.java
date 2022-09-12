@@ -1,7 +1,10 @@
 package io.github.osinn.securitytoken.security;
 
+import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.exception.SecurityJwtException;
+import io.github.osinn.securitytoken.service.ISecurityService;
 import io.github.osinn.securitytoken.starter.SecurityJwtProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -18,6 +21,9 @@ import java.io.IOException;
  * @author wency_cai
  */
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
+
+    @Autowired
+    private ISecurityService securityService;
 
     private SecurityJwtProperties securityJwtProperties;
 
@@ -36,7 +42,13 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
             throw new SecurityJwtException(statusCode, tokenError);
         } else {
             response.setStatus(HttpStatus.OK.value());
-            ResponseUtils.outWriter(statusCode, tokenError, accessDeniedException.getMessage(), request, response);
+            String path;
+            if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
+                path = securityService.getServiceName(request);
+            } else {
+                path = request.getRequestURI();
+            }
+            ResponseUtils.outWriter(statusCode, tokenError, accessDeniedException.getMessage(), path, request, response);
         }
     }
 

@@ -1,13 +1,11 @@
 package io.github.osinn.securitytoken.service.impl;
 
-import io.github.osinn.securitytoken.security.dto.OnlineUser;
+import com.google.common.collect.Lists;
+import io.github.osinn.securitytoken.security.dto.*;
 import io.github.osinn.securitytoken.starter.SecurityJwtProperties;
 import io.github.osinn.securitytoken.constants.JwtConstant;
 import io.github.osinn.securitytoken.enums.JwtHttpStatus;
 import io.github.osinn.securitytoken.exception.SecurityJwtException;
-import io.github.osinn.securitytoken.security.dto.AuthUser;
-import io.github.osinn.securitytoken.security.dto.JwtRoleInfo;
-import io.github.osinn.securitytoken.security.dto.JwtUser;
 import io.github.osinn.securitytoken.service.IOnlineUserService;
 import io.github.osinn.securitytoken.service.ISecurityCaptchaCodeService;
 import io.github.osinn.securitytoken.service.ISecurityService;
@@ -18,7 +16,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -57,10 +54,11 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             return null;
         }
 
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(jwtUser, null, jwtUser.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         // 生成token
         this.generationToken(jwtUser, request);
+
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(jwtUser, null, jwtUser.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         return jwtUser;
     }
 
@@ -98,6 +96,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
         // 生成令牌
         JwtUser jwtUser = (JwtUser) authentication.getPrincipal();
 
@@ -141,7 +140,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         Collections.reverse(keys);
         List<OnlineUser> onlineUsers = new ArrayList<>();
         for (String key : keys) {
-            OnlineUser onlineUser = redisUtils.get(key);
+            OnlineUser onlineUser = redisUtils.get(key, OnlineUser.class);
             if (onlineUser == null) {
                 continue;
             }
@@ -193,7 +192,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      */
     @Override
     public OnlineUser getOne(String key) {
-        return redisUtils.get(key);
+        return redisUtils.get(key, OnlineUser.class);
     }
 
     /**
@@ -216,18 +215,23 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     @Override
     public List<OnlineUser> fetchOnlineUserAll() {
-        List<OnlineUser> onlineUserList = redisUtils.fetchLike(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + "*");
-        return onlineUserList;
+        List<String> onlineUserList = redisUtils.fetchLike(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + "*");
+        List<OnlineUser> onlineUsers = Lists.newArrayList();
+        for (String onlineUserStr : onlineUserList) {
+            OnlineUser onlineUser = GsonMapper.toBean(onlineUserStr, OnlineUser.class);
+            onlineUsers.add(onlineUser);
+        }
+        return onlineUsers;
     }
 
     @Override
     public void refreshToken(OnlineUser onlineUser) {
         String token = TokenUtils.getToken();
-        if (token != null || onlineUser != null) {
+        if (token != null && onlineUser != null) {
             onlineUser.setLoginTime(new Date());
             redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
         } else {
-            log.warn("token 不存在无法刷新过期时间");
+            log.error("无法刷新token过期时间，token【{}】onlineUser【{}】", token != null, onlineUser != null);
         }
     }
 
@@ -333,7 +337,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             permissions.add("default");
         }
 
-        jwtUser.setAuthorities(permissions.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
+        jwtUser.setAuthorities(permissions.stream().map(GrantedOfAuthority::new).collect(Collectors.toList()));
 
     }
 

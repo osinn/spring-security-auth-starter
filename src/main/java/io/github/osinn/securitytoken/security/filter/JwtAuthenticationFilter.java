@@ -99,21 +99,19 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
      */
     private Authentication getAuthenticationFromToken(HttpServletRequest request) {
         String token = TokenUtils.getToken(request);
-        String requestUri = request.getRequestURI();
         if (StrUtils.isEmpty(token)) {
-            request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "token已过期");
+            request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
             return null;
         } else {
             // 验证 token 是否存在
             OnlineUser onlineUser = null;
             onlineUser = onlineUserService.getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
             if (onlineUser == null) {
-                request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "token已过期");
+                request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
                 return null;
             } else {
                 try {
                     UsernamePasswordAuthenticationToken authentication = this.getAuthentication(onlineUser, token);
-                    log.debug("set Authentication to security context for '{}', uri: {}", authentication.getName(), requestUri);
                     // 是否刷新token缓存过期时间
                     if (securityJwtProperties.isDynamicRefreshToken()) {
                         Date loginTime = onlineUser.getLoginTime();
@@ -125,7 +123,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
                     return authentication;
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
-                    request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "token已过期");
+                    request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
                     return null;
                 }
 
