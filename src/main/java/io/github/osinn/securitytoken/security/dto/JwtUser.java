@@ -45,6 +45,12 @@ public class JwtUser implements UserDetails, Serializable {
     private Collection<? extends GrantedOfAuthority> authorities;
 
     /**
+     * 资源权限
+     */
+    @JsonIgnore
+    private Collection<ResourcePermission> resourcePermissions = Collections.emptyList();
+
+    /**
      * 用户角色
      */
     @JsonIgnore

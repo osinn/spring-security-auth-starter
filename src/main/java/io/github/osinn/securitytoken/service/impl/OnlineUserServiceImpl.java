@@ -57,8 +57,6 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         // 生成token
         this.generationToken(jwtUser, request);
 
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(jwtUser, null, jwtUser.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         return jwtUser;
     }
 
@@ -308,8 +306,11 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     new Date(),
                     securityJwtProperties.getLoginSource(),
                     jwtUser.getRoles(),
-                    jwtUser.getAuthorities());
-
+                    jwtUser.getAuthorities(),
+                    jwtUser.getResourcePermissions());
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(onlineUser, token, onlineUser.getAuthorities());
+            // 设置登录认证信息到上下文
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
             request.setAttribute(securityJwtProperties.getHeader(), securityJwtProperties.getTokenStartWith() + token);
         } catch (Exception e) {
@@ -325,18 +326,23 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      */
     private void setUserPermission(JwtUser jwtUser) {
         Set<String> permissions = new HashSet<>();
+        Set<ResourcePermission> resourcePermissions = new HashSet<>();
         // 用户权限列表，根据用户拥有的权限标识与如 @PreAuthorize("hasAuthority('sys:menu:view')") 标注的接口对比，决定是否可以调用接口
         JwtRoleInfo jwtRoleInfo = securityService.fetchRolePermissionInfo(jwtUser.getId());
-        jwtUser.setRoles(jwtRoleInfo.getRoles());
-        List<String> frolePermissionList = jwtRoleInfo.getPermissions();
-        if (frolePermissionList != null) {
-            permissions.addAll(frolePermissionList);
+
+        for (JwtRoleInfo.BaseRoleInfo role : jwtRoleInfo.getRoles()) {
+            for (ResourcePermission resourcePermission : role.getResourcePermission()) {
+                permissions.add(resourcePermission.getPermissionCode());
+                resourcePermissions.add(resourcePermission);
+            }
         }
+        jwtUser.setRoles(jwtRoleInfo.getRoles());
+
 
         if (permissions.isEmpty()) {
             permissions.add("default");
         }
-
+        jwtUser.setResourcePermissions(resourcePermissions);
         jwtUser.setAuthorities(permissions.stream().map(GrantedOfAuthority::new).collect(Collectors.toList()));
 
     }

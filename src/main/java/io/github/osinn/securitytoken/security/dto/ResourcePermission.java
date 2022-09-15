@@ -2,6 +2,7 @@ package io.github.osinn.securitytoken.security.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
@@ -16,6 +17,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class ResourcePermission implements Serializable {
 
     /**
@@ -24,7 +26,8 @@ public class ResourcePermission implements Serializable {
     private String uriPath;
 
     /**
-     * 访问资源路径权限编码
+     * 菜单权限标识或用户角色集合，@PreAuthorize 注解只作用在auth-type: CODE
+     * 用户权限列表，根据用户拥有的权限标识例如： @PreAuthorize("hasAuthority('sys:menu:view')") 标注的接口对比，决定是否可以调用接口
      */
     private String permissionCode;
 

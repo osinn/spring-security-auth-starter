@@ -102,21 +102,15 @@ public class ApiAuthServiceImpl implements IApiAuthService {
     }
 
     @Override
-    public List<ConfigAttribute> getConfigAttribute(String requestURI, HttpServletRequest request) {
-
+    public void checkResourcePermissionUriPath(String requestURI, Collection<ResourcePermission> resourcePermissions, HttpServletRequest request) {
         if (AuthType.URL.equals(authType)) {
-            //从数据库加载全部权限配置
-            List<ResourcePermission> resourcePermissionList = securityService.fetchResourcePermissionAll();
-            if (resourcePermissionList != null) {
-                for (ResourcePermission resourcePermission : resourcePermissionList) {
-                    if (!StrUtils.isEmpty(resourcePermission.getUriPath())
-                            && antPathMatcher.match(resourcePermission.getUriPath(), requestURI)) {
-                        request.setAttribute("accessDecisionMenuName", resourcePermission.getMenuName());
-                        return SecurityConfig.createList(resourcePermission.getPermissionCode());
-                    }
+            for (ResourcePermission resourcePermission : resourcePermissions) {
+                if (!StrUtils.isEmpty(resourcePermission.getUriPath()) && antPathMatcher.match(resourcePermission.getUriPath(), requestURI)) {
+                    return;
                 }
             }
         }
+        request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "当前访问没有权限");
         throw new AccessDeniedException("当前访问没有权限");
     }
 

@@ -2,6 +2,7 @@ package io.github.osinn.securitytoken.service;
 
 import io.github.osinn.securitytoken.annotation.API;
 import io.github.osinn.securitytoken.annotation.APIMethodPermission;
+import io.github.osinn.securitytoken.security.dto.ResourcePermission;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -45,14 +46,13 @@ public interface IApiAuthService {
     void checkAttribute(API api, HttpServletRequest request, Collection<? extends GrantedAuthority> authorities);
 
     /**
-     * 从全部权限中查询是否存在该权限
+     * 根据url认证访问权限
      *
-     * @param requestURI
-     * @param request
+     * @param requestURI          当前访问的路径
+     * @param resourcePermissions 拥有的资源权限
      * @return 权限
      */
-    @Deprecated
-    List<ConfigAttribute> getConfigAttribute(String requestURI, HttpServletRequest request);
+    void checkResourcePermissionUriPath(String requestURI, Collection<ResourcePermission> resourcePermissions, HttpServletRequest request);
 
 
     boolean getIsApiService();

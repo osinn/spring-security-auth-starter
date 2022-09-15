@@ -3,9 +3,13 @@ package io.github.osinn.securitytoken.security;
 import io.github.osinn.securitytoken.annotation.API;
 import io.github.osinn.securitytoken.annotation.APIMethodPermission;
 import io.github.osinn.securitytoken.enums.AuthType;
+import io.github.osinn.securitytoken.enums.JwtHttpStatus;
+import io.github.osinn.securitytoken.security.dto.OnlineUser;
+import io.github.osinn.securitytoken.security.dto.ResourcePermission;
 import io.github.osinn.securitytoken.security.dto.SecurityStorage;
 import io.github.osinn.securitytoken.service.IApiAuthService;
 import io.github.osinn.securitytoken.service.ISecurityService;
+import io.github.osinn.securitytoken.utils.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDeniedException;
@@ -75,13 +79,20 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
             throw new AccessDeniedException("当前访问没有权限");
         }
 
+        OnlineUser onlineUser = (OnlineUser) authentication.getPrincipal();
+
+        Boolean hasRoleAdmin = TokenUtils.hasRoleAdmin(onlineUser.getRoles());
+        if (Boolean.TRUE.equals(hasRoleAdmin)) {
+            return;
+        }
+
         if (AuthType.SERVICE.equals(authType)) {
             API api = apiAuthService.getServiceApiAnnotation(request);
             APIMethodPermission serviceApiMethodPermissionAnnotation = apiAuthService.getServiceApiMethodPermissionAnnotation(api.service());
-            if(serviceApiMethodPermissionAnnotation != null) {
-               if(!serviceApiMethodPermissionAnnotation.needPermission()) {
-                   return;
-               }
+            if (serviceApiMethodPermissionAnnotation != null) {
+                if (!serviceApiMethodPermissionAnnotation.needPermission()) {
+                    return;
+                }
             } else if (!api.needPermission()) {
                 return;
             }
@@ -89,18 +100,18 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
 //            configAttributeList = apiAuthService.getApiConfigAttribute(api, request);
             // 检查是否有权限访问
             apiAuthService.checkAttribute(api, request, authentication.getAuthorities());
-        } else {
-
+        } else if (AuthType.URL.equals(authType)) {
             /**
              * 后面将删除此方法，直接调用 authentication.getAuthorities()
              */
-            configAttributeList = apiAuthService.getConfigAttribute(request.getRequestURI(), request);
+             apiAuthService.checkResourcePermissionUriPath(request.getRequestURI(), onlineUser.getResourcePermissions(), request);
 
+        } else {
             /**
              * 判断是否有权限访问
              */
-            for (ConfigAttribute attribute : configAttributeList) {
-                String needCode = attribute.getAttribute();
+            for (ResourcePermission resourcePermission : onlineUser.getResourcePermissions()) {
+                String needCode = resourcePermission.getPermissionCode();
                 if (needCode != null) {
                     Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
                     for (GrantedAuthority authority : authorities) {
@@ -109,9 +120,8 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
                         }
                     }
                 }
-
             }
-
+            request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "当前访问没有权限");
             throw new AccessDeniedException("当前访问没有权限");
         }
 

@@ -152,6 +152,9 @@ public class TokenUtils {
      * @return 如果是超级管理员返回true否则false
      */
     public static Boolean hasRoleAdmin(List<JwtRoleInfo.BaseRoleInfo> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return false;
+        }
         return roles.stream().anyMatch(item -> item.getRoleCode().equals(JwtConstant.SUPER_ADMIN_ROLE));
     }
 

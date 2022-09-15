@@ -1,5 +1,6 @@
 package io.github.osinn.securitytoken.security.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -75,6 +76,12 @@ public class OnlineUser implements Serializable {
     //
 //    @JsonIgnore
     private Collection<? extends GrantedOfAuthority> authorities = Collections.emptyList();
+
+    /**
+     * 资源权限
+     */
+    @JsonIgnore
+    private Collection<ResourcePermission> resourcePermissions = Collections.emptyList();
 
     public List<String> getAuthority() {
         return this.authorities.stream().map(GrantedOfAuthority::getAuthority).collect(Collectors.toList());

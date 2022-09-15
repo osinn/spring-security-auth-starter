@@ -23,13 +23,6 @@ public class JwtRoleInfo implements Serializable {
      */
     private List<BaseRoleInfo> roles;
 
-    /**
-     * 菜单权限标识或用户角色集合，@PreAuthorize 注解只作用在auth-type: CODE
-     * 用户权限列表，根据用户拥有的权限标识例如： @PreAuthorize("hasAuthority('sys:menu:view')") 标注的接口对比，决定是否可以调用接口
-     *
-     */
-    private List<String> permissions = Collections.emptyList();
-
     @Data
     @Builder
     @NoArgsConstructor
@@ -51,5 +44,10 @@ public class JwtRoleInfo implements Serializable {
          * 约定值为 admin 是超级管理员角色
          */
         private String roleCode;
+
+        /**
+         * 资源权限
+         */
+        private List<ResourcePermission> resourcePermission = Collections.emptyList();
     }
 }
