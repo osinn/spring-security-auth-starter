@@ -25,7 +25,7 @@ import java.util.List;
 
 
 /**
- * 自定义访问决策
+ * 自定义访问决策(code认证不会进来，使用默认的认证)
  *
  * @author wency_cai
  */
@@ -106,24 +106,26 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
              */
              apiAuthService.checkResourcePermissionUriPath(request.getRequestURI(), onlineUser.getResourcePermissions(), request);
 
-        } else {
-            /**
-             * 判断是否有权限访问
-             */
-            for (ResourcePermission resourcePermission : onlineUser.getResourcePermissions()) {
-                String needCode = resourcePermission.getPermissionCode();
-                if (needCode != null) {
-                    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-                    for (GrantedAuthority authority : authorities) {
-                        if (authority.getAuthority().equals(needCode)) {
-                            return;
-                        }
-                    }
-                }
-            }
-            request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "当前访问没有权限");
-            throw new AccessDeniedException("当前访问没有权限");
         }
+
+//        else {
+//            /**
+//             * 判断是否有权限访问
+//             */
+//            for (ResourcePermission resourcePermission : onlineUser.getResourcePermissions()) {
+//                String needCode = resourcePermission.getPermissionCode();
+//                if (needCode != null) {
+//                    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+//                    for (GrantedAuthority authority : authorities) {
+//                        if (authority.getAuthority().equals(needCode)) {
+//                            return;
+//                        }
+//                    }
+//                }
+//            }
+//            request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), "当前访问没有权限");
+//            throw new AccessDeniedException("当前访问没有权限");
+//        }
 
     }
 

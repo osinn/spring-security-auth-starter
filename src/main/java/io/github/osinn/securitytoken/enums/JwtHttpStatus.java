@@ -45,15 +45,23 @@ public enum JwtHttpStatus {
     /**
      * 账户已被禁用
      */
-    DISABLED_ACCOUNT(4009, "账号已被禁用"),
+    DISABLED_ACCOUNT(4009, "账号已被禁用，请联系管理员"),
     /**
      * 账户已被锁定
      */
-    LOCK_ACCOUNT(4010, "账号已被锁定"),
+    LOCK_ACCOUNT(4010, "账号已被锁定，请联系管理员"),
     /**
      * 退出登录失败
      */
     LOGOUT_FAIL(4011, "退出登录失败"),
+    /**
+     * 登录失败
+     */
+    LOGIN_FAIL(4012, "登录失败，请联系管理员"),
+    /**
+     * 证书过期，请联系管理员
+     */
+    CREDENTIALS_EXPIRED(4013, "证书过期，请联系管理员"),
     /**
      * 退出登录成功
      */

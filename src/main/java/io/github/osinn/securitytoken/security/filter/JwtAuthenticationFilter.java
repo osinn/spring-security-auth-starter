@@ -3,6 +3,8 @@ package io.github.osinn.securitytoken.security.filter;
 import io.github.osinn.securitytoken.constants.JwtConstant;
 import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.enums.JwtHttpStatus;
+import io.github.osinn.securitytoken.exception.SecurityJwtException;
+import io.github.osinn.securitytoken.security.JwtAuthenticationEntryPoint;
 import io.github.osinn.securitytoken.security.dto.OnlineUser;
 import io.github.osinn.securitytoken.service.IApiAuthService;
 import io.github.osinn.securitytoken.service.IOnlineUserService;
@@ -13,9 +15,9 @@ import io.github.osinn.securitytoken.utils.TokenUtils;
 import io.github.osinn.securitytoken.security.dto.SecurityStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
@@ -48,23 +50,35 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     private IApiAuthService apiAuthService;
 
+    private JwtAuthenticationEntryPoint authenticationEntryPoint;
+
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
                                    SecurityStorage securityStorage,
                                    IApiAuthService apiAuthService,
                                    IOnlineUserService onlineUserService,
-                                   SecurityJwtProperties securityJwtProperties) {
+                                   SecurityJwtProperties securityJwtProperties,
+                                   JwtAuthenticationEntryPoint authenticationEntryPoint) {
         super(authenticationManager);
         this.securityStorage = securityStorage;
         this.apiAuthService = apiAuthService;
         this.onlineUserService = onlineUserService;
         this.securityJwtProperties = securityJwtProperties;
+        this.authenticationEntryPoint = authenticationEntryPoint;
     }
 
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        this.checkAuthentication(request);
-        chain.doFilter(request, response);
+        try {
+            this.checkAuthentication(request);
+            chain.doFilter(request, response);
+        } catch (AuthenticationException e) {
+            log.error(e.getMessage(), e);
+            this.authenticationEntryPoint.commence(request, response, e);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new SecurityJwtException(JwtHttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -90,6 +104,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         Authentication authentication = this.getAuthenticationFromToken(request);
         // 设置登录认证信息到上下文
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
     }
 
     /**
@@ -101,14 +116,16 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         String token = TokenUtils.getToken(request);
         if (StrUtils.isEmpty(token)) {
             request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-            return null;
+            throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
+//            return null;
         } else {
             // 验证 token 是否存在
             OnlineUser onlineUser = null;
             onlineUser = onlineUserService.getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
             if (onlineUser == null) {
                 request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-                return null;
+                throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
+//                return null;
             } else {
                 try {
                     UsernamePasswordAuthenticationToken authentication = this.getAuthentication(onlineUser, token);
@@ -124,7 +141,9 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                     request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-                    return null;
+//                    throw new BadCredentialsException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
+                    throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
+//                    return null;
                 }
 
             }

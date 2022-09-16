@@ -1,10 +1,7 @@
 package io.github.osinn.securitytoken.config;
 
 import io.github.osinn.securitytoken.enums.AuthType;
-import io.github.osinn.securitytoken.security.CustomAccessDecisionManager;
-import io.github.osinn.securitytoken.security.CustomLogoutSuccessHandler;
-import io.github.osinn.securitytoken.security.JwtAccessDeniedHandler;
-import io.github.osinn.securitytoken.security.JwtAuthenticationEntryPoint;
+import io.github.osinn.securitytoken.security.*;
 import io.github.osinn.securitytoken.service.IApiAuthService;
 import io.github.osinn.securitytoken.service.IOnlineUserService;
 import io.github.osinn.securitytoken.starter.SecurityJwtProperties;
@@ -31,6 +28,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -181,11 +179,12 @@ public class SecurityConfig {
             httpSecurity.csrf().disable();
         }
         httpSecurity
-                .addFilter(new JwtAuthenticationFilter(authenticationManagerBuilder.getObject(),
-                        securityStorage,
-                        apiAuthService,
-                        onlineUserService,
-                        securityJwtProperties))
+
+//                .addFilter(new JwtAuthenticationFilter(authenticationManagerBuilder.getObject(),
+//                        securityStorage,
+//                        apiAuthService,
+//                        onlineUserService,
+//                        securityJwtProperties))
                 // 授权异常
                 .exceptionHandling()
                 .authenticationEntryPoint(authenticationEntryPoint)
@@ -219,7 +218,7 @@ public class SecurityConfig {
                 .withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
                     @Override
                     public <O extends FilterSecurityInterceptor> O postProcess(O fsi) {
-                        if(!AuthType.CODE.equals(securityJwtProperties.getAuthType())){
+                        if (!AuthType.CODE.equals(securityJwtProperties.getAuthType())) {
                             fsi.setAccessDecisionManager(accessDecisionManager());
                         }
 //                        fsi.setAccessDecisionManager(accessDecisionManager());
@@ -233,8 +232,14 @@ public class SecurityConfig {
                 .antMatchers(authUrlsPrefix.toArray(new String[0]))
                 .and().logout().logoutUrl("/logout").logoutSuccessHandler(customLogoutSuccessHandler()).permitAll();
 
+        httpSecurity.addFilterBefore(new JwtAuthenticationFilter(authenticationManagerBuilder.getObject(),
+                        securityStorage,
+                        apiAuthService,
+                        onlineUserService,
+                        securityJwtProperties,
+                        authenticationEntryPoint),
+                UsernamePasswordAuthenticationFilter.class);
         httpSecurity.addFilterBefore(new MyRequestFilter(securityJwtProperties.isEnableCors(), securityJwtProperties.isEnableXss(), securityJwtProperties.getAuthType()), CorsFilter.class);
-
         //单用户登录，如果有一个登录了，同一个用户在其他地方不能登录
         //httpSecurity.sessionManagement().maximumSessions(1).maxSessionsPreventsLogin(true);
 

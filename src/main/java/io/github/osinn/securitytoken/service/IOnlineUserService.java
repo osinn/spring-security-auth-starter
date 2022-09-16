@@ -6,6 +6,7 @@ import io.github.osinn.securitytoken.security.dto.AuthUser;
 import io.github.osinn.securitytoken.security.dto.JwtUser;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -31,7 +32,7 @@ public interface IOnlineUserService {
      * @param request
      * @return
      */
-    JwtUser auth(AuthUser authUser, HttpServletRequest request);
+    JwtUser auth(AuthUser authUser, HttpServletRequest request, HttpServletResponse response) throws SecurityJwtException;
 
     /**
      * 退出登录删除token

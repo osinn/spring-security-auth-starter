@@ -16,11 +16,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,7 +63,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     }
 
     @Override
-    public JwtUser auth(AuthUser authUser, HttpServletRequest request) {
+    public JwtUser auth(AuthUser authUser, HttpServletRequest request, HttpServletResponse response) {
 
         SecurityJwtProperties.CaptchaCode captchaCode = securityJwtProperties.getCaptchaCode();
         if (captchaCode.isEnable()) {
@@ -91,17 +93,22 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         }
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(authUser.getUsername(), password);
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        Authentication authentication = null;
+        try {
+            authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // 生成令牌
+            JwtUser jwtUser = (JwtUser) authentication.getPrincipal();
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // 生成令牌
-        JwtUser jwtUser = (JwtUser) authentication.getPrincipal();
-
-        // 生成token
-        this.generationToken(jwtUser, request);
-        return jwtUser;
-
+            // 生成token
+            this.generationToken(jwtUser, request);
+            return jwtUser;
+        } catch (AuthenticationException e) {
+            ResponseUtils.loginFailThrows(e);
+        } catch (Exception e) {
+            throw new SecurityException(e.getMessage());
+        }
+        throw new SecurityJwtException(JwtHttpStatus.LOGIN_FAIL);
     }
 
     /**
