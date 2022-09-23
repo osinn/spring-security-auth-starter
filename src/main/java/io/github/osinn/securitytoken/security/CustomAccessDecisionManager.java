@@ -3,7 +3,6 @@ package io.github.osinn.securitytoken.security;
 import io.github.osinn.securitytoken.annotation.API;
 import io.github.osinn.securitytoken.annotation.APIMethodPermission;
 import io.github.osinn.securitytoken.enums.AuthType;
-import io.github.osinn.securitytoken.enums.JwtHttpStatus;
 import io.github.osinn.securitytoken.security.dto.OnlineUser;
 import io.github.osinn.securitytoken.security.dto.ResourcePermission;
 import io.github.osinn.securitytoken.security.dto.SecurityStorage;
@@ -16,12 +15,13 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.FilterInvocation;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -86,6 +86,8 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
             return;
         }
 
+        List<ResourcePermission> resourcePermissionAll = securityService.getSysResourcePermissionAll();
+
         if (AuthType.SERVICE.equals(authType)) {
             API api = apiAuthService.getServiceApiAnnotation(request);
             APIMethodPermission serviceApiMethodPermissionAnnotation = apiAuthService.getServiceApiMethodPermissionAnnotation(api.service());
@@ -101,10 +103,24 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
             // 检查是否有权限访问
             apiAuthService.checkAttribute(api, request, authentication.getAuthorities());
         } else if (AuthType.URL.equals(authType)) {
+            boolean authority = false;
+            if (resourcePermissionAll != null) {
+                for (ResourcePermission resourcePermission : resourcePermissionAll) {
+                    if (StringUtils.hasLength(resourcePermission.getUriPath()) && Objects.equals(resourcePermission.getUriPath(), request.getRequestURI())) {
+                        authority = true;
+                        break;
+                    }
+                }
+            }
+
+            // 请求路径再权限表中，需要认证权限，否则放行
+            if (!authority) {
+                return;
+            }
             /**
              * 后面将删除此方法，直接调用 authentication.getAuthorities()
              */
-             apiAuthService.checkResourcePermissionUriPath(request.getRequestURI(), onlineUser.getResourcePermissions(), request);
+            apiAuthService.checkResourcePermissionUriPath(request.getRequestURI(), onlineUser.getResourcePermissions(), request);
 
         }
 

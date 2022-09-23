@@ -65,6 +65,11 @@ public class OnlineUser implements Serializable {
     private Date loginTime;
 
     /**
+     * 刷新时间
+     */
+    private Date refreshTime;
+
+    /**
      * 登陆来源，可根据需要使用
      */
     private String loginSource;
@@ -85,5 +90,8 @@ public class OnlineUser implements Serializable {
 
     public List<String> getAuthority() {
         return this.authorities.stream().map(GrantedOfAuthority::getAuthority).collect(Collectors.toList());
+    }
+    public <T>T getId() {
+        return (T)id;
     }
 }

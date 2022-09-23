@@ -6,10 +6,13 @@ import io.github.osinn.securitytoken.security.dto.SecurityStorage;
 import io.github.osinn.securitytoken.service.IApiAuthService;
 import io.github.osinn.securitytoken.service.ISecurityCaptchaCodeService;
 import io.github.osinn.securitytoken.service.impl.ApiAuthServiceImpl;
+import io.github.osinn.securitytoken.service.impl.RedissonServiceImpl;
 import io.github.osinn.securitytoken.service.impl.SecurityCaptchaCodeServiceImpl;
 import io.github.osinn.securitytoken.utils.PasswordEncoderUtils;
 import io.github.osinn.securitytoken.utils.SpringContextHolder;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -94,6 +97,13 @@ public class SecurityAutoConfigure {
     @Bean
     public IApiAuthService apiAuthService() {
         return new ApiAuthServiceImpl(securityJwtProperties.getAuthType(), securityJwtProperties.isApiService());
+    }
+
+    @Bean
+//    @ConditionalOnBean({RedissonClient.class})
+    public RedissonServiceImpl redissonDistributeLocker(RedissonClient redissonClient) {
+        RedissonServiceImpl redissonService = new RedissonServiceImpl(redissonClient);
+        return redissonService;
     }
 
 }

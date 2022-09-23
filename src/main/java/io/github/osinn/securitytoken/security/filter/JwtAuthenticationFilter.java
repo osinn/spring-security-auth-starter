@@ -117,7 +117,6 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         if (StrUtils.isEmpty(token)) {
             request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
             throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-//            return null;
         } else {
             // 验证 token 是否存在
             OnlineUser onlineUser = null;
@@ -125,13 +124,13 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             if (onlineUser == null) {
                 request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
                 throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-//                return null;
             } else {
                 try {
+                    request.setAttribute(JwtConstant.ONLINE_USER_ID, onlineUser.getId());
                     UsernamePasswordAuthenticationToken authentication = this.getAuthentication(onlineUser, token);
                     // 是否刷新token缓存过期时间
                     if (securityJwtProperties.isDynamicRefreshToken()) {
-                        Date loginTime = onlineUser.getLoginTime();
+                        Date loginTime = onlineUser.getRefreshTime();
                         if (loginTime != null && (System.currentTimeMillis() - loginTime.getTime()) >= (securityJwtProperties.getTokenValidityInSeconds() * 1000) / 2) {
                             // 过期时间过半刷新token缓存过期时间
                             TokenUtils.refreshToken(onlineUser);
@@ -141,9 +140,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                     request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-//                    throw new BadCredentialsException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
                     throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-//                    return null;
                 }
 
             }

@@ -1,5 +1,6 @@
 package io.github.osinn.securitytoken.utils;
 
+import io.github.osinn.securitytoken.service.IRedissonService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -22,9 +23,11 @@ import java.util.concurrent.TimeUnit;
 public class RedisUtils {
 
     private RedisTemplate redisTemplate;
+    private IRedissonService redissonService;
 
-    public RedisUtils(RedisTemplate redisTemplate) {
+    public RedisUtils(RedisTemplate redisTemplate, IRedissonService redissonService) {
         this.redisTemplate = redisTemplate;
+        this.redissonService = redissonService;
     }
 
     // =============================common============================
@@ -104,11 +107,10 @@ public class RedisUtils {
      * @return 值
      */
     public <T> T get(String key, Class<T> clazz) {
-        Object o = redisTemplate.opsForValue().get(key);
-        return o == null ? null : GsonMapper.toBean((String)o, clazz);
+        return redissonService.getValue(key);
     }
 
-   
+
     /**
      * 普通缓存放入
      *
@@ -117,13 +119,8 @@ public class RedisUtils {
      * @return true成功 false失败
      */
     public boolean set(String key, Object value) {
-        try {
-            redisTemplate.opsForValue().set(key, GsonMapper.toJsonStr(value));
-            return true;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return false;
-        }
+        redissonService.setValue(key, value);
+        return true;
     }
 
     /**
@@ -135,42 +132,9 @@ public class RedisUtils {
      * @return true成功 false 失败
      */
     public boolean set(String key, Object value, long time) {
-        try {
-            if (time > 0) {
-                redisTemplate.opsForValue().set(key, GsonMapper.toJsonStr(value), time, TimeUnit.SECONDS);
-            } else {
-                set(key, GsonMapper.toJsonStr(value));
-            }
-            return true;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return false;
-        }
+        redissonService.setValue(key, value, time);
+        return true;
     }
-
-    /**
-     * 普通缓存放入并设置时间
-     *
-     * @param key      键
-     * @param value    值
-     * @param time     时间
-     * @param timeUnit 类型
-     * @return true成功 false 失败
-     */
-    public boolean set(String key, Object value, long time, TimeUnit timeUnit) {
-        try {
-            if (time > 0) {
-                redisTemplate.opsForValue().set(key, GsonMapper.toJsonStr(value), time, timeUnit);
-            } else {
-                set(key, GsonMapper.toJsonStr(value));
-            }
-            return true;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return false;
-        }
-    }
-
 
     // ===============================list=================================
 
@@ -191,7 +155,11 @@ public class RedisUtils {
      */
     public <T> List<T> fetchLike(String prefix) {
         Set<String> keys = redisTemplate.keys(prefix);
-        List<T> list = redisTemplate.opsForValue().multiGet(keys);
+        List<T> list = new ArrayList<>();
+        for (String key : keys) {
+            list.add(redissonService.getValue(key));
+        }
+        list.removeIf(x -> x == null);
         return list;
     }
 }

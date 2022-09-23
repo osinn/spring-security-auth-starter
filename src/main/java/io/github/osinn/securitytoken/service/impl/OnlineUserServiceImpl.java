@@ -157,7 +157,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                 onlineUsers.add(onlineUser);
             }
         }
-        onlineUsers.sort((o1, o2) -> o2.getLoginTime().compareTo(o1.getLoginTime()));
+        onlineUsers.sort((o1, o2) -> o2.getRefreshTime().compareTo(o1.getRefreshTime()));
         return onlineUsers;
     }
 
@@ -233,7 +233,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     public void refreshToken(OnlineUser onlineUser) {
         String token = TokenUtils.getToken();
         if (token != null && onlineUser != null) {
-            onlineUser.setLoginTime(new Date());
+            onlineUser.setRefreshTime(new Date());
             redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
         } else {
             log.error("无法刷新token过期时间，token【{}】onlineUser【{}】", token != null, onlineUser != null);
@@ -310,6 +310,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     browser,
                     ip,
                     DesEncryptUtils.desEncrypt(token),
+                    new Date(),
                     new Date(),
                     securityJwtProperties.getLoginSource(),
                     jwtUser.getRoles(),

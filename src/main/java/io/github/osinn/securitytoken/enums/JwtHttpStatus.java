@@ -65,7 +65,7 @@ public enum JwtHttpStatus {
     /**
      * 退出登录成功
      */
-    LOGOUT_SUCCESS(20000, "退出登录成功"),
+    LOGOUT_SUCCESS(200, "退出登录成功"),
     /**
      * 服务器异常，请联系管理员
      */

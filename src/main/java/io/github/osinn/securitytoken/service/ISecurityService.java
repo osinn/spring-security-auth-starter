@@ -67,6 +67,13 @@ public interface ISecurityService<T, E> {
     void logoutBeforeHandler(HttpServletRequest request, HttpServletResponse response, OnlineUser loginUser);
 
     /**
+     * 获取系统全部权限，如果需要缓存自行处理
+     *
+     * @return
+     */
+    List<ResourcePermission> getSysResourcePermissionAll();
+
+    /**
      * 获取服务名称 配合@API使用
      *
      * @param request
