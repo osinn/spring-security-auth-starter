@@ -39,6 +39,11 @@ public class JwtUser implements UserDetails, Serializable {
     private String password;
 
     /**
+     * 扩展字段
+     */
+    private String extendField;
+
+    /**
      * 权限
      */
     @JsonIgnore

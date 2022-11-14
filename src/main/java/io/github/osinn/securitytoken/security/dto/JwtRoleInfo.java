@@ -46,6 +46,12 @@ public class JwtRoleInfo implements Serializable {
         private String roleCode;
 
         /**
+         * 扩展字段
+         */
+        private String extendField;
+
+
+        /**
          * 资源权限
          */
         private List<ResourcePermission> resourcePermission = Collections.emptyList();

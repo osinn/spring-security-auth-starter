@@ -75,6 +75,11 @@ public class OnlineUser implements Serializable {
     private String loginSource;
 
     /**
+     * 扩展字段
+     */
+    private String extendField;
+
+    /**
      * 用户角色
      */
     private List<JwtRoleInfo.BaseRoleInfo> roles = Collections.emptyList();

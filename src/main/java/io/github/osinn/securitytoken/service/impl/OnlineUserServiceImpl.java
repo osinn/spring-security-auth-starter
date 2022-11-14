@@ -313,6 +313,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     new Date(),
                     new Date(),
                     securityJwtProperties.getLoginSource(),
+                    jwtUser.getExtendField(),
                     jwtUser.getRoles(),
                     jwtUser.getAuthorities(),
                     jwtUser.getResourcePermissions());
