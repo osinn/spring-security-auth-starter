@@ -15,11 +15,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -85,6 +88,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
                                            AuthenticationManagerBuilder authenticationManagerBuilder,
+                                           AccessDecisionManager accessDecisionManager,
                                            RequestMappingHandlerMapping requestMappingHandlerMapping) throws Exception {
 
 
@@ -218,11 +222,8 @@ public class SecurityConfig {
                 .withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
                     @Override
                     public <O extends FilterSecurityInterceptor> O postProcess(O fsi) {
-                        if (!AuthType.CODE.equals(securityJwtProperties.getAuthType())) {
-                            fsi.setAccessDecisionManager(accessDecisionManager());
-                        }
-//                        fsi.setAccessDecisionManager(accessDecisionManager());
-//                        fsi.setSecurityMetadataSource(mySecurityMetadataSource(fsi.getSecurityMetadataSource()));
+                        fsi.setAccessDecisionManager(accessDecisionManager);
+                        fsi.setSecurityMetadataSource(securityMetadataSource());
                         return fsi;
                     }
                 })
@@ -246,8 +247,14 @@ public class SecurityConfig {
         return httpSecurity.build();
     }
 
+    @Bean
+    @ConditionalOnProperty(prefix = SecurityJwtProperties.PREFIX, name = "auth-type", havingValue = "CODE")
+    public CodeAccessDecisionManager codeAccessDecisionManager() {
+        return new CodeAccessDecisionManager();
+    }
 
     @Bean
+    @ConditionalOnMissingBean(CodeAccessDecisionManager.class)
     public CustomAccessDecisionManager accessDecisionManager() {
         return new CustomAccessDecisionManager(securityStorage,
                 securityService,
@@ -260,13 +267,11 @@ public class SecurityConfig {
         return new CustomLogoutSuccessHandler();
     }
 
-//
-//    @Bean
-//    public CustomSecurityMetadataSource mySecurityMetadataSource(FilterInvocationSecurityMetadataSource filterInvocationSecurityMetadataSource) {
-//        CustomSecurityMetadataSource securityMetadataSource = new CustomSecurityMetadataSource(filterInvocationSecurityMetadataSource,
-//                permissionAnonymousUri,
-//                ISecurityService);
-//        return securityMetadataSource;
-//    }
+    private CustomSecurityMetadataSource securityMetadataSource() {
+        CustomSecurityMetadataSource securityMetadataSource = new CustomSecurityMetadataSource(
+                securityService,
+                securityJwtProperties.getAuthType());
+        return securityMetadataSource;
+    }
 
 }

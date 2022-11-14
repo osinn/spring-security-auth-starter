@@ -1,5 +1,6 @@
 package io.github.osinn.securitytoken.security;
 
+import cn.hutool.core.collection.CollUtil;
 import io.github.osinn.securitytoken.annotation.API;
 import io.github.osinn.securitytoken.annotation.APIMethodPermission;
 import io.github.osinn.securitytoken.enums.AuthType;
@@ -66,9 +67,13 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
             return;
         }
 
+        // 当系统没有配置权限资源时直接放行
+        if (CollUtil.isEmpty(configAttributes)) {
+            return;
+        }
+
         FilterInvocation filterInvocation = (FilterInvocation) object;
         HttpServletRequest request = filterInvocation.getRequest();
-        List<ConfigAttribute> configAttributeList;
 
         if (securityStorage.isAnonymousUri(request)) {
             // 放行白名单
@@ -86,8 +91,6 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
             return;
         }
 
-        List<ResourcePermission> resourcePermissionAll = securityService.getSysResourcePermissionAll();
-
         if (AuthType.SERVICE.equals(authType)) {
             API api = apiAuthService.getServiceApiAnnotation(request);
             APIMethodPermission serviceApiMethodPermissionAnnotation = apiAuthService.getServiceApiMethodPermissionAnnotation(api.service());
@@ -104,9 +107,11 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
             apiAuthService.checkAttribute(api, request, authentication.getAuthorities());
         } else if (AuthType.URL.equals(authType)) {
             boolean authority = false;
-            if (resourcePermissionAll != null) {
-                for (ResourcePermission resourcePermission : resourcePermissionAll) {
-                    if (StringUtils.hasLength(resourcePermission.getUriPath()) && Objects.equals(resourcePermission.getUriPath(), request.getRequestURI())) {
+            if (configAttributes != null && !configAttributes.isEmpty()) {
+                for (ConfigAttribute configAttribute : configAttributes) {
+                    //资源比对系统权限
+                    String needAuthority = configAttribute.getAttribute();
+                    if (Objects.equals(needAuthority, request.getRequestURI())) {
                         authority = true;
                         break;
                     }

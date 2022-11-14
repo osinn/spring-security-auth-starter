@@ -1,84 +1,82 @@
-//package top.itczw.framework.boot.api.securityjwt.security;
-//
-//import org.springframework.security.access.ConfigAttribute;
-//import org.springframework.security.access.SecurityConfig;
-//import org.springframework.security.web.FilterInvocation;
-//import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
-//import org.springframework.util.AntPathMatcher;
-//import top.itczw.framework.boot.api.securityjwt.enums.AuthType;
-//import top.itczw.framework.boot.api.securityjwt.security.dto.PermissionAnonymousUri;
-//import top.itczw.framework.boot.api.securityjwt.security.dto.ResourcePermission;
-//import top.itczw.framework.boot.api.securityjwt.service.ISecurityService;
-//
-//import javax.servlet.http.HttpServletRequest;
-//import java.util.Collection;
-//import java.util.List;
-//
-///**
-// * 自定安全元数据源
-// *
-// * @author wency_cai
-// */
-//public class CustomSecurityMetadataSource implements FilterInvocationSecurityMetadataSource {
-//
-//    private FilterInvocationSecurityMetadataSource superMetadataSource;
-//
-//    /**
-//     * 白名单
-//     */
-//    private PermissionAnonymousUri permissionAnonymousUri;
-//
-//    private ISecurityService ISecurityService;
-//
-//    /**
-//     * 默认根据url认证
-//     */
-//    private AuthType authType = AuthType.URL;
-//
-//    @Override
-//    public Collection<ConfigAttribute> getAllConfigAttributes() {
-//        return null;
-//    }
-//
-//    public CustomSecurityMetadataSource(FilterInvocationSecurityMetadataSource expressionBasedFilterInvocationSecurityMetadataSource,
-//                                        PermissionAnonymousUri permissionAnonymousUri,
-//                                        ISecurityService ISecurityService,
-//                                        AuthType authType) {
-//        this.superMetadataSource = expressionBasedFilterInvocationSecurityMetadataSource;
-//        this.permissionAnonymousUri = permissionAnonymousUri;
-//        this.ISecurityService = ISecurityService;
-//        this.authType = authType;
-//    }
-//
-//    private final AntPathMatcher antPathMatcher = new AntPathMatcher();
-//
-//    @Override
-//    public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
-//
-//        FilterInvocation fi = (FilterInvocation) object;
-//        HttpServletRequest request = fi.getHttpRequest();
-//        if (!permissionAnonymousUri.isAnonymousUri(request)) {
-//
-//            //从数据库加载全部权限配置
-//            List<ResourcePermission> resourcePermissionList = ISecurityService.fetchResourcePermissionAll();
-//            if (resourcePermissionList != null) {
-//                String url = fi.getRequestUrl();
-//                for (ResourcePermission resourcePermission : resourcePermissionList) {
-//                    if (antPathMatcher.match(resourcePermission.getUriPath(), url)) {
-//                        return SecurityConfig.createList(resourcePermission.getPermissionCode());
-//                    }
-//                }
-//            }
-//
-//        }
-//        //  返回代码定义的默认配置
-//        return superMetadataSource.getAttributes(object);
-//    }
-//
-//
-//    @Override
-//    public boolean supports(Class<?> clazz) {
-//        return FilterInvocation.class.isAssignableFrom(clazz);
-//    }
-//
-//}
+package io.github.osinn.securitytoken.security;
+
+import io.github.osinn.securitytoken.enums.AuthType;
+import io.github.osinn.securitytoken.security.dto.ResourcePermission;
+import io.github.osinn.securitytoken.service.ISecurityService;
+import org.springframework.security.access.ConfigAttribute;
+import org.springframework.security.access.SecurityConfig;
+import org.springframework.security.web.FilterInvocation;
+import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
+import org.springframework.util.AntPathMatcher;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * 自定安全元数据源
+ *
+ * @author wency_cai
+ */
+public class CustomSecurityMetadataSource implements FilterInvocationSecurityMetadataSource {
+
+
+    private ISecurityService securityService;
+
+    private AuthType authType;
+
+
+    @Override
+    public Collection<ConfigAttribute> getAllConfigAttributes() {
+        return null;
+    }
+
+    public CustomSecurityMetadataSource(ISecurityService securityService,
+                                        AuthType authType) {
+        this.securityService = securityService;
+        this.authType = authType;
+    }
+
+    private final AntPathMatcher antPathMatcher = new AntPathMatcher();
+
+    @Override
+    public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
+
+        FilterInvocation fi = (FilterInvocation) object;
+        HttpServletRequest request = fi.getHttpRequest();
+
+        //从数据库加载全部权限配置
+        List<ResourcePermission> resourcePermissionList = securityService.getSysResourcePermissionAll();
+        if (resourcePermissionList != null) {
+            if (AuthType.OFF.equals(authType)) {
+                return SecurityConfig.createList();
+            } else if (AuthType.CODE.equals(authType)) {
+                String url = fi.getRequestUrl();
+                for (ResourcePermission resourcePermission : resourcePermissionList) {
+                    // 对比系统权限资源
+                    if (antPathMatcher.match(resourcePermission.getUriPath(), url)) {
+                        return SecurityConfig.createList(resourcePermission.getPermissionCode().trim());
+                    }
+                }
+            } else {
+                String url = fi.getRequestUrl();
+                for (ResourcePermission resourcePermission : resourcePermissionList) {
+                    // 对比系统权限资源
+                    if (antPathMatcher.match(resourcePermission.getUriPath(), url)) {
+                        return SecurityConfig.createList(resourcePermission.getUriPath().trim());
+                    }
+                }
+            }
+        }
+
+        //  返回代码定义的默认配置
+        return SecurityConfig.createList();
+    }
+
+
+    @Override
+    public boolean supports(Class<?> clazz) {
+        return FilterInvocation.class.isAssignableFrom(clazz);
+    }
+
+}

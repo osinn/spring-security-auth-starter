@@ -6,6 +6,9 @@
 - 支持基于URL路径权限认证。登录接口前端可对密码进行rsa加密(前端公钥加密，后端私钥解密)
 - 支持自定义登录接口(微信公众授权/小程序授权可选自定义登录接口)
 - 支持与Spring cloud集成
+- 
+# Spring Security版
+- 5.7.X版本
 
 # 项目地址
 - github：[https://github.com/wency-cai/spring-security-auth-starter](https://github.com/wency-cai/spring-security-auth-starter)
@@ -374,4 +377,102 @@ for (GrantedAuthority authority : authorities) {
 
 // 或者调用fetchOnlineUserCompleteInfo()方法获取当前在线用户信息从而获取用户拥有的权限
 IOnlineUserService.fetchOnlineUserCompleteInfo()
+```
+
+# 基于code权限认证 service 实现类
+```java
+
+import com.google.common.collect.Lists;
+import io.github.osinn.securitytoken.security.dto.*;
+import io.github.osinn.securitytoken.service.ISecurityService;
+import org.springframework.stereotype.Service;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
+/**
+ * 授权服务
+ *
+ * @author wency_cai
+ */
+@Service
+public class SecurityServiceImpl implements ISecurityService {
+
+    /**
+     * 自定义登录接口
+     *
+     * @param principal(为登陆接口传的参数)
+     * @return
+     */
+    @Override
+    public JwtUser customAuth(Object principal) {
+        // principal 自行转换得到对应对象
+        JwtUser jwtUser = new JwtUser();
+        jwtUser.setId(1401043674048851970L);
+        jwtUser.setNickname("测试");
+        jwtUser.setAccount("test");
+
+        return jwtUser;
+    }
+
+    /**
+     * 获取用户的角色以及权限
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public JwtRoleInfo fetchRolePermissionInfo(Object userId) {
+        JwtRoleInfo jwtRoleInfo = new JwtRoleInfo();
+        JwtRoleInfo.BaseRoleInfo baseRoleInfo = new JwtRoleInfo.BaseRoleInfo();
+
+        ResourcePermission resourcePermission = new ResourcePermission();
+        resourcePermission.setUriPath("/test/demo");
+        resourcePermission.setPermissionCode("test.demo");
+        resourcePermission.setMenuName("测试");
+
+
+        baseRoleInfo.setRoleCode("test");
+        baseRoleInfo.setId(1);
+        baseRoleInfo.setName("test");
+        baseRoleInfo.setResourcePermission(Lists.newArrayList(resourcePermission));
+        jwtRoleInfo.setRoles(Lists.newArrayList(baseRoleInfo));
+//
+//        JwtRoleInfo jwtRoleInfo = new JwtRoleInfo();
+//        jwtRoleInfo.setRoles(Lists.newArrayList());
+        return jwtRoleInfo;
+    }
+
+
+    @Override
+    public Object loadUserByUsername(String account) {
+        return null;
+    }
+
+    @Override
+    public String getCustomizeToken(JwtUser jwtUser) {
+        return null;
+    }
+
+    @Override
+    public void logoutBeforeHandler(HttpServletRequest request, HttpServletResponse response, OnlineUser loginUser) {
+
+    }
+
+    @Override
+    public List<ResourcePermission> getSysResourcePermissionAll() {
+        // 如果是小程序等api应用，接口没有权限控制的，这里可以直接返回空集合
+        ResourcePermission resourcePermission = new ResourcePermission();
+        resourcePermission.setUriPath("/test/demo");
+        resourcePermission.setPermissionCode("test.demo");
+        resourcePermission.setMenuName("测试");
+
+        ResourcePermission resourcePermission2 = new ResourcePermission();
+        resourcePermission2.setUriPath("/test/demo2");
+        resourcePermission2.setPermissionCode("test.demo2");
+        resourcePermission2.setMenuName("测试");
+        return Lists.newArrayList(resourcePermission, resourcePermission2);
+    }
+}
 ```
