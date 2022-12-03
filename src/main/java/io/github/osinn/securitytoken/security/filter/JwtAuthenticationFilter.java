@@ -78,7 +78,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             this.authenticationEntryPoint.commence(request, response, e);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new SecurityJwtException(JwtHttpStatus.INTERNAL_SERVER_ERROR);
+            this.authenticationEntryPoint.commence(request, response, new AuthenticationServiceException(JwtHttpStatus.INTERNAL_SERVER_ERROR.getMessage(), new SecurityJwtException(JwtHttpStatus.INTERNAL_SERVER_ERROR)));
         }
     }
 
@@ -89,11 +89,11 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
      */
     private void checkAuthentication(HttpServletRequest request) {
         // 多环境，效验请求
-        if(StringUtils.hasLength(securityJwtProperties.getEnvTag()) && StringUtils.hasLength(securityJwtProperties.getHeaderEnvTagName())) {
+        if (StringUtils.hasLength(securityJwtProperties.getEnvTag()) && StringUtils.hasLength(securityJwtProperties.getHeaderEnvTagName())) {
             String headerEnvTag = request.getHeader(securityJwtProperties.getHeaderEnvTagName());
-            if(!securityJwtProperties.getEnvTag().equals(headerEnvTag)) {
+            if (!securityJwtProperties.getEnvTag().equals(headerEnvTag)) {
                 request.setAttribute(JwtHttpStatus.ENV_TAG_ERROR.name(), JwtHttpStatus.ENV_TAG_ERROR.getMessage());
-                throw new AuthenticationServiceException(JwtHttpStatus.ENV_TAG_ERROR.getMessage());
+                throw new AuthenticationServiceException(JwtHttpStatus.ENV_TAG_ERROR.getMessage(), new SecurityJwtException(JwtHttpStatus.ENV_TAG_ERROR));
             }
         }
 
