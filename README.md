@@ -106,6 +106,11 @@ security:
       - message: msg # 默认message
       - error: error_msg # error
       - code: code # 默认code
+    # 多环境值，用途：多环境下，请求头携带的值与设定的值一直请求放行，否则拦截请求，空则忽略
+    # 应用场景：小程序多环境配置项目，上生产时，前端不小心使用测试环境打包发布上线，请求接口携带envTag值，服务端效验envTag拦截请求及时告知请求环境地址错误
+    env-tag: test # 测试环境
+    # 多环境环境请求头参数名称
+    header-env-tag-name: environment  
     ...
 ```
 

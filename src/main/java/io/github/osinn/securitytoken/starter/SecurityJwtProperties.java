@@ -171,6 +171,17 @@ public class SecurityJwtProperties {
      */
     private boolean apiService;
 
+    /**
+     * 多环境值，用途：多环境下，请求头携带的值与设定的值一直请求放行，否则拦截请求，空则忽略
+     * 应用场景：小程序多环境配置项目，上生产时，前端不小心使用测试环境打包发布上线，请求接口携带envTag值，服务端效验envTag拦截请求及时告知请求环境地址错误
+     */
+    private String envTag;
+
+    /**
+     * 多环境环境请求头参数名称
+     */
+    private String headerEnvTagName;
+
     public void setDesPassword(String desPassword) {
         this.desPassword = desPassword;
         DesEncryptUtils.setDesPassword(desPassword);

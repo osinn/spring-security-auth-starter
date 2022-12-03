@@ -63,6 +63,10 @@ public enum JwtHttpStatus {
      */
     CREDENTIALS_EXPIRED(4013, "证书过期，请联系管理员"),
     /**
+     * 环境错误，请联系管理员
+     */
+    ENV_TAG_ERROR(4014, "环境错误，请联系管理员"),
+    /**
      * 退出登录成功
      */
     LOGOUT_SUCCESS(200, "退出登录成功"),

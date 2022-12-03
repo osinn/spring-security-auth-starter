@@ -20,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -87,11 +88,21 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
      * @param request
      */
     private void checkAuthentication(HttpServletRequest request) {
+        // 多环境，效验请求
+        if(StringUtils.hasLength(securityJwtProperties.getEnvTag()) && StringUtils.hasLength(securityJwtProperties.getHeaderEnvTagName())) {
+            String headerEnvTag = request.getHeader(securityJwtProperties.getHeaderEnvTagName());
+            if(!securityJwtProperties.getEnvTag().equals(headerEnvTag)) {
+                request.setAttribute(JwtHttpStatus.ENV_TAG_ERROR.name(), JwtHttpStatus.ENV_TAG_ERROR.getMessage());
+                throw new AuthenticationServiceException(JwtHttpStatus.ENV_TAG_ERROR.getMessage());
+            }
+        }
+
         boolean anonymousUrs = securityStorage.isAnonymousUri(request);
         //OPTIONS请求或白名单直接放行
         if (request.getMethod().equals(HttpMethod.OPTIONS.toString()) || anonymousUrs) {
             return;
         }
+
         if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
             // 判断是否为匿名访问服务
             boolean anonymousService = apiAuthService.checkAnonymousService(request);
