@@ -322,6 +322,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
             request.setAttribute(securityJwtProperties.getHeader(), securityJwtProperties.getTokenStartWith() + token);
+            request.setAttribute(JwtConstant.ONLINE_USER_INFO_KEY, onlineUser);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new SecurityJwtException(JwtHttpStatus.TOKEN_UNAUTHORIZED.getCode(), JwtHttpStatus.TOKEN_UNAUTHORIZED.getMessage());

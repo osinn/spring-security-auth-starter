@@ -48,7 +48,7 @@ public class JwtRoleInfo implements Serializable {
         /**
          * 扩展字段
          */
-        private String extendField;
+        private Object extendField;
 
 
         /**

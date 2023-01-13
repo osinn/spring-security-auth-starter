@@ -74,6 +74,16 @@ public interface ISecurityService<T, E> {
     List<ResourcePermission> getSysResourcePermissionAll();
 
     /**
+     * 白名单路径不会被调用
+     * 检查登陆完成后，在调用 doFilter前执行一次此方法
+     * 可以使用此方法做额外处理
+     *
+     * @param request
+     * @param response
+     */
+    void doFilterBeforeHandler(HttpServletRequest request, HttpServletResponse response);
+
+    /**
      * 获取服务名称 配合@API使用
      *
      * @param request

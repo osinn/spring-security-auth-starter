@@ -5,7 +5,6 @@ import io.github.osinn.securitytoken.annotation.API;
 import io.github.osinn.securitytoken.annotation.APIMethodPermission;
 import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.security.dto.OnlineUser;
-import io.github.osinn.securitytoken.security.dto.ResourcePermission;
 import io.github.osinn.securitytoken.security.dto.SecurityStorage;
 import io.github.osinn.securitytoken.service.IApiAuthService;
 import io.github.osinn.securitytoken.service.ISecurityService;
@@ -17,7 +16,6 @@ import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.FilterInvocation;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
@@ -107,7 +105,7 @@ public class CustomAccessDecisionManager implements AccessDecisionManager {
             apiAuthService.checkAttribute(api, request, authentication.getAuthorities());
         } else if (AuthType.URL.equals(authType)) {
             boolean authority = false;
-            if (configAttributes != null && !configAttributes.isEmpty()) {
+            if (!configAttributes.isEmpty()) {
                 for (ConfigAttribute configAttribute : configAttributes) {
                     //资源比对系统权限
                     String needAuthority = configAttribute.getAttribute();

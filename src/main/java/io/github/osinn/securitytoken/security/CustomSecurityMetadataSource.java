@@ -2,6 +2,7 @@ package io.github.osinn.securitytoken.security;
 
 import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.security.dto.ResourcePermission;
+import io.github.osinn.securitytoken.security.dto.SecurityStorage;
 import io.github.osinn.securitytoken.service.ISecurityService;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.access.SecurityConfig;
@@ -25,6 +26,10 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
 
     private AuthType authType;
 
+    /**
+     * 白名单
+     */
+    private SecurityStorage securityStorage;
 
     @Override
     public Collection<ConfigAttribute> getAllConfigAttributes() {
@@ -32,8 +37,10 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
     }
 
     public CustomSecurityMetadataSource(ISecurityService securityService,
+                                        SecurityStorage securityStorage,
                                         AuthType authType) {
         this.securityService = securityService;
+        this.securityStorage = securityStorage;
         this.authType = authType;
     }
 
@@ -45,9 +52,14 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
         FilterInvocation fi = (FilterInvocation) object;
         HttpServletRequest request = fi.getHttpRequest();
 
+        if (securityStorage.isAnonymousUri(request)) {
+            // 放行白名单
+            return SecurityConfig.createList();
+        }
+
         //从数据库加载全部权限配置
         List<ResourcePermission> resourcePermissionList = securityService.getSysResourcePermissionAll();
-        if (resourcePermissionList != null) {
+        if (resourcePermissionList != null && !resourcePermissionList.isEmpty()) {
             if (AuthType.OFF.equals(authType)) {
                 return SecurityConfig.createList();
             } else if (AuthType.CODE.equals(authType)) {

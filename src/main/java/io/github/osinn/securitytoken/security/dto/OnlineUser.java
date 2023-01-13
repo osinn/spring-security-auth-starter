@@ -77,7 +77,7 @@ public class OnlineUser implements Serializable {
     /**
      * 扩展字段
      */
-    private String extendField;
+    private Object extendField;
 
     /**
      * 用户角色

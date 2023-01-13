@@ -8,6 +8,7 @@ import io.github.osinn.securitytoken.security.JwtAuthenticationEntryPoint;
 import io.github.osinn.securitytoken.security.dto.OnlineUser;
 import io.github.osinn.securitytoken.service.IApiAuthService;
 import io.github.osinn.securitytoken.service.IOnlineUserService;
+import io.github.osinn.securitytoken.service.ISecurityService;
 import io.github.osinn.securitytoken.starter.SecurityJwtProperties;
 import io.github.osinn.securitytoken.utils.DesEncryptUtils;
 import io.github.osinn.securitytoken.utils.StrUtils;
@@ -53,25 +54,29 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     private JwtAuthenticationEntryPoint authenticationEntryPoint;
 
+    private ISecurityService securityService;
+
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
                                    SecurityStorage securityStorage,
                                    IApiAuthService apiAuthService,
                                    IOnlineUserService onlineUserService,
                                    SecurityJwtProperties securityJwtProperties,
-                                   JwtAuthenticationEntryPoint authenticationEntryPoint) {
+                                   JwtAuthenticationEntryPoint authenticationEntryPoint,
+                                   ISecurityService securityService) {
         super(authenticationManager);
         this.securityStorage = securityStorage;
         this.apiAuthService = apiAuthService;
         this.onlineUserService = onlineUserService;
         this.securityJwtProperties = securityJwtProperties;
         this.authenticationEntryPoint = authenticationEntryPoint;
+        this.securityService = securityService;
     }
 
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         try {
-            this.checkAuthentication(request);
+            this.checkAuthentication(request, response);
             chain.doFilter(request, response);
         } catch (AuthenticationException e) {
             log.error(e.getMessage(), e);
@@ -87,7 +92,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
      *
      * @param request
      */
-    private void checkAuthentication(HttpServletRequest request) {
+    private void checkAuthentication(HttpServletRequest request, HttpServletResponse response) {
         // 多环境，效验请求
         if (StringUtils.hasLength(securityJwtProperties.getEnvTag()) && StringUtils.hasLength(securityJwtProperties.getHeaderEnvTagName())) {
             String headerEnvTag = request.getHeader(securityJwtProperties.getHeaderEnvTagName());
@@ -115,6 +120,8 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         Authentication authentication = this.getAuthenticationFromToken(request);
         // 设置登录认证信息到上下文
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        securityService.doFilterBeforeHandler(request, response);
 
     }
 
@@ -147,6 +154,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
                             TokenUtils.refreshToken(onlineUser);
                         }
                     }
+                    request.setAttribute(JwtConstant.ONLINE_USER_INFO_KEY, onlineUser);
                     return authentication;
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);

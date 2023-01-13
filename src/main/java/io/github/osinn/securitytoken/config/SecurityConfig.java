@@ -238,7 +238,8 @@ public class SecurityConfig {
                         apiAuthService,
                         onlineUserService,
                         securityJwtProperties,
-                        authenticationEntryPoint),
+                        authenticationEntryPoint,
+                        securityService),
                 UsernamePasswordAuthenticationFilter.class);
         httpSecurity.addFilterBefore(new MyRequestFilter(securityJwtProperties.isEnableCors(), securityJwtProperties.isEnableXss(), securityJwtProperties.getAuthType()), CorsFilter.class);
         //单用户登录，如果有一个登录了，同一个用户在其他地方不能登录
@@ -270,6 +271,7 @@ public class SecurityConfig {
     private CustomSecurityMetadataSource securityMetadataSource() {
         CustomSecurityMetadataSource securityMetadataSource = new CustomSecurityMetadataSource(
                 securityService,
+                securityStorage,
                 securityJwtProperties.getAuthType());
         return securityMetadataSource;
     }
