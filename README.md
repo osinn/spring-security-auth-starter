@@ -8,7 +8,8 @@
 - 支持与Spring cloud集成
 - 
 # Spring Security版
-- 5.7.X版本
+- master分支基于 Spring boot 3.x版本，Spring security 6.X版本
+- security-v5.7.X分支 分支基于 Spring boot 2.x版本，Spring security 5.7.X版本
 
 # 项目地址
 - github：[https://github.com/wency-cai/spring-security-auth-starter](https://github.com/wency-cai/spring-security-auth-starter)
@@ -34,10 +35,11 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-web</artifactId>
 </dependency>
-<!-- redis-->
+<!-- redis -->
 <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-redis</artifactId>
+    <groupId>org.redisson</groupId>
+    <artifactId>redisson-spring-boot-starter</artifactId>
+    <version>${version}</version>
 </dependency>
 ```
 # 快速开始
@@ -46,7 +48,7 @@
 <dependency>
   <groupId>io.github.osinn</groupId>
   <artifactId>spring-security-auth-starter</artifactId>
-  <version>1.1.1</version>
+  <version>2.0-beta0</version>
 </dependency>
 ```
 # `application.yml`配置
@@ -388,12 +390,12 @@ IOnlineUserService.fetchOnlineUserCompleteInfo()
 ```java
 
 import com.google.common.collect.Lists;
-import io.github.osinn.securitytoken.security.dto.*;
-import io.github.osinn.securitytoken.service.ISecurityService;
+import io.github.osinn.security.security.dto.*;
+import io.github.osinn.security.service.ISecurityService;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
