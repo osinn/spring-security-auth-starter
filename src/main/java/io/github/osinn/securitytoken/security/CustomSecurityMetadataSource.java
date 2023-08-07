@@ -63,7 +63,7 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
             if (AuthType.OFF.equals(authType)) {
                 return SecurityConfig.createList();
             } else if (AuthType.CODE.equals(authType)) {
-                String url = fi.getRequestUrl();
+                String url = request.getRequestURI();
                 for (ResourcePermission resourcePermission : resourcePermissionList) {
                     // 对比系统权限资源
                     if (antPathMatcher.match(resourcePermission.getUriPath(), url)) {
