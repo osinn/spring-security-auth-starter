@@ -71,7 +71,7 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
                     }
                 }
             } else {
-                String url = fi.getRequestUrl();
+                String url = request.getRequestURI();
                 for (ResourcePermission resourcePermission : resourcePermissionList) {
                     // 对比系统权限资源
                     if (antPathMatcher.match(resourcePermission.getUriPath(), url)) {
