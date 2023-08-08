@@ -46,7 +46,7 @@
 <dependency>
   <groupId>io.github.osinn</groupId>
   <artifactId>spring-security-auth-starter</artifactId>
-  <version>1.1.1</version>
+  <version>1.2</version>
 </dependency>
 ```
 # `application.yml`配置
