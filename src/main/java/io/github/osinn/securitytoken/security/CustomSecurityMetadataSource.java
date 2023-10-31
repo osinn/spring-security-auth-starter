@@ -1,5 +1,6 @@
 package io.github.osinn.securitytoken.security;
 
+import io.github.osinn.securitytoken.constants.JwtConstant;
 import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.security.dto.ResourcePermission;
 import io.github.osinn.securitytoken.security.dto.SecurityStorage;
@@ -82,7 +83,7 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
         }
 
         //  返回代码定义的默认配置
-        return SecurityConfig.createList();
+        return SecurityConfig.createList(JwtConstant.UNKNOWN);
     }
 
 
