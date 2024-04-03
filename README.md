@@ -46,7 +46,7 @@
 <dependency>
   <groupId>io.github.osinn</groupId>
   <artifactId>spring-security-auth-starter</artifactId>
-  <version>1.2</version>
+  <version>1.5.1</version>
 </dependency>
 ```
 # `application.yml`配置
@@ -480,4 +480,10 @@ public class SecurityServiceImpl implements ISecurityService {
         return Lists.newArrayList(resourcePermission, resourcePermission2);
     }
 }
+```
+
+# 权限编码
+```
+@PreAuthorize("@pms.hasPermission('sys:demo')")
+@PreAuthorize("@pms.hasRole('testRole')")
 ```

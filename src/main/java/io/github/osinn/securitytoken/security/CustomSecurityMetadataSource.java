@@ -1,10 +1,10 @@
 package io.github.osinn.securitytoken.security;
 
-import io.github.osinn.securitytoken.constants.JwtConstant;
 import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.security.dto.ResourcePermission;
 import io.github.osinn.securitytoken.security.dto.SecurityStorage;
 import io.github.osinn.securitytoken.service.ISecurityService;
+import io.github.osinn.securitytoken.utils.StrUtils;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.access.SecurityConfig;
 import org.springframework.security.web.FilterInvocation;
@@ -64,10 +64,9 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
             if (AuthType.OFF.equals(authType)) {
                 return SecurityConfig.createList();
             } else if (AuthType.CODE.equals(authType)) {
-                String url = request.getRequestURI();
                 for (ResourcePermission resourcePermission : resourcePermissionList) {
                     // 对比系统权限资源
-                    if (antPathMatcher.match(resourcePermission.getUriPath(), url)) {
+                    if (StrUtils.isEmpty(resourcePermission.getPermissionCode())) {
                         return SecurityConfig.createList(resourcePermission.getPermissionCode().trim());
                     }
                 }
@@ -83,7 +82,7 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
         }
 
         //  返回代码定义的默认配置
-        return SecurityConfig.createList(JwtConstant.UNKNOWN);
+        return SecurityConfig.createList();
     }
 
 

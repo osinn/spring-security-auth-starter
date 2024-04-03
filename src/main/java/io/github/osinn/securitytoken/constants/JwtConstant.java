@@ -5,7 +5,6 @@ package io.github.osinn.securitytoken.constants;
  **/
 public class JwtConstant {
 
-
     public static final String UNKNOWN = "unknown";
     public static final String PROXY_CLIENT_IP = "Proxy-Client-IP";
     public static final String X_FORWARDED_FOR = "x-forwarded-for";
@@ -44,4 +43,14 @@ public class JwtConstant {
      * 在线用户ID key
      */
     public static final String ONLINE_USER_ID = "online_user_id";
+
+    /**
+     * 角色/权限分隔符
+     */
+    public static final String DELIMETER = "\\|";
+
+    /**
+     * 所有权限标识
+     */
+    public static final String ALL_PERMISSION = "*:*:*";
 }

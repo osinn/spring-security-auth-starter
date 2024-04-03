@@ -248,6 +248,12 @@ public class SecurityConfig {
         return httpSecurity.build();
     }
 
+    @Bean("pms")
+    @ConditionalOnMissingBean(CodeAccessDecisionManager.class)
+    public PermissionService PermissionService() {
+        return new PermissionService(securityJwtProperties);
+    }
+
     @Bean
     @ConditionalOnProperty(prefix = SecurityJwtProperties.PREFIX, name = "auth-type", havingValue = "CODE")
     public CodeAccessDecisionManager codeAccessDecisionManager() {
