@@ -15,6 +15,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.endpoint.web.servlet.ControllerEndpointHandlerMapping;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -103,7 +104,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
                                            AuthenticationManagerBuilder authenticationManagerBuilder,
-                                           RequestMappingHandlerMapping requestMappingHandlerMapping,
+                                           ControllerEndpointHandlerMapping requestMappingHandlerMapping,
                                            PasswordEncoder passwordEncoder,
                                            ISecurityService securityService) throws Exception {
 

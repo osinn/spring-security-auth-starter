@@ -4,12 +4,8 @@ import io.github.osinn.security.service.IRedissonService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.RedisConnectionUtils;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.*;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -22,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings({"unchecked", "all"})
 public class RedisUtils {
 
-    private RedisTemplate redisTemplate;
+    private StringRedisTemplate redisTemplate;
     private IRedissonService redissonService;
 
-    public RedisUtils(RedisTemplate redisTemplate, IRedissonService redissonService) {
+    public RedisUtils(StringRedisTemplate stringRedisTemplate, IRedissonService redissonService) {
         this.redisTemplate = redisTemplate;
         this.redissonService = redissonService;
     }
@@ -56,7 +52,7 @@ public class RedisUtils {
      * @param key 键 不能为null
      * @return 时间(秒) 返回0代表为永久有效, 返回-2代表不存在
      */
-    public long getExpire(Object key) {
+    public long getExpire(String key) {
         return redisTemplate.getExpire(key, TimeUnit.SECONDS);
     }
 
@@ -93,7 +89,7 @@ public class RedisUtils {
             if (key.length == 1) {
                 redisTemplate.delete(key[0]);
             } else {
-                redisTemplate.delete(CollectionUtils.arrayToList(key));
+                redisTemplate.delete(Arrays.asList(key));
             }
         }
     }

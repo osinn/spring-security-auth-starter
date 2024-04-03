@@ -83,6 +83,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         } catch (AuthenticationException e) {
             this.authenticationEntryPoint.commence(request, response, e);
         } catch (Exception e) {
+            log.error(e.getMessage());
             this.authenticationEntryPoint.commence(request, response, new AuthenticationServiceException(JwtHttpStatus.INTERNAL_SERVER_ERROR.getMessage(), new SecurityJwtException(JwtHttpStatus.INTERNAL_SERVER_ERROR)));
         }
     }
