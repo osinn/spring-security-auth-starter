@@ -80,6 +80,11 @@ public class OnlineUser implements Serializable {
     private Object extendField;
 
     /**
+     * 是否是管理员
+     */
+    private boolean hasAdmin;
+
+    /**
      * 用户角色
      */
     private List<JwtRoleInfo.BaseRoleInfo> roles = Collections.emptyList();
@@ -96,7 +101,8 @@ public class OnlineUser implements Serializable {
     public List<String> getAuthority() {
         return this.authorities.stream().map(GrantedOfAuthority::getAuthority).collect(Collectors.toList());
     }
-    public <T>T getId() {
-        return (T)id;
+
+    public <T> T getId() {
+        return (T) id;
     }
 }

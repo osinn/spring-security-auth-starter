@@ -130,6 +130,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     @Override
     public void saveToken(String token, OnlineUser onlineUser) {
+        onlineUser.setHasAdmin(TokenUtils.hasRoleAdmin());
         redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
     }
 
@@ -314,6 +315,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     new Date(),
                     securityJwtProperties.getLoginSource(),
                     jwtUser.getExtendField(),
+                    TokenUtils.hasRoleAdmin(jwtUser.getRoles()),
                     jwtUser.getRoles(),
                     jwtUser.getAuthorities(),
                     jwtUser.getResourcePermissions());

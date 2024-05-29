@@ -18,11 +18,9 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings({"unchecked", "all"})
 public class RedisUtils {
 
-    private StringRedisTemplate redisTemplate;
     private IRedissonService redissonService;
 
-    public RedisUtils(StringRedisTemplate stringRedisTemplate, IRedissonService redissonService) {
-        this.redisTemplate = redisTemplate;
+    public RedisUtils(IRedissonService redissonService) {
         this.redissonService = redissonService;
     }
 
@@ -37,7 +35,7 @@ public class RedisUtils {
     public boolean expire(String key, long time) {
         try {
             if (time > 0) {
-                redisTemplate.expire(key, time, TimeUnit.SECONDS);
+                redissonService.getRedissonClient().getBucket(key).expire(time, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -53,7 +51,7 @@ public class RedisUtils {
      * @return 时间(秒) 返回0代表为永久有效, 返回-2代表不存在
      */
     public long getExpire(String key) {
-        return redisTemplate.getExpire(key, TimeUnit.SECONDS);
+        return redissonService.getRedissonClient().getBucket(key).getExpireTime();
     }
 
     /**
@@ -63,20 +61,12 @@ public class RedisUtils {
      * @return /
      */
     public List<String> scan(String pattern) {
-        ScanOptions options = ScanOptions.scanOptions().match(pattern).build();
-        RedisConnectionFactory factory = redisTemplate.getConnectionFactory();
-        RedisConnection rc = Objects.requireNonNull(factory).getConnection();
-        Cursor<byte[]> cursor = rc.scan(options);
-        List<String> result = new ArrayList<>();
-        while (cursor.hasNext()) {
-            result.add(new String(cursor.next()));
+        Iterable<String> keysByPattern = redissonService.getRedissonClient().getKeys().getKeysByPattern(pattern);
+        List<String> keys = new ArrayList<>();
+        for (String key : keysByPattern) {
+            keys.add(key);
         }
-        try {
-            RedisConnectionUtils.releaseConnection(rc, factory);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-        return result;
+        return keys;
     }
 
     /**
@@ -87,9 +77,9 @@ public class RedisUtils {
     public void del(String... key) {
         if (key != null && key.length > 0) {
             if (key.length == 1) {
-                redisTemplate.delete(key[0]);
+                redissonService.delete(key[0]);
             } else {
-                redisTemplate.delete(Arrays.asList(key));
+                redissonService.getRedissonClient().getKeys().delete(key);
             }
         }
     }
@@ -140,8 +130,12 @@ public class RedisUtils {
      * @param prefix 前缀
      */
     public void deleteCacheByPrefix(String prefix) {
-        Set<String> keys = redisTemplate.keys(prefix + "*");
-        redisTemplate.delete(keys);
+        List<String> list = scan(prefix + "*");
+        if (!list.isEmpty()) {
+            String[] array = new String[list.size()];
+            array = list.toArray(array);
+            redissonService.getRedissonClient().getKeys().delete(array);
+        }
     }
 
     /**
@@ -150,7 +144,7 @@ public class RedisUtils {
      * @param prefix 前缀
      */
     public <T> List<T> fetchLike(String prefix) {
-        Set<String> keys = redisTemplate.keys(prefix);
+        List<String> keys = scan(prefix);
         List<T> list = new ArrayList<>();
         for (String key : keys) {
             list.add(redissonService.getValue(key));

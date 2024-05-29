@@ -17,6 +17,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -142,7 +143,8 @@ public class TokenUtils {
      * @return 如果是超级管理员返回true否则false
      */
     public static Boolean hasRoleAdmin() {
-        return fetchOnlineUserInfo().getRoles().stream().anyMatch(item -> item.getRoleCode().equals(JwtConstant.SUPER_ADMIN_ROLE));
+        List<JwtRoleInfo.BaseRoleInfo> roles = fetchOnlineUserInfo().getRoles();
+        return roles != null && roles.stream().anyMatch(item -> item.getRoleCode().equals(JwtConstant.SUPER_ADMIN_ROLE));
     }
 
     /**
