@@ -365,7 +365,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      * @param jwtUser 用户信息
      * @param request
      */
-    private void generationToken(JwtUser jwtUser, HttpServletRequest request) {
+    @Override
+    public void generationToken(JwtUser jwtUser, HttpServletRequest request) {
         String token = null;
         // 获取自定义token
         token = securityService.getCustomizeToken(jwtUser);
