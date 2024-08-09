@@ -17,6 +17,14 @@ import java.util.List;
 public interface IOnlineUserService {
 
     /**
+     * 生成token并缓存用户信息
+     *
+     * @param jwtUser 用户信息
+     * @param request
+     */
+    void generationToken(JwtUser jwtUser, HttpServletRequest request);
+
+    /**
      * 自定义登录
      *
      * @param principal 登录请求信息
