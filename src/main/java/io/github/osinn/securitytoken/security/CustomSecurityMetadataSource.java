@@ -4,7 +4,9 @@ import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.security.dto.ResourcePermission;
 import io.github.osinn.securitytoken.security.dto.SecurityStorage;
 import io.github.osinn.securitytoken.service.ISecurityService;
+import io.github.osinn.securitytoken.starter.SecurityJwtProperties;
 import io.github.osinn.securitytoken.utils.StrUtils;
+import io.github.osinn.securitytoken.utils.TokenUtils;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.access.SecurityConfig;
 import org.springframework.security.web.FilterInvocation;
@@ -32,6 +34,8 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
      */
     private SecurityStorage securityStorage;
 
+    private SecurityJwtProperties securityJwtProperties;
+
     @Override
     public Collection<ConfigAttribute> getAllConfigAttributes() {
         return null;
@@ -39,10 +43,11 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
 
     public CustomSecurityMetadataSource(ISecurityService securityService,
                                         SecurityStorage securityStorage,
-                                        AuthType authType) {
+                                        SecurityJwtProperties securityJwtProperties) {
         this.securityService = securityService;
         this.securityStorage = securityStorage;
-        this.authType = authType;
+        this.securityJwtProperties = securityJwtProperties;
+        this.authType = securityJwtProperties.getAuthType();
     }
 
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
@@ -55,6 +60,12 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
 
         if (securityStorage.isAnonymousUri(request)) {
             // 放行白名单
+            return SecurityConfig.createList();
+        }
+
+        String token = TokenUtils.getToken();
+        if (token != null && securityJwtProperties.getIgnoringToken().contains(token)) {
+            // 白名单token放行
             return SecurityConfig.createList();
         }
 

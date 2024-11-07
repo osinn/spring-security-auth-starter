@@ -108,6 +108,12 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             return;
         }
 
+        String token = TokenUtils.getToken(request);
+        if (token != null && securityJwtProperties.getIgnoringToken().contains(token)) {
+            // 白名单token放行
+            return;
+        }
+
         if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
             // 判断是否为匿名访问服务
             boolean anonymousService = apiAuthService.checkAnonymousService(request);

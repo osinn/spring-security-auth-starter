@@ -6,6 +6,7 @@ import io.github.osinn.securitytoken.security.dto.JwtRoleInfo;
 import io.github.osinn.securitytoken.security.dto.OnlineUser;
 import io.github.osinn.securitytoken.starter.SecurityJwtProperties;
 import io.github.osinn.securitytoken.utils.StrUtils;
+import io.github.osinn.securitytoken.utils.TokenUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +30,12 @@ public class PermissionService {
      * @return {boolean}
      */
     public boolean hasPermission(String hasPermission) {
+
+        String token = TokenUtils.getToken();
+        if (token != null && securityJwtProperties.getIgnoringToken().contains(token)) {
+            // 白名单token放行
+            return true;
+        }
 
         if (!AuthType.CODE.equals(securityJwtProperties.getAuthType())) {
             return true;

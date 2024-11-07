@@ -278,7 +278,7 @@ public class SecurityConfig {
         CustomSecurityMetadataSource securityMetadataSource = new CustomSecurityMetadataSource(
                 securityService,
                 securityStorage,
-                securityJwtProperties.getAuthType());
+                securityJwtProperties);
         return securityMetadataSource;
     }
 

@@ -42,6 +42,11 @@ public class SecurityJwtProperties {
     private Set<String> ignoringUrls = Sets.newLinkedHashSet();
 
     /**
+     * 白名单token
+     */
+    private Set<String> ignoringToken = Sets.newLinkedHashSet();
+
+    /**
      * 可选-额外自定义黑名单路径
      */
     private Set<String> authUrlsPrefix = Sets.newLinkedHashSet();
