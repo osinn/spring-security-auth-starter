@@ -109,23 +109,27 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         }
 
         String token = TokenUtils.getToken(request);
-        if (token != null && securityJwtProperties.getIgnoringToken().contains(securityJwtProperties.getTokenStartWith() + token)) {
-            // 白名单token放行
-            return;
-        }
-
-        if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
-            // 判断是否为匿名访问服务
-            boolean anonymousService = apiAuthService.checkAnonymousService(request);
-            if (anonymousService) {
-                return;
+        if (!StrUtils.isEmpty(token) && securityJwtProperties.getIgnoringToken().contains(securityJwtProperties.getTokenStartWith() + token)) {
+            OnlineUser onlineUser = onlineUserService.getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+            if(onlineUser != null) {
+                request.setAttribute(JwtConstant.ONLINE_USER_ID, onlineUser.getId());
+                request.setAttribute(JwtConstant.ONLINE_USER_INFO_KEY, onlineUser);
             }
+        } else {
+            if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
+                // 判断是否为匿名访问服务
+                boolean anonymousService = apiAuthService.checkAnonymousService(request);
+                if (anonymousService) {
+                    return;
+                }
+            }
+
+            // 获取令牌并根据令牌获取登录认证信息
+            Authentication authentication = this.getAuthenticationFromToken(request);
+            // 设置登录认证信息到上下文
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
-        // 获取令牌并根据令牌获取登录认证信息
-        Authentication authentication = this.getAuthenticationFromToken(request);
-        // 设置登录认证信息到上下文
-        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         securityService.doFilterBeforeHandler(request, response);
 
