@@ -80,8 +80,12 @@ public class RedissonServiceImpl implements IRedissonService {
 
     @Override
     public <T> void setValue(String key, T value, Long expiration) {
-        RBucket<T> bucket = redissonClient.getBucket(key);
-        bucket.set(value, expiration, TimeUnit.SECONDS);
+        if (expiration == null || expiration <= 0) {
+            setValue(key, value);
+        } else {
+            RBucket<T> bucket = redissonClient.getBucket(key);
+            bucket.set(value, expiration, TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -100,10 +104,14 @@ public class RedissonServiceImpl implements IRedissonService {
         if (listValue == null || listValue.isEmpty()) {
             return false;
         }
-        RList<T> rList = redissonClient.getList(key);
-        boolean status = rList.addAll(listValue);
-        rList.expire(expiration, TimeUnit.SECONDS);
-        return status;
+        if (expiration == null || expiration <= 0) {
+            return setList(key, listValue);
+        } else {
+            RList<T> rList = redissonClient.getList(key);
+            boolean status = rList.addAll(listValue);
+            rList.expire(expiration, TimeUnit.SECONDS);
+            return status;
+        }
     }
 
     @Override

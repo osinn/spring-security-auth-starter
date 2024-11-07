@@ -109,7 +109,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         }
 
         String token = TokenUtils.getToken(request);
-        if (token != null && securityJwtProperties.getIgnoringToken().contains(token)) {
+        if (token != null && securityJwtProperties.getIgnoringToken().contains(securityJwtProperties.getTokenStartWith() + token)) {
             // 白名单token放行
             return;
         }

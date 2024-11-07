@@ -107,11 +107,27 @@ public interface IOnlineUserService {
     List<OnlineUser> fetchOnlineUserAll();
 
     /**
-     * 刷新token缓存过期时间
+     * 刷新token缓存过期时间，如果token已不存在不会抛异常
      *
      * @param onlineUser 当前登陆用户
      */
     void refreshToken(OnlineUser onlineUser);
+
+    /**
+     * 刷新token缓存过期时间，如果token已不存在不会抛异常
+     *
+     * @param onlineUser 当前登陆用户
+     * @param expire     有效期 单位秒
+     */
+    void refreshToken(OnlineUser onlineUser, Long expire);
+
+    /**
+     * 刷新token缓存过期时间
+     *
+     * @param onlineUser 当前登陆用户
+     * @param expire     有效期 单位秒
+     */
+    void refreshToken(String token, OnlineUser onlineUser, Long expire);
 
     /**
      * 根据用户ID删除token

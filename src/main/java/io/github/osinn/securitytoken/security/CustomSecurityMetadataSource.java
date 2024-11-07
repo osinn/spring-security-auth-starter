@@ -64,7 +64,7 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
         }
 
         String token = TokenUtils.getToken();
-        if (token != null && securityJwtProperties.getIgnoringToken().contains(token)) {
+        if (token != null && securityJwtProperties.getIgnoringToken().contains(securityJwtProperties.getTokenStartWith() + token)) {
             // 白名单token放行
             return SecurityConfig.createList();
         }

@@ -32,7 +32,7 @@ public class PermissionService {
     public boolean hasPermission(String hasPermission) {
 
         String token = TokenUtils.getToken();
-        if (token != null && securityJwtProperties.getIgnoringToken().contains(token)) {
+        if (token != null && securityJwtProperties.getIgnoringToken().contains(securityJwtProperties.getTokenStartWith() + token)) {
             // 白名单token放行
             return true;
         }

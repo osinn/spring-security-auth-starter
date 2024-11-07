@@ -236,7 +236,28 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             onlineUser.setRefreshTime(new Date());
             redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
         } else {
-            log.error("无法刷新token过期时间，token【{}】onlineUser【{}】", token != null, onlineUser != null);
+            log.error("token已过期，无法刷新token过期时间，token【{}】onlineUser【{}】", token != null, onlineUser != null);
+        }
+    }
+
+    @Override
+    public void refreshToken(OnlineUser onlineUser, Long expire) {
+        String token = TokenUtils.getToken();
+        if (token != null && onlineUser != null) {
+            onlineUser.setRefreshTime(new Date());
+            redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, expire);
+        } else {
+            log.error("token已过期，无法刷新token过期时间，token【{}】onlineUser【{}】", token != null, onlineUser != null);
+        }
+    }
+
+    @Override
+    public void refreshToken(String token, OnlineUser onlineUser, Long expire) {
+        if (token != null && onlineUser != null) {
+            onlineUser.setRefreshTime(new Date());
+            redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, expire);
+        } else {
+            throw new RuntimeException("token、在线用户不能为空");
         }
     }
 

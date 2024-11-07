@@ -42,7 +42,7 @@ public class SecurityJwtProperties {
     private Set<String> ignoringUrls = Sets.newLinkedHashSet();
 
     /**
-     * 白名单token
+     * 白名单token，完成的token,包括 tokenStartWith
      */
     private Set<String> ignoringToken = Sets.newLinkedHashSet();
 

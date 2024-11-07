@@ -5,7 +5,7 @@
 
     <groupId>io.github.osinn</groupId>
     <artifactId>spring-security-auth-starter</artifactId>
-    <version>1.5.3</version>
+    <version>1.5.3.2</version>
     <packaging>jar</packaging>
     <name>spring-security-auth-starter</name>
     <description>Spring boot security 集成</description>
