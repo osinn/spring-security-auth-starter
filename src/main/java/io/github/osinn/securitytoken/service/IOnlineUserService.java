@@ -50,6 +50,13 @@ public interface IOnlineUserService {
     void logout() throws SecurityJwtException;
 
     /**
+     * 退出登录删除token
+     *
+     * @throws SecurityJwtException 请求头不携带token抛出异常
+     */
+    void logout(OnlineUser onlineUser) throws SecurityJwtException;
+
+    /**
      * 存储token
      *
      * @param token      token值

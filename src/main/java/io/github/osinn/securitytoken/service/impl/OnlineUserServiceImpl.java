@@ -129,6 +129,20 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     }
 
     @Override
+    public void logout(OnlineUser onlineUser) throws SecurityJwtException {
+        if (onlineUser != null) {
+            try {
+                String token = DesEncryptUtils.desDecrypt(onlineUser.getKey());
+                // 踢出用户
+                redisUtils.del(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+            } catch (Exception e) {
+                log.error("指定退出用户失败：{}", e.getMessage());
+                throw new SecurityJwtException(JwtHttpStatus.LOGOUT_FAIL.getCode(), JwtHttpStatus.LOGOUT_FAIL.getMessage());
+            }
+        }
+    }
+
+    @Override
     public void saveToken(String token, OnlineUser onlineUser) {
         redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
     }
@@ -254,6 +268,9 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     @Override
     public void refreshToken(String token, OnlineUser onlineUser, Long expire) {
         if (token != null && onlineUser != null) {
+            if (!StrUtils.isEmpty(token) && token.startsWith(securityJwtProperties.getTokenStartWith())) {
+                token = token.replace(securityJwtProperties.getTokenStartWith(), "");
+            }
             onlineUser.setRefreshTime(new Date());
             redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, expire);
         } else {
