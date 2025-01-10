@@ -110,7 +110,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
         String token = TokenUtils.getToken(request);
         if (!StrUtils.isEmpty(token) && securityJwtProperties.getIgnoringToken().contains(securityJwtProperties.getTokenStartWith() + token)) {
-            OnlineUser onlineUser = onlineUserService.getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+            OnlineUser onlineUser = onlineUserService.getOne(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token));
             if(onlineUser != null) {
                 request.setAttribute(JwtConstant.ONLINE_USER_ID, onlineUser.getId());
                 request.setAttribute(JwtConstant.ONLINE_USER_INFO_KEY, onlineUser);
@@ -148,7 +148,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         } else {
             // 验证 token 是否存在
             OnlineUser onlineUser = null;
-            onlineUser = onlineUserService.getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+            onlineUser = onlineUserService.getOne(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token));
             if (onlineUser == null) {
                 request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
                 throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());

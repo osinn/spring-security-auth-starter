@@ -1,5 +1,6 @@
 package io.github.osinn.securitytoken.starter;
 
+import io.github.osinn.securitytoken.constants.JwtConstant;
 import io.github.osinn.securitytoken.enums.AuthType;
 import io.github.osinn.securitytoken.utils.DesEncryptUtils;
 import com.google.common.collect.Sets;
@@ -118,13 +119,13 @@ public class SecurityJwtProperties {
     /**
      * 自定义权限不足、认证失败、退出成功响应字段名
      * 例如
-     *  - message: msg # 默认message
-     *  - error: error_msg # error
-     *  - code: code # 默认code
-     *
-     *         jsonObject.set("message", message);
-     *         jsonObject.set("error", errorMessage);
-     *         jsonObject.set("code", statusCode);
+     * - message: msg # 默认message
+     * - error: error_msg # error
+     * - code: code # 默认code
+     * <p>
+     * jsonObject.set("message", message);
+     * jsonObject.set("error", errorMessage);
+     * jsonObject.set("code", statusCode);
      */
     private Map<String, String> responseBody = new HashMap<>();
 
@@ -186,6 +187,11 @@ public class SecurityJwtProperties {
      * 多环境环境请求头参数名称
      */
     private String headerEnvTagName;
+
+    /**
+     * 缓存在线用户信息key前缀
+     */
+    private String cacheOnlineUserInfoKeyPrefix = JwtConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX;
 
     public void setDesPassword(String desPassword) {
         this.desPassword = desPassword;

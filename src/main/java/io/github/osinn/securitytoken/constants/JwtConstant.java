@@ -17,7 +17,7 @@ public class JwtConstant {
      */
     public static final String REGION = "内网IP";
 
-    public static final String ONLINE_USER_INFO_KEY_PREFIX = "online_user_info:key_";
+    public static final String CACHE_ONLINE_USER_INFO_KEY_PREFIX = "online_user_info:key_";
     /**
      * 下面两个key只是为了定义删除全部数据用
      */

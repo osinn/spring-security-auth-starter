@@ -121,7 +121,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         //2 token不为空，移除token，从redis删除token
         String token = TokenUtils.getToken();
         if (token != null) {
-            redisUtils.del(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+            redisUtils.del(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token));
         } else {
             throw new SecurityJwtException(JwtHttpStatus.LOGOUT_FAIL.getCode(), JwtHttpStatus.LOGOUT_FAIL.getMessage());
         }
@@ -134,7 +134,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             try {
                 String token = DesEncryptUtils.desDecrypt(onlineUser.getKey());
                 // 踢出用户
-                redisUtils.del(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+                redisUtils.del(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token));
             } catch (Exception e) {
                 log.error("指定退出用户失败：{}", e.getMessage());
                 throw new SecurityJwtException(JwtHttpStatus.LOGOUT_FAIL.getCode(), JwtHttpStatus.LOGOUT_FAIL.getMessage());
@@ -144,7 +144,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     @Override
     public void saveToken(String token, OnlineUser onlineUser) {
-        redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
+        redisUtils.set(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
     }
 
     /**
@@ -187,7 +187,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         if (StrUtils.isEmpty(token)) {
             return null;
         }
-        OnlineUser onlineUserInfo = getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+        OnlineUser onlineUserInfo = getOne(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token));
         return onlineUserInfo;
     }
 
@@ -199,7 +199,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         if (StringUtils.hasText(token) && token.startsWith(securityJwtProperties.getTokenStartWith())) {
             token = token.replace(securityJwtProperties.getTokenStartWith(), "");
         }
-        OnlineUser onlineUserInfo = getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+        OnlineUser onlineUserInfo = getOne(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token));
         return onlineUserInfo;
     }
 
@@ -234,13 +234,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     @Override
     public List<OnlineUser> fetchOnlineUserAll() {
-        List<String> onlineUserList = redisUtils.fetchLike(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + "*");
-        List<OnlineUser> onlineUsers = Lists.newArrayList();
-        for (String onlineUserStr : onlineUserList) {
-            OnlineUser onlineUser = GsonMapper.toBean(onlineUserStr, OnlineUser.class);
-            onlineUsers.add(onlineUser);
-        }
-        return onlineUsers;
+        return redisUtils.fetchLike(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + "*");
     }
 
     @Override
@@ -248,7 +242,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         String token = TokenUtils.getToken();
         if (token != null && onlineUser != null) {
             onlineUser.setRefreshTime(new Date());
-            redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
+            redisUtils.set(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
         } else {
             log.error("token已过期，无法刷新token过期时间，token【{}】onlineUser【{}】", token != null, onlineUser != null);
         }
@@ -259,7 +253,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         String token = TokenUtils.getToken();
         if (token != null && onlineUser != null) {
             onlineUser.setRefreshTime(new Date());
-            redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, expire);
+            redisUtils.set(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token), onlineUser, expire);
         } else {
             log.error("token已过期，无法刷新token过期时间，token【{}】onlineUser【{}】", token != null, onlineUser != null);
         }
@@ -272,7 +266,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                 token = token.replace(securityJwtProperties.getTokenStartWith(), "");
             }
             onlineUser.setRefreshTime(new Date());
-            redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, expire);
+            redisUtils.set(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token), onlineUser, expire);
         } else {
             throw new RuntimeException("token、在线用户不能为空");
         }
@@ -291,7 +285,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             if (ids.contains(onlineUser.getId())) {
                 try {
                     String token = DesEncryptUtils.desDecrypt(onlineUser.getKey());
-                    redisUtils.del(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+                    redisUtils.del(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token));
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -316,7 +310,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     String token = DesEncryptUtils.desDecrypt(onlineUser.getKey());
                     if (!StrUtils.isEmpty(igoreToken) && !igoreToken.equals(token)) {
                         // 踢出用户
-                        redisUtils.del(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+                        redisUtils.del(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token));
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -358,7 +352,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(onlineUser, token, onlineUser.getAuthorities());
             // 设置登录认证信息到上下文
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
+            redisUtils.set(securityJwtProperties.getCacheOnlineUserInfoKeyPrefix() + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
             request.setAttribute(securityJwtProperties.getHeader(), securityJwtProperties.getTokenStartWith() + token);
             request.setAttribute(JwtConstant.ONLINE_USER_INFO_KEY, onlineUser);
         } catch (Exception e) {
