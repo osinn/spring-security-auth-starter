@@ -1,6 +1,5 @@
 package io.github.osinn.security.security;
 
-import io.github.osinn.security.enums.AuthType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.authorization.AuthorizationDecision;
@@ -11,6 +10,7 @@ import java.util.Collection;
 import java.util.function.Supplier;
 
 /**
+ * 使用 @PreAuthorize("@pms.hasPermission('xxx:xxx:xxx')") 会触发这里的校验
  * 接口鉴权-检查是否拥有访问接口权限
  *
  * @author wency_cai

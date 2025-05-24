@@ -6,12 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @author wency
- * token认证访问方法
+ * 白名单访问方法
+ *
+ * @author wency_cai
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Deprecated
-public @interface AutoAccess {
+public @interface AuthIgnore {
 
 }

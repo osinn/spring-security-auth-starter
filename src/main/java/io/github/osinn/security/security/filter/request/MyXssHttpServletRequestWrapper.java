@@ -16,11 +16,8 @@ import static org.springframework.web.util.HtmlUtils.htmlEscape;
 @Slf4j
 public class MyXssHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
-    private final boolean enableXss;
-
-    public MyXssHttpServletRequestWrapper(HttpServletRequest request, boolean enableXss) {
+    public MyXssHttpServletRequestWrapper(HttpServletRequest request) {
         super(request);
-        this.enableXss = enableXss;
     }
 
     @Override
@@ -61,11 +58,7 @@ public class MyXssHttpServletRequestWrapper extends HttpServletRequestWrapper {
     }
 
     private String xssHtmlEscape(String value) {
-        if (enableXss) {
-            return htmlEscape(value);
-        } else {
-            return value;
-        }
+        return htmlEscape(value);
     }
 
 }

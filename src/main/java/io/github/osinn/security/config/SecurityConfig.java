@@ -3,17 +3,16 @@ package io.github.osinn.security.config;
 import io.github.osinn.security.security.*;
 import io.github.osinn.security.security.filter.CustomAuthorizationFilter;
 import io.github.osinn.security.security.filter.MyRequestFilter;
-import io.github.osinn.security.service.IApiAuthService;
 import io.github.osinn.security.service.IOnlineUserService;
-import io.github.osinn.security.starter.SecurityJwtProperties;
-import io.github.osinn.security.annotation.AnonymousAccess;
-import io.github.osinn.security.annotation.AutoAccess;
+import io.github.osinn.security.starter.SecurityProperties;
+import io.github.osinn.security.annotation.AuthIgnore;
 import io.github.osinn.security.security.dto.SecurityStorage;
-import io.github.osinn.security.security.filter.JwtAuthenticationFilter;
+import io.github.osinn.security.security.filter.SecurityAuthenticationFilter;
 import io.github.osinn.security.service.ISecurityService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.github.osinn.security.utils.RedisUtils;
+import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.endpoint.web.servlet.ControllerEndpointHandlerMapping;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +33,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPattern;
 
 import java.util.HashSet;
@@ -57,26 +55,26 @@ import static org.springframework.security.config.Customizer.withDefaults;
 )
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationEntryPoint authenticationEntryPoint;
+    @Resource
+    private SecurityAuthenticationEntryPoint authenticationEntryPoint;
 
-    @Autowired
-    private JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    @Resource
+    private SecurityAccessDeniedHandler securityAccessDeniedHandler;
 
-    @Autowired
-    private SecurityJwtProperties securityJwtProperties;
+    @Resource
+    private SecurityProperties securityProperties;
 
-    @Autowired
+    @Resource
     private SecurityStorage securityStorage;
 
-    @Autowired
+    @Resource
     private ISecurityService securityService;
 
-    @Autowired
-    private IApiAuthService apiAuthService;
-
-    @Autowired
+    @Resource
     private IOnlineUserService onlineUserService;
+
+    @Resource
+    private RedisUtils redisUtils;
 
 
     @Value("${server.servlet.context-path:}")
@@ -86,20 +84,6 @@ public class SecurityConfig {
      * 权限白名单urls
      */
     private Set<String> anonymousUrs = Sets.newHashSet();
-
-//    @Bean
-//    public WebSecurityCustomizer webSecurityCustomizer() {
-//        // WebSecurityCustomizer是一个类似于Consumer<WebSecurity>的接口，函数接受一个WebSecurity类型的变量，无返回值
-//        // 此处使用lambda实现WebSecurityCustomizer接口，web变量的类型WebSecurity，箭头后面可以对其进行操作
-//        // 使用requestMatchers()代替antMatchers()
-//        return (web) -> web.ignoring().requestMatchers("/ignore1", "/ignore2");
-//    }
-
-//    @Bean
-//    public WebSecurityCustomizer webSecurity() {
-//        return (web) -> web
-//                .ignoring().requestMatchers("/testWebSecurity");
-//    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
@@ -123,8 +107,8 @@ public class SecurityConfig {
             HandlerMethod handlerMethod = infoEntry.getValue();
 
             // 基于注解排除路径
-            AnonymousAccess anonymousAccess = handlerMethod.getMethodAnnotation(AnonymousAccess.class);
-            if (null != anonymousAccess) {
+            AuthIgnore authIgnore = handlerMethod.getMethodAnnotation(AuthIgnore.class);
+            if (null != authIgnore) {
                 if (infoEntry.getKey().getPatternsCondition() == null) {
                     assert infoEntry.getKey().getPathPatternsCondition() != null;
                     Set<PathPattern> patterns = infoEntry.getKey().getPathPatternsCondition().getPatterns();
@@ -138,22 +122,14 @@ public class SecurityConfig {
                     });
                 }
 
-            } else {
-                AutoAccess autoAccess = handlerMethod.getMethodAnnotation(AutoAccess.class);
-                if (null != autoAccess) {
-                    Set<String> patterns = infoEntry.getKey().getPatternsCondition().getPatterns();
-                    patterns.forEach(p -> {
-                        authUrlsPrefix.add(contextPath + p);
-                    });
-                }
             }
         }
         // 基于配置url排除路径
-        Set<String> ignoringUrls = securityJwtProperties.getIgnoringUrls();
+        Set<String> ignoringUrls = securityProperties.getIgnoringUrls();
         anonymousUrls.addAll(ignoringUrls);
 
         // 基于配置url拦截路径
-        Set<String> authUrls = securityJwtProperties.getAuthUrlsPrefix();
+        Set<String> authUrls = securityProperties.getAuthUrlsPrefix();
         authUrlsPrefix.addAll(authUrls);
 
         //        anonymousUrlList.add("");
@@ -182,16 +158,15 @@ public class SecurityConfig {
         securityStorage.setPermissionAnonymousUrlList(anonymousUrs);
 
 
-        if (securityJwtProperties.isDisableHttpBasic()) {
+        if (securityProperties.isDisableHttpBasic()) {
             // 禁用Http Basic
             httpSecurity.httpBasic().disable();
         }
-        if (securityJwtProperties.isDisableCsrf()) {
+        if (securityProperties.isDisableCsrf()) {
             // 禁用 CSRF
             httpSecurity.csrf().disable();
         }
 
-//.ignoring().requestMatchers("/ignore1", "/ignore2");
         httpSecurity
                 // 禁用默认登录页
                 .formLogin().disable()
@@ -199,7 +174,7 @@ public class SecurityConfig {
                 .logout().disable()
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(e -> {
-                    e.accessDeniedHandler(jwtAccessDeniedHandler);
+                    e.accessDeniedHandler(securityAccessDeniedHandler);
                     e.authenticationEntryPoint(authenticationEntryPoint);
                 })
                 .authorizeHttpRequests(authorize -> {
@@ -226,45 +201,39 @@ public class SecurityConfig {
                         }
                 )
                 .httpBasic(withDefaults());
-        httpSecurity.addFilterBefore(new JwtAuthenticationFilter(authenticationManagerBuilder.getObject(),
+        httpSecurity.addFilterBefore(new SecurityAuthenticationFilter(authenticationManagerBuilder.getObject(),
                         securityStorage,
-                        apiAuthService,
                         onlineUserService,
-                        securityJwtProperties,
+                        securityProperties,
                         authenticationEntryPoint,
                         securityService),
                 UsernamePasswordAuthenticationFilter.class);
 
-        httpSecurity.addFilterBefore(new MyRequestFilter(securityJwtProperties.isEnableCors(), securityJwtProperties.isEnableXss(), securityJwtProperties.getAuthType()), CorsFilter.class);
+        if (securityProperties.isEnableCors() || securityProperties.isEnableXss()) {
+            httpSecurity.addFilterBefore(new MyRequestFilter(securityProperties.isEnableCors(), securityProperties.isEnableXss()), CorsFilter.class);
+        }
+
         httpSecurity.addFilterAfter(new CustomAuthorizationFilter(new AccessDecisionAuthorizationManager(accessDecisionManager(), securityMetadataSource())), AuthorizationFilter.class);
         return httpSecurity.build();
     }
 
-    //    @Bean
-//    public AccessDecisionManagerAuthorizationManagerAdapter authorizationManagerAdapter() {
-//        return new AccessDecisionManagerAuthorizationManagerAdapter(accessDecisionManager(), securityMetadataSource());
-//    }
-//
-//    @Bean
-//    public CustomExceptionTranslationFilter customExceptionTranslationFilter() {
-//        CustomExceptionTranslationFilter customExceptionTranslationFilter = new CustomExceptionTranslationFilter(authenticationEntryPoint);
-//        customExceptionTranslationFilter.setAccessDeniedHandler(accessDecisionManager());
-//        return customExceptionTranslationFilter;
-//    }
-
     @Bean
     public CustomAccessDecisionManager accessDecisionManager() {
-        return new CustomAccessDecisionManager(securityStorage,
-                apiAuthService,
-                securityJwtProperties.getAuthType());
+        return new CustomAccessDecisionManager(securityStorage, securityProperties.getAuthType());
     }
 
     private CustomSecurityMetadataSource securityMetadataSource() {
-        CustomSecurityMetadataSource securityMetadataSource = new CustomSecurityMetadataSource(
+        return new CustomSecurityMetadataSource(
                 securityService,
                 securityStorage,
-                securityJwtProperties.getAuthType());
-        return securityMetadataSource;
+                securityProperties,
+                redisUtils,
+                securityProperties.getAuthType());
+    }
+
+    @Bean("pms")
+    public PermissionService permissionService() {
+        return new PermissionService(securityProperties);
     }
 
 }

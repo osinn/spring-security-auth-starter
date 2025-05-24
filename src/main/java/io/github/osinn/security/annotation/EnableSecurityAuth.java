@@ -1,6 +1,6 @@
 package io.github.osinn.security.annotation;
 
-import io.github.osinn.security.config.JwtAppRun;
+import io.github.osinn.security.config.AuthAppRun;
 import io.github.osinn.security.config.SecurityConfig;
 import io.github.osinn.security.starter.SecurityAutoConfigure;
 import io.github.osinn.security.utils.SpringContextHolder;
@@ -12,12 +12,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 启用security jwt
+ * 启用security auth
  *
  * @author wency_cai
  **/
-@Import({SecurityAutoConfigure.class, SecurityConfig.class, SpringContextHolder.class, JwtAppRun.class})
+@Import({SecurityAutoConfigure.class, SecurityConfig.class, SpringContextHolder.class, AuthAppRun.class})
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EnableSecurityJwt {
+public @interface EnableSecurityAuth {
 }

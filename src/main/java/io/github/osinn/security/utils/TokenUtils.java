@@ -1,26 +1,18 @@
 package io.github.osinn.security.utils;
 
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import io.github.osinn.security.security.dto.OnlineUser;
 import io.github.osinn.security.service.IOnlineUserService;
-import io.github.osinn.security.starter.SecurityJwtProperties;
-import io.github.osinn.security.constants.JwtConstant;
-import io.github.osinn.security.enums.AuthType;
-import io.github.osinn.security.security.dto.JwtRoleInfo;
-import com.google.common.base.Charsets;
+import io.github.osinn.security.starter.SecurityProperties;
+import io.github.osinn.security.constants.AuthConstant;
+import io.github.osinn.security.security.dto.AuthRoleInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.List;
 
 /**
@@ -32,12 +24,12 @@ import java.util.List;
 @Component
 public class TokenUtils {
 
-    private static SecurityJwtProperties securityJwtProperties;
+    private static SecurityProperties securityProperties;
     private static IOnlineUserService onlineUserService;
 
 
-    public TokenUtils(SecurityJwtProperties securityJwtProperties, IOnlineUserService onlineUserService) {
-        TokenUtils.securityJwtProperties = securityJwtProperties;
+    public TokenUtils(SecurityProperties securityProperties, IOnlineUserService onlineUserService) {
+        TokenUtils.securityProperties = securityProperties;
         TokenUtils.onlineUserService = onlineUserService;
     }
 
@@ -71,52 +63,11 @@ public class TokenUtils {
      * @return
      */
     public static String getToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader(securityJwtProperties.getHeader());
-        if (!StrUtils.isEmpty(bearerToken) && bearerToken.startsWith(securityJwtProperties.getTokenStartWith())) {
-            return bearerToken.replace(securityJwtProperties.getTokenStartWith(), "");
+        String bearerToken = request.getHeader(securityProperties.getHeader());
+        if (!StrUtils.isEmpty(bearerToken) && bearerToken.startsWith(securityProperties.getTokenStartWith())) {
+            return bearerToken.replace(securityProperties.getTokenStartWith(), "");
         }
         return null;
-    }
-
-    /**
-     * 支持从请求头、get请求、post表单JSON数据中获取token
-     *
-     * @param httpServletRequest
-     * @return
-     */
-    public static String getServiceName(HttpServletRequest httpServletRequest) {
-        String serviceName = httpServletRequest.getHeader(securityJwtProperties.getServiceName());
-        String serviceHandlerMethod = httpServletRequest.getHeader(securityJwtProperties.getServiceHandlerMethod());
-        if (StrUtils.isEmpty(serviceName)) {
-            serviceName = httpServletRequest.getParameter(securityJwtProperties.getServiceName());
-            serviceHandlerMethod = httpServletRequest.getParameter(securityJwtProperties.getServiceHandlerMethod());
-            if (StrUtils.isEmpty(serviceName) && AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
-                try (BufferedReader streamReader = new BufferedReader(new InputStreamReader(httpServletRequest.getInputStream(), Charsets.UTF_8))) {
-                    StringBuffer body = new StringBuffer();
-                    String inputStr = null;
-                    while ((inputStr = streamReader.readLine()) != null) {
-                        body.append(inputStr);
-                    }
-                    String bodyStr = body.toString();
-                    if (!StrUtils.isEmpty(bodyStr)) {
-                        JSONObject jsonObject = JSONUtil.parseObj(bodyStr);
-                        if (!jsonObject.isEmpty()) {
-                            serviceName = String.valueOf(jsonObject.get(securityJwtProperties.getServiceName()));
-                            if (!StrUtils.isEmpty(jsonObject.get(securityJwtProperties.getServiceHandlerMethod()))) {
-                                serviceHandlerMethod = (String) jsonObject.get(securityJwtProperties.getServiceHandlerMethod());
-                            }
-                        }
-                    }
-                } catch (IOException e) {
-                    log.debug("获取服务名称-HttpServletRequest 尝试解析表单请求json数据失败：" + e.getMessage(), e);
-                }
-            }
-        }
-
-        if (!StrUtils.isEmpty(serviceHandlerMethod) && !StrUtils.isEmpty(serviceName)) {
-            serviceName = serviceName + JwtConstant.POINT + serviceHandlerMethod;
-        }
-        return serviceName;
     }
 
     /**
@@ -143,21 +94,21 @@ public class TokenUtils {
      * @return 如果是超级管理员返回true否则false
      */
     public static Boolean hasRoleAdmin() {
-        List<JwtRoleInfo.BaseRoleInfo> roles = fetchOnlineUserInfo().getRoles();
-        return roles != null && roles.stream().anyMatch(item -> item.getRoleCode().equals(JwtConstant.SUPER_ADMIN_ROLE));
+        List<AuthRoleInfo.BaseRoleInfo> roles = fetchOnlineUserInfo().getRoles();
+        return roles != null && roles.stream().anyMatch(item -> item.getRoleCode().equals(AuthConstant.SUPER_ADMIN_ROLE));
     }
 
     /**
      * 判断是否包含admin角色
-     * 角色 entity可以继承JwtRoleInfo.BaseRoleInfo类方便传值
+     * 角色 entity可以继承AuthRoleInfo.BaseRoleInfo类方便传值
      *
      * @return 如果是超级管理员返回true否则false
      */
-    public static Boolean hasRoleAdmin(List<JwtRoleInfo.BaseRoleInfo> roles) {
+    public static Boolean hasRoleAdmin(List<AuthRoleInfo.BaseRoleInfo> roles) {
         if (roles == null || roles.isEmpty()) {
             return false;
         }
-        return roles.stream().anyMatch(item -> item.getRoleCode().equals(JwtConstant.SUPER_ADMIN_ROLE));
+        return roles.stream().anyMatch(item -> item.getRoleCode().equals(AuthConstant.SUPER_ADMIN_ROLE));
     }
 
     /**

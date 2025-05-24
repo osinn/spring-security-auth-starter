@@ -11,19 +11,19 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * jwt token检验信息
+ * token检验信息
  * 用户账号锁定、禁用等状态自行判断
  *
  * @author wency_cai
  */
 @Data
 @AllArgsConstructor
-public class JwtUser implements UserDetails, Serializable {
+public class AuthUserInfo implements UserDetails, Serializable {
 
     /**
      * 用户ID
      */
-    private Object id;
+    private Serializable id;
 
     /**
      * 登录账号
@@ -59,11 +59,11 @@ public class JwtUser implements UserDetails, Serializable {
      * 用户角色
      */
     @JsonIgnore
-    private List<JwtRoleInfo.BaseRoleInfo> roles = Collections.emptyList();
+    private List<AuthRoleInfo.BaseRoleInfo> roles = Collections.emptyList();
 
     private String token;
 
-    public JwtUser() {
+    public AuthUserInfo() {
 
     }
 

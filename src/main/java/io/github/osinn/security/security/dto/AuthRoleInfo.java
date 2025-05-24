@@ -16,7 +16,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class JwtRoleInfo implements Serializable {
+public class AuthRoleInfo implements Serializable {
 
     /**
      * 用户拥有的角色

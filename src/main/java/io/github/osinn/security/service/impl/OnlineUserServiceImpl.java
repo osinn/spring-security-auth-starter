@@ -1,129 +1,132 @@
 package io.github.osinn.security.service.impl;
 
 import com.google.common.collect.Lists;
+import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.security.dto.*;
-import io.github.osinn.security.starter.SecurityJwtProperties;
-import io.github.osinn.security.constants.JwtConstant;
-import io.github.osinn.security.enums.JwtHttpStatus;
-import io.github.osinn.security.exception.SecurityJwtException;
+import io.github.osinn.security.starter.SecurityProperties;
+import io.github.osinn.security.enums.AuthHttpStatus;
+import io.github.osinn.security.exception.SecurityAuthException;
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.service.ISecurityCaptchaCodeService;
 import io.github.osinn.security.service.ISecurityService;
 import io.github.osinn.security.utils.*;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author wency_cai
  */
-@Service
 @Slf4j
+@Component
 public class OnlineUserServiceImpl implements IOnlineUserService {
 
-    @Autowired
+    @Resource
     private ISecurityService securityService;
 
-    @Autowired
-    private SecurityJwtProperties securityJwtProperties;
+    @Resource
+    private SecurityProperties securityProperties;
 
-    @Autowired
+    @Resource
     private AuthenticationManagerBuilder authenticationManagerBuilder;
 
-    @Autowired
+    @Resource
     private RedisUtils redisUtils;
 
-    @Autowired
+    @Resource
     private ISecurityCaptchaCodeService securityCaptchaCodeService;
 
     @Override
-    public JwtUser customAuth(Object principal, HttpServletRequest request) {
-        JwtUser jwtUser = securityService.customAuth(principal);
+    public AuthUserInfo customAuth(Object principal, HttpServletRequest request) {
+        AuthUserInfo authUserInfo = securityService.customAuth(principal);
 
-        if (jwtUser == null) {
+        if (authUserInfo == null) {
             return null;
         }
 
         // 生成token
-        this.generationToken(jwtUser, request);
+        this.generationToken(authUserInfo, request);
 
-        return jwtUser;
+        return authUserInfo;
     }
 
     @Override
-    public JwtUser auth(AuthUser authUser, HttpServletRequest request, HttpServletResponse response) {
+    public AuthUserInfo auth(AuthLoginParam authLoginParam, HttpServletRequest request, HttpServletResponse response) {
 
-        SecurityJwtProperties.CaptchaCode captchaCode = securityJwtProperties.getCaptchaCode();
+        SecurityProperties.CaptchaCode captchaCode = securityProperties.getCaptchaCode();
         if (captchaCode.isEnable()) {
             // 查询验证码
-            String code = securityCaptchaCodeService.getCaptchaCode(authUser.getUuid());
+            String code = securityCaptchaCodeService.getCaptchaCode(authLoginParam.getUuid());
             // 清除验证码
-            securityCaptchaCodeService.delete(authUser.getUuid());
+            securityCaptchaCodeService.delete(authLoginParam.getUuid());
             if (StrUtils.isEmpty(code)) {
-                throw new SecurityJwtException(JwtHttpStatus.NOT_FOUND_CODE.getCode(), JwtHttpStatus.NOT_FOUND_CODE.getMessage());
+                throw new SecurityAuthException(AuthHttpStatus.NOT_FOUND_CODE.getCode(), AuthHttpStatus.NOT_FOUND_CODE.getMessage());
             }
-            if (!code.equalsIgnoreCase(authUser.getCode())) {
-                throw new SecurityJwtException(JwtHttpStatus.CODE_UNAUTHORIZED.getCode(), JwtHttpStatus.CODE_UNAUTHORIZED.getMessage());
+            if (!code.equalsIgnoreCase(authLoginParam.getCode())) {
+                throw new SecurityAuthException(AuthHttpStatus.CODE_UNAUTHORIZED.getCode(), AuthHttpStatus.CODE_UNAUTHORIZED.getMessage());
             }
         }
 
         String password;
-        if (!StrUtils.isEmpty(securityJwtProperties.getRsaPrivateKey())) {
+        if (!StrUtils.isEmpty(securityProperties.getRsaPrivateKey())) {
             try {
-                password = RsaEncryptUtils.decrypt(authUser.getPassword(), securityJwtProperties.getRsaPrivateKey());
+                password = CryptoUtils.rsaDecrypt(authLoginParam.getPassword(), securityProperties.getRsaPrivateKey());
 
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                throw new SecurityJwtException(JwtHttpStatus.PASSWORD_ERROR.getCode(), JwtHttpStatus.TOKEN_UNAUTHORIZED.getMessage());
+                throw new SecurityAuthException(AuthHttpStatus.PASSWORD_ERROR.getCode(), AuthHttpStatus.TOKEN_UNAUTHORIZED.getMessage());
             }
         } else {
-            password = authUser.getPassword();
+            password = authLoginParam.getPassword();
         }
 
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(authUser.getUsername(), password);
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(authLoginParam.getAccount(), password);
         Authentication authentication = null;
         try {
             authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             // 生成令牌
-            JwtUser jwtUser = (JwtUser) authentication.getPrincipal();
+            AuthUserInfo authUserInfo = (AuthUserInfo) authentication.getPrincipal();
 
             // 生成token
-            this.generationToken(jwtUser, request);
-            return jwtUser;
+            this.generationToken(authUserInfo, request);
+            return authUserInfo;
         } catch (AuthenticationException e) {
             ResponseUtils.loginFailThrows(e);
         } catch (Exception e) {
             throw new SecurityException(e.getMessage());
         }
-        throw new SecurityJwtException(JwtHttpStatus.LOGIN_FAIL);
+        throw new SecurityAuthException(AuthHttpStatus.LOGIN_FAIL);
     }
 
     /**
      * 退出登录删除redis缓存
      *
-     * @throws SecurityJwtException
+     * @throws SecurityAuthException
      */
     @Override
-    public void logout() throws SecurityJwtException {
+    public void logout() throws SecurityAuthException {
         //2 token不为空，移除token，从redis删除token
         String token = TokenUtils.getToken();
         if (token != null) {
-            redisUtils.del(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+            redisUtils.del(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
         } else {
-            throw new SecurityJwtException(JwtHttpStatus.LOGOUT_FAIL.getCode(), JwtHttpStatus.LOGOUT_FAIL.getMessage());
+            throw new SecurityAuthException(AuthHttpStatus.LOGOUT_FAIL.getCode(), AuthHttpStatus.LOGOUT_FAIL.getMessage());
         }
 
     }
@@ -131,7 +134,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     @Override
     public void saveToken(String token, OnlineUser onlineUser) {
         onlineUser.setHasAdmin(TokenUtils.hasRoleAdmin());
-        redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
+        redisUtils.set(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token), onlineUser, securityProperties.getExpireTime());
     }
 
     /**
@@ -142,7 +145,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      */
     @Override
     public List<OnlineUser> fetchOnlineUserAllByUserId(Object filterUserId) {
-        List<String> keys = redisUtils.scan(JwtConstant.ONLINE_TOKEN_KEY + "*");
+        List<String> keys = redisUtils.scan(securityProperties.getCacheOnlineUserInfoKeyPrefix() + "*");
         Collections.reverse(keys);
         List<OnlineUser> onlineUsers = new ArrayList<>();
         for (String key : keys) {
@@ -174,7 +177,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         if (StrUtils.isEmpty(token)) {
             return null;
         }
-        OnlineUser onlineUserInfo = getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+        OnlineUser onlineUserInfo = getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
         return onlineUserInfo;
     }
 
@@ -183,10 +186,10 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         if (StrUtils.isEmpty(token)) {
             return null;
         }
-        if (StringUtils.hasText(token) && token.startsWith(securityJwtProperties.getTokenStartWith())) {
-            token = token.replace(securityJwtProperties.getTokenStartWith(), "");
+        if (StringUtils.hasText(token) && token.startsWith(securityProperties.getTokenStartWith())) {
+            token = token.replace(securityProperties.getTokenStartWith(), "");
         }
-        OnlineUser onlineUserInfo = getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+        OnlineUser onlineUserInfo = getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
         return onlineUserInfo;
     }
 
@@ -213,15 +216,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     }
 
     @Override
-    public void deleteCacheAll() {
-        redisUtils.deleteCacheByPrefix(JwtConstant.ONLINE_TOKEN_KEY);
-        redisUtils.deleteCacheByPrefix(JwtConstant.ONLINE_USER_INFO_KEY);
-        redisUtils.deleteCacheByPrefix(JwtConstant.RESOURCE_PERMISSION);
-    }
-
-    @Override
     public List<OnlineUser> fetchOnlineUserAll() {
-        List<String> onlineUserList = redisUtils.fetchLike(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + "*");
+        List<String> onlineUserList = redisUtils.fetchLike(securityProperties.getCacheOnlineUserInfoKeyPrefix() + "*");
         List<OnlineUser> onlineUsers = Lists.newArrayList();
         for (String onlineUserStr : onlineUserList) {
             OnlineUser onlineUser = GsonMapper.toBean(onlineUserStr, OnlineUser.class);
@@ -234,8 +230,9 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     public void refreshToken(OnlineUser onlineUser) {
         String token = TokenUtils.getToken();
         if (token != null && onlineUser != null) {
-            onlineUser.setRefreshTime(new Date());
-            redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
+            log.debug("token过期时间已刷新");
+            onlineUser.setRefreshTime(System.currentTimeMillis());
+            redisUtils.set(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token), onlineUser, securityProperties.getExpireTime());
         } else {
             log.error("无法刷新token过期时间，token【{}】onlineUser【{}】", token != null, onlineUser != null);
         }
@@ -253,8 +250,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         onlineUserAll.forEach(onlineUser -> {
             if (ids.contains(onlineUser.getId())) {
                 try {
-                    String token = DesEncryptUtils.desDecrypt(onlineUser.getKey());
-                    redisUtils.del(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+                    String token = CryptoUtils.desDecrypt(onlineUser.getKey(), securityProperties.getDesPassword());
+                    redisUtils.del(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -263,6 +260,28 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     }
 
+    /**
+     * 生成token并缓存用户信息
+     *
+     * @param authUserInfo 用户信息
+     * @param request
+     */
+    @Override
+    public void generationToken(AuthUserInfo authUserInfo, HttpServletRequest request) {
+        String token = null;
+        // 获取自定义token
+        token = securityService.getCustomizeToken(authUserInfo);
+        if (StrUtils.isEmpty(token)) {
+            token = TokenUtils.createToken();
+        }
+        authUserInfo.setToken(securityProperties.getTokenStartWith() + token);
+        // 保存在线信息
+        this.tokenSave(authUserInfo, token, request);
+        // 检查是否登录过，踢出登录
+        if (securityProperties.isSingleLogin()) {
+            this.checkLoginOnUser(authUserInfo.getId(), token);
+        }
+    }
 
     /**
      * @param userId     用户名
@@ -276,10 +295,10 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         for (OnlineUser onlineUser : onlineUsers) {
             if (userId.equals(onlineUser.getId())) {
                 try {
-                    String token = DesEncryptUtils.desDecrypt(onlineUser.getKey());
+                    String token = CryptoUtils.desDecrypt(onlineUser.getKey(), securityProperties.getDesPassword());
                     if (!StrUtils.isEmpty(igoreToken) && !igoreToken.equals(token)) {
                         // 踢出用户
-                        redisUtils.del(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+                        redisUtils.del(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -288,97 +307,107 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         }
     }
 
-
     /**
      * 保存在线用户信息
      *
-     * @param jwtUser /
-     * @param token   /
-     * @param request /
+     * @param authUserInfo /
+     * @param token        /
+     * @param request      /
      */
-    private void tokenSave(JwtUser jwtUser, String token, HttpServletRequest request) {
-        String ip = StrUtils.getIp(request);
-        String browser = StrUtils.getBrowser(request);
+    private void tokenSave(AuthUserInfo authUserInfo, String token, HttpServletRequest request) {
 
-        OnlineUser onlineUser = null;
         try {
             // 用户权限赋值
-            this.setUserPermission(jwtUser);
-            onlineUser = new OnlineUser(jwtUser.getId(),
-                    jwtUser.getAccount(),
-                    jwtUser.getPassword(),
-                    jwtUser.getNickname(),
+            this.setUserPermission(authUserInfo);
+            String ip = StrUtils.getIp(request);
+            String browser = StrUtils.getBrowser(request);
+            OnlineUser onlineUser = new OnlineUser(authUserInfo.getId(),
+                    authUserInfo.getAccount(),
+                    authUserInfo.getPassword(),
+                    authUserInfo.getNickname(),
                     browser,
                     ip,
-                    DesEncryptUtils.desEncrypt(token),
+                    CryptoUtils.desEncrypt(token, securityProperties.getDesPassword()),
                     new Date(),
-                    new Date(),
-                    securityJwtProperties.getLoginSource(),
-                    jwtUser.getExtendField(),
-                    TokenUtils.hasRoleAdmin(jwtUser.getRoles()),
-                    jwtUser.getRoles(),
-                    jwtUser.getAuthorities(),
-                    jwtUser.getResourcePermissions());
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(onlineUser, token, onlineUser.getAuthorities());
-            // 设置登录认证信息到上下文
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            redisUtils.set(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token), onlineUser, securityJwtProperties.getTokenValidityInSeconds());
-            request.setAttribute(securityJwtProperties.getHeader(), securityJwtProperties.getTokenStartWith() + token);
-            request.setAttribute(JwtConstant.ONLINE_USER_INFO_KEY, onlineUser);
+                    System.currentTimeMillis(),
+                    securityProperties.getLoginSource(),
+                    authUserInfo.getExtendField(),
+                    TokenUtils.hasRoleAdmin(authUserInfo.getRoles()),
+                    authUserInfo.getRoles(),
+                    authUserInfo.getAuthorities(),
+                    authUserInfo.getResourcePermissions());
+            saveLoginInfo(onlineUser, token);
+            request.setAttribute(securityProperties.getHeader(), securityProperties.getTokenStartWith() + token);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new SecurityJwtException(JwtHttpStatus.TOKEN_UNAUTHORIZED.getCode(), JwtHttpStatus.TOKEN_UNAUTHORIZED.getMessage());
+            throw new SecurityAuthException(AuthHttpStatus.TOKEN_UNAUTHORIZED.getCode(), AuthHttpStatus.TOKEN_UNAUTHORIZED.getMessage());
         }
+    }
+
+    @Override
+    public void refreshUserPermission(Serializable userId) {
+        List<OnlineUser> onlineUsers = fetchOnlineUserAllByUserId(userId);
+        if (CollectionUtils.isEmpty(onlineUsers)) {
+            return;
+        }
+        AuthUserInfo authUserInfo = new AuthUserInfo();
+        authUserInfo.setId(userId);
+        this.setUserPermission(authUserInfo);
+        boolean isAdmin = TokenUtils.hasRoleAdmin(authUserInfo.getRoles());
+        for (OnlineUser onlineUser : onlineUsers) {
+            String token;
+            try {
+                token = CryptoUtils.desDecrypt(onlineUser.getKey(), securityProperties.getDesPassword());
+            } catch (Exception e) {
+                throw new SecurityAuthException("刷新用户权限token解密失败");
+            }
+
+            onlineUser.setHasAdmin(isAdmin);
+            onlineUser.setRoles(authUserInfo.getRoles());
+            onlineUser.setAuthorities(authUserInfo.getAuthorities());
+            onlineUser.setResourcePermissions(authUserInfo.getResourcePermissions());
+            this.saveLoginInfo(onlineUser, token);
+        }
+
+    }
+
+    @Override
+    public void deleteCacheAll() {
+        this.deleteCacheByPrefix(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY);
+    }
+
+    private void saveLoginInfo(OnlineUser onlineUser, String token) {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(onlineUser, token, onlineUser.getAuthorities());
+        // 设置登录认证信息到上下文
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        redisUtils.set(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token), onlineUser, securityProperties.getExpireTime());
     }
 
     /**
      * 设计用户权限
      *
-     * @param jwtUser
+     * @param authUserInfo
      */
-    private void setUserPermission(JwtUser jwtUser) {
+    private void setUserPermission(AuthUserInfo authUserInfo) {
         Set<String> permissions = new HashSet<>();
         Set<ResourcePermission> resourcePermissions = new HashSet<>();
         // 用户权限列表，根据用户拥有的权限标识与如 @PreAuthorize("hasAuthority('sys:menu:view')") 标注的接口对比，决定是否可以调用接口
-        JwtRoleInfo jwtRoleInfo = securityService.fetchRolePermissionInfo(jwtUser.getId());
+        AuthRoleInfo authRoleInfo = securityService.fetchRolePermissionInfo(authUserInfo.getId());
 
-        for (JwtRoleInfo.BaseRoleInfo role : jwtRoleInfo.getRoles()) {
+        for (AuthRoleInfo.BaseRoleInfo role : authRoleInfo.getRoles()) {
             for (ResourcePermission resourcePermission : role.getResourcePermission()) {
                 permissions.add(resourcePermission.getPermissionCode());
                 resourcePermissions.add(resourcePermission);
             }
         }
-        jwtUser.setRoles(jwtRoleInfo.getRoles());
+        authUserInfo.setRoles(authRoleInfo.getRoles());
 
 
         if (permissions.isEmpty()) {
             permissions.add("default");
         }
-        jwtUser.setResourcePermissions(resourcePermissions);
-        jwtUser.setAuthorities(permissions.stream().map(GrantedOfAuthority::new).collect(Collectors.toList()));
-
+        authUserInfo.setResourcePermissions(resourcePermissions);
+        authUserInfo.setAuthorities(permissions.stream().map(GrantedOfAuthority::new).collect(Collectors.toList()));
     }
 
-    /**
-     * 生成token并缓存用户信息
-     *
-     * @param jwtUser 用户信息
-     * @param request
-     */
-    @Override
-    public void generationToken(JwtUser jwtUser, HttpServletRequest request) {
-        String token = null;
-        // 获取自定义token
-        token = securityService.getCustomizeToken(jwtUser);
-        if (StrUtils.isEmpty(token)) {
-            token = TokenUtils.createToken();
-        }
-        jwtUser.setToken(securityJwtProperties.getTokenStartWith() + token);
-        // 保存在线信息
-        this.tokenSave(jwtUser, token, request);
-        // 检查是否登录过，踢出登录
-        if (securityJwtProperties.isSingleLogin()) {
-            this.checkLoginOnUser(jwtUser.getId(), token);
-        }
-    }
 }

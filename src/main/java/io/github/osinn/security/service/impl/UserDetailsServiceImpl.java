@@ -1,7 +1,7 @@
 package io.github.osinn.security.service.impl;
 
-import io.github.osinn.security.exception.SecurityJwtException;
-import io.github.osinn.security.security.dto.JwtUser;
+import io.github.osinn.security.exception.SecurityAuthException;
+import io.github.osinn.security.security.dto.AuthUserInfo;
 import io.github.osinn.security.service.ISecurityService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import io.github.osinn.security.enums.JwtHttpStatus;
+import io.github.osinn.security.enums.AuthHttpStatus;
 
 import java.lang.reflect.Field;
 
@@ -35,44 +35,27 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         log.debug("-------->  loadUserByUsername  <--------");
 
-        JwtUser jwtUser = findUser(account);
-        return jwtUser;
+        return findUser(account);
 
     }
 
-    private JwtUser findUser(String account) {
+    private AuthUserInfo findUser(String account) {
 
-        Object user = null;
+        AuthUserInfo authUserInfo = null;
         try {
-            user = securityService.loadUserByUsername(account);
-        } catch (SecurityJwtException | DisabledException | LockedException e) {
+            authUserInfo = securityService.loadUserByUsername(account);
+        } catch (SecurityAuthException | DisabledException | LockedException e) {
             throw e;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new SecurityJwtException(JwtHttpStatus.INTERNAL_SERVER_ERROR.getCode(), JwtHttpStatus.INTERNAL_SERVER_ERROR.getMessage());
+            throw new SecurityAuthException(AuthHttpStatus.INTERNAL_SERVER_ERROR.getCode(), AuthHttpStatus.INTERNAL_SERVER_ERROR.getMessage());
         }
 
-        if (user == null) {
-            throw new UsernameNotFoundException(JwtHttpStatus.NOT_FOUND_ACCOUNT.getMessage());
+        if (authUserInfo == null) {
+            throw new UsernameNotFoundException(AuthHttpStatus.NOT_FOUND_ACCOUNT.getMessage());
         }
 
-        JwtUser jwtUser;
-        try {
-            jwtUser = new JwtUser();
-            BeanUtils.copyProperties(user, jwtUser);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new UsernameNotFoundException(JwtHttpStatus.NOT_FOUND_ACCOUNT.getMessage());
-
-        }
-//        if (!jwtUser.isEnabled()) {
-//            throw new DisabledException(JwtHttpStatus.DISABLED_ACCOUNT.getMessage());
-//        }
-//        if (!jwtUser.isAccountNonLocked()) {
-//            throw new LockedException(JwtHttpStatus.LOCK_ACCOUNT.getMessage());
-//        }
-
-        return jwtUser;
+        return authUserInfo;
     }
 
     /**

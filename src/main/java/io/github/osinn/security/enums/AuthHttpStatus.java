@@ -8,7 +8,7 @@ import org.springframework.lang.Nullable;
  *
  * @author wency_cai
  **/
-public enum JwtHttpStatus {
+public enum AuthHttpStatus {
 
     /**
      * 用户名或密码错误
@@ -79,7 +79,7 @@ public enum JwtHttpStatus {
 
     private final int code;
 
-    JwtHttpStatus(int code, String message) {
+    AuthHttpStatus(int code, String message) {
         this.code = code;
         this.message = message;
     }
@@ -92,8 +92,8 @@ public enum JwtHttpStatus {
         return this.code;
     }
 
-    public static JwtHttpStatus valueOf(int code) {
-        JwtHttpStatus status = resolve(code);
+    public static AuthHttpStatus valueOf(int code) {
+        AuthHttpStatus status = resolve(code);
         if (status == null) {
             throw new IllegalArgumentException("No matching constant for [" + code + "]");
         }
@@ -109,8 +109,8 @@ public enum JwtHttpStatus {
      * @since 5.0
      */
     @Nullable
-    public static JwtHttpStatus resolve(int statusCode) {
-        for (JwtHttpStatus status : values()) {
+    public static AuthHttpStatus resolve(int statusCode) {
+        for (AuthHttpStatus status : values()) {
             if (status.code == statusCode) {
                 return status;
             }

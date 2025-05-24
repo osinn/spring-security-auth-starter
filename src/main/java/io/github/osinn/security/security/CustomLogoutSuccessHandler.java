@@ -2,23 +2,22 @@ package io.github.osinn.security.security;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.CharsetUtil;
-
-import io.github.osinn.security.enums.AuthType;
 import io.github.osinn.security.security.dto.OnlineUser;
-import io.github.osinn.security.enums.JwtHttpStatus;
+import io.github.osinn.security.enums.AuthHttpStatus;
 import io.github.osinn.security.service.ISecurityService;
-import io.github.osinn.security.starter.SecurityJwtProperties;
+import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.utils.IpUtils;
 import io.github.osinn.security.utils.ResponseUtils;
 import io.github.osinn.security.utils.TokenUtils;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 
 
@@ -30,11 +29,11 @@ import java.io.IOException;
 @Slf4j
 public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
 
-    @Autowired
+    @Resource
     private ISecurityService securityService;
 
-    @Autowired
-    private SecurityJwtProperties securityJwtProperties;
+    @Resource
+    private SecurityProperties securityProperties;
 
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -50,15 +49,10 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
             securityService.logoutBeforeHandler(request, response, loginUser);
             TokenUtils.deleteToken();
         }
-        if(securityJwtProperties.isLoginOutResponse()) {
+        if(securityProperties.isLoginOutResponse()) {
             response.setCharacterEncoding(CharsetUtil.UTF_8);
-            String path;
-            if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
-                path = securityService.getServiceName(request);
-            } else {
-                path = request.getRequestURI();
-            }
-            ResponseUtils.outWriter(JwtHttpStatus.LOGOUT_SUCCESS.getCode(), JwtHttpStatus.LOGOUT_SUCCESS.getMessage(), null, path, request, response);
+            String path = request.getRequestURI();
+            ResponseUtils.outWriter(AuthHttpStatus.LOGOUT_SUCCESS.getCode(), AuthHttpStatus.LOGOUT_SUCCESS.getMessage(), null, path, request, response);
         }
     }
 

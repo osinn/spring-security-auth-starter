@@ -1,16 +1,14 @@
 package io.github.osinn.security.security.filter;
 
-import io.github.osinn.security.constants.JwtConstant;
-import io.github.osinn.security.enums.AuthType;
-import io.github.osinn.security.enums.JwtHttpStatus;
-import io.github.osinn.security.exception.SecurityJwtException;
-import io.github.osinn.security.security.JwtAuthenticationEntryPoint;
+import io.github.osinn.security.constants.AuthConstant;
+import io.github.osinn.security.enums.AuthHttpStatus;
+import io.github.osinn.security.exception.SecurityAuthException;
+import io.github.osinn.security.security.SecurityAuthenticationEntryPoint;
 import io.github.osinn.security.security.dto.OnlineUser;
-import io.github.osinn.security.service.IApiAuthService;
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.service.ISecurityService;
-import io.github.osinn.security.starter.SecurityJwtProperties;
-import io.github.osinn.security.utils.DesEncryptUtils;
+import io.github.osinn.security.starter.SecurityProperties;
+import io.github.osinn.security.utils.CryptoUtils;
 import io.github.osinn.security.utils.StrUtils;
 import io.github.osinn.security.utils.TokenUtils;
 import io.github.osinn.security.security.dto.SecurityStorage;
@@ -27,21 +25,20 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
-import java.util.Date;
 
 /**
  * token的校验
  * 该类继承自BasicAuthenticationFilter，在doFilterInternal方法中，
- * 从http头的Authorization 项读取token数据，然后用Jwts包提供的方法校验token的合法性。
  * 如果校验通过，就认为这是一个取得授权的合法请求
  *
  * @author wency_cai
  */
 @Slf4j
-public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
+public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
 
-    private SecurityJwtProperties securityJwtProperties;
+    private SecurityProperties securityProperties;
 
     private IOnlineUserService onlineUserService;
 
@@ -50,26 +47,21 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
      */
     private SecurityStorage securityStorage;
 
-    private IApiAuthService apiAuthService;
-
-    private JwtAuthenticationEntryPoint authenticationEntryPoint;
+    private SecurityAuthenticationEntryPoint authenticationEntryPoint;
 
     private ISecurityService securityService;
 
 
-
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
-                                   SecurityStorage securityStorage,
-                                   IApiAuthService apiAuthService,
-                                   IOnlineUserService onlineUserService,
-                                   SecurityJwtProperties securityJwtProperties,
-                                   JwtAuthenticationEntryPoint authenticationEntryPoint,
-                                   ISecurityService securityService) {
+    public SecurityAuthenticationFilter(AuthenticationManager authenticationManager,
+                                        SecurityStorage securityStorage,
+                                        IOnlineUserService onlineUserService,
+                                        SecurityProperties securityProperties,
+                                        SecurityAuthenticationEntryPoint authenticationEntryPoint,
+                                        ISecurityService securityService) {
         super(authenticationManager);
         this.securityStorage = securityStorage;
-        this.apiAuthService = apiAuthService;
         this.onlineUserService = onlineUserService;
-        this.securityJwtProperties = securityJwtProperties;
+        this.securityProperties = securityProperties;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.securityService = securityService;
     }
@@ -84,7 +76,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             this.authenticationEntryPoint.commence(request, response, e);
         } catch (Exception e) {
             log.error(e.getMessage());
-            this.authenticationEntryPoint.commence(request, response, new AuthenticationServiceException(JwtHttpStatus.INTERNAL_SERVER_ERROR.getMessage(), new SecurityJwtException(JwtHttpStatus.INTERNAL_SERVER_ERROR)));
+            this.authenticationEntryPoint.commence(request, response, new AuthenticationServiceException(AuthHttpStatus.INTERNAL_SERVER_ERROR.getMessage(), new SecurityAuthException(AuthHttpStatus.INTERNAL_SERVER_ERROR)));
         }
     }
 
@@ -95,11 +87,11 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
      */
     private void checkAuthentication(HttpServletRequest request, HttpServletResponse response) {
         // 多环境，效验请求
-        if (StringUtils.hasLength(securityJwtProperties.getEnvTag()) && StringUtils.hasLength(securityJwtProperties.getHeaderEnvTagName())) {
-            String headerEnvTag = request.getHeader(securityJwtProperties.getHeaderEnvTagName());
-            if (!securityJwtProperties.getEnvTag().equals(headerEnvTag)) {
-                request.setAttribute(JwtHttpStatus.ENV_TAG_ERROR.name(), JwtHttpStatus.ENV_TAG_ERROR.getMessage());
-                throw new AuthenticationServiceException(JwtHttpStatus.ENV_TAG_ERROR.getMessage(), new SecurityJwtException(JwtHttpStatus.ENV_TAG_ERROR));
+        if (StringUtils.hasLength(securityProperties.getEnvTag()) && StringUtils.hasLength(securityProperties.getHeaderEnvTagName())) {
+            String headerEnvTag = request.getHeader(securityProperties.getHeaderEnvTagName());
+            if (!securityProperties.getEnvTag().equals(headerEnvTag)) {
+                request.setAttribute(AuthHttpStatus.ENV_TAG_ERROR.name(), AuthHttpStatus.ENV_TAG_ERROR.getMessage());
+                throw new AuthenticationServiceException(AuthHttpStatus.ENV_TAG_ERROR.getMessage(), new SecurityAuthException(AuthHttpStatus.ENV_TAG_ERROR));
             }
         }
 
@@ -109,11 +101,11 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
             return;
         }
 
-        if (AuthType.SERVICE.equals(securityJwtProperties.getAuthType())) {
-            // 判断是否为匿名访问服务
-            boolean anonymousService = apiAuthService.checkAnonymousService(request);
-            if (anonymousService) {
-                return;
+        String token = TokenUtils.getToken(request);
+        if (!StrUtils.isEmpty(token) && securityProperties.getIgnoringToken().contains(securityProperties.getTokenStartWith() + token)) {
+            OnlineUser onlineUser = onlineUserService.getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
+            if(onlineUser != null) {
+                request.setAttribute(AuthConstant.ONLINE_USER_ID, onlineUser.getId());
             }
         }
 
@@ -134,33 +126,33 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     private Authentication getAuthenticationFromToken(HttpServletRequest request) {
         String token = TokenUtils.getToken(request);
         if (StrUtils.isEmpty(token)) {
-            request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-            throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
+            request.setAttribute(AuthHttpStatus.TOKEN_EXPIRE.name(), AuthHttpStatus.TOKEN_EXPIRE.getMessage());
+            throw new AuthenticationCredentialsNotFoundException(AuthHttpStatus.TOKEN_EXPIRE.getMessage());
         } else {
             // 验证 token 是否存在
             OnlineUser onlineUser = null;
-            onlineUser = onlineUserService.getOne(JwtConstant.ONLINE_USER_INFO_KEY_PREFIX + DesEncryptUtils.md5DigestAsHex(token));
+            onlineUser = onlineUserService.getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
             if (onlineUser == null) {
-                request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-                throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
+                request.setAttribute(AuthHttpStatus.TOKEN_EXPIRE.name(), AuthHttpStatus.TOKEN_EXPIRE.getMessage());
+                throw new AuthenticationCredentialsNotFoundException(AuthHttpStatus.TOKEN_EXPIRE.getMessage());
             } else {
                 try {
-                    request.setAttribute(JwtConstant.ONLINE_USER_ID, onlineUser.getId());
+                    request.setAttribute(AuthConstant.ONLINE_USER_ID, onlineUser.getId());
                     UsernamePasswordAuthenticationToken authentication = this.getAuthentication(onlineUser, token);
                     // 是否刷新token缓存过期时间
-                    if (securityJwtProperties.isDynamicRefreshToken()) {
-                        Date loginTime = onlineUser.getRefreshTime();
-                        if (loginTime != null && (System.currentTimeMillis() - loginTime.getTime()) >= (securityJwtProperties.getTokenValidityInSeconds() * 1000) / 2) {
+                    if (securityProperties.isDynamicRefreshToken()) {
+                        Long loginTime = onlineUser.getRefreshTime();
+                        boolean flagRefreshTime = updateRefreshTimeIfNeeded(loginTime, securityProperties.getExpireTime());
+                        if (flagRefreshTime) {
                             // 过期时间过半刷新token缓存过期时间
                             TokenUtils.refreshToken(onlineUser);
                         }
                     }
-                    request.setAttribute(JwtConstant.ONLINE_USER_INFO_KEY, onlineUser);
                     return authentication;
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
-                    request.setAttribute(JwtHttpStatus.TOKEN_EXPIRE.name(), JwtHttpStatus.TOKEN_EXPIRE.getMessage());
-                    throw new AuthenticationCredentialsNotFoundException(JwtHttpStatus.TOKEN_EXPIRE.getMessage());
+                    request.setAttribute(AuthHttpStatus.TOKEN_EXPIRE.name(), AuthHttpStatus.TOKEN_EXPIRE.getMessage());
+                    throw new AuthenticationCredentialsNotFoundException(AuthHttpStatus.TOKEN_EXPIRE.getMessage());
                 }
 
             }
@@ -169,6 +161,16 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     private UsernamePasswordAuthenticationToken getAuthentication(OnlineUser onlineUser, String token) {
         return new UsernamePasswordAuthenticationToken(onlineUser, token, onlineUser.getAuthorities());
+    }
+
+    private boolean updateRefreshTimeIfNeeded(long refreshTime, long expireTime) {
+        long expireMillis = expireTime * 1000; //秒转换为毫秒
+        long halfExpireMillis = expireMillis / 2; // 一半时间
+        long nowTime = System.currentTimeMillis();
+        // 计算时间差
+        long timeDifference = nowTime - refreshTime;
+        // 如果时间差小于等于阈值一半的时间，则更新refreshTime为当前时间
+        return timeDifference > halfExpireMillis;
     }
 
 }

@@ -1,6 +1,6 @@
 package io.github.osinn.security.exception;
 
-import io.github.osinn.security.enums.JwtHttpStatus;
+import io.github.osinn.security.enums.AuthHttpStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,7 +13,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
  */
 @Getter
 @NoArgsConstructor
-public class SecurityJwtException extends RuntimeException {
+public class SecurityAuthException extends RuntimeException {
 
     private Integer status = BAD_REQUEST.value();
 
@@ -22,7 +22,7 @@ public class SecurityJwtException extends RuntimeException {
      *
      * @param message 异常信息
      */
-    public SecurityJwtException(String message) {
+    public SecurityAuthException(String message) {
         super(message);
     }
 
@@ -32,23 +32,23 @@ public class SecurityJwtException extends RuntimeException {
      * @param message 异常消息
      * @param cause   异常堆栈信息
      */
-    public SecurityJwtException(String message, Throwable cause) {
+    public SecurityAuthException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public SecurityJwtException(HttpStatus status, String msg) {
+    public SecurityAuthException(HttpStatus status, String msg) {
         super(msg);
         this.status = status.value();
     }
 
-    public SecurityJwtException(int status, String msg) {
+    public SecurityAuthException(int status, String msg) {
         super(msg);
         this.status = status;
     }
 
-    public SecurityJwtException(JwtHttpStatus jwtHttpStatus) {
-        super(jwtHttpStatus.getMessage());
-        this.status = jwtHttpStatus.getCode();
+    public SecurityAuthException(AuthHttpStatus authHttpStatus) {
+        super(authHttpStatus.getMessage());
+        this.status = authHttpStatus.getCode();
     }
 
     /**
@@ -57,7 +57,7 @@ public class SecurityJwtException extends RuntimeException {
      * @param message 异常消息
      * @param cause   异常堆栈信息
      */
-    public SecurityJwtException(int status, String message, Throwable cause) {
+    public SecurityAuthException(int status, String message, Throwable cause) {
         super(message, cause);
         this.status = status;
     }

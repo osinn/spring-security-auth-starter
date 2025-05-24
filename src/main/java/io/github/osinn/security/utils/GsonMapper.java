@@ -23,14 +23,11 @@ public class GsonMapper {
         return bean;
     }
 
-    public static <T> T toListBean(String str) {
-        if (str == null || "".equals(str)) {
-            return null;
-        }
-        Type type = new TypeToken<List<T>>(){}.getType();
-        T bean = GSON.fromJson(str, type);
-        return bean;
+    public static <T> List<T> toListBean(String json, Class<T> clazz) {
+        Type type = TypeToken.getParameterized(List.class, clazz).getType();
+        return new Gson().fromJson(json, type);
     }
+
 
     public static String toJsonStr(Object obj) {
         if (obj == null || "".equals(obj)) {
@@ -40,9 +37,4 @@ public class GsonMapper {
         return json;
     }
 
-    public static void main(String[] args) {
-        Object obj = "sdasd";
-        String d= toBean((String)obj, String.class);
-        System.out.println(d);
-    }
 }

@@ -2,12 +2,12 @@ package io.github.osinn.security.service.impl;
 
 import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.util.IdUtil;
-import io.github.osinn.security.starter.SecurityJwtProperties;
+import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.security.dto.CaptchaCodeDTO;
 import io.github.osinn.security.service.ISecurityCaptchaCodeService;
 import io.github.osinn.security.utils.RedisUtils;
 import com.wf.captcha.SpecCaptcha;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
 
 /**
  * 图形验证码服务
@@ -16,11 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeService {
 
-    @Autowired
+    @Resource
     private RedisUtils redisUtils;
 
-    @Autowired
-    private SecurityJwtProperties securityService;
+    @Resource
+    private SecurityProperties securityService;
 
     /**
      * 创建图形验证码
@@ -35,7 +35,7 @@ public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeServi
         SpecCaptcha specCaptcha = new SpecCaptcha(111, 36, 4);
         String verCode = specCaptcha.text().toLowerCase();
         String key = String.valueOf(id);
-        SecurityJwtProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
+        SecurityProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
         redisUtils.set(captchaCode.getCodeKey().concat(key), verCode, captchaCode.getCaptchaExpiration());
 
         return new CaptchaCodeDTO(key, specCaptcha.toBase64());
@@ -49,7 +49,7 @@ public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeServi
      */
     @Override
     public String getCaptchaCode(String codeKey) {
-        SecurityJwtProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
+        SecurityProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
         // 从redis取出验证码
         String code = redisUtils.get(captchaCode.getCodeKey().concat(codeKey), String.class);
         return code;
@@ -62,7 +62,7 @@ public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeServi
      */
     @Override
     public void delete(String codeKey) {
-        SecurityJwtProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
+        SecurityProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
         redisUtils.del(captchaCode.getCodeKey().concat(codeKey));
     }
 }

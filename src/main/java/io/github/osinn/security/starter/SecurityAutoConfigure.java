@@ -1,18 +1,13 @@
 package io.github.osinn.security.starter;
 
-import io.github.osinn.security.security.JwtAccessDeniedHandler;
-import io.github.osinn.security.security.JwtAuthenticationEntryPoint;
+import io.github.osinn.security.security.SecurityAccessDeniedHandler;
+import io.github.osinn.security.security.SecurityAuthenticationEntryPoint;
 import io.github.osinn.security.security.dto.SecurityStorage;
-import io.github.osinn.security.service.IApiAuthService;
 import io.github.osinn.security.service.ISecurityCaptchaCodeService;
-import io.github.osinn.security.service.impl.ApiAuthServiceImpl;
-import io.github.osinn.security.service.impl.RedissonServiceImpl;
 import io.github.osinn.security.service.impl.SecurityCaptchaCodeServiceImpl;
 import io.github.osinn.security.utils.PasswordEncoderUtils;
 import io.github.osinn.security.utils.SpringContextHolder;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -26,12 +21,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  * @description: 描述
  **/
 @Configuration
-@EnableConfigurationProperties(SecurityJwtProperties.class)
+@EnableConfigurationProperties(SecurityProperties.class)
 @ComponentScan("io.github.osinn.security")
 public class SecurityAutoConfigure {
 
     @Autowired
-    private SecurityJwtProperties securityJwtProperties;
+    private SecurityProperties securityProperties;
 
     @Bean
     @ConditionalOnMissingBean
@@ -41,14 +36,14 @@ public class SecurityAutoConfigure {
 
     @Bean
     @ConditionalOnMissingBean
-    public JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint() {
-        return new JwtAuthenticationEntryPoint(securityJwtProperties);
+    public SecurityAuthenticationEntryPoint securityAuthenticationEntryPoint() {
+        return new SecurityAuthenticationEntryPoint(securityProperties);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public JwtAccessDeniedHandler jwtAccessDeniedHandler() {
-        return new JwtAccessDeniedHandler(securityJwtProperties);
+    public SecurityAccessDeniedHandler securityAccessDeniedHandler() {
+        return new SecurityAccessDeniedHandler(securityProperties);
     }
 //
 //    @Bean
@@ -67,7 +62,7 @@ public class SecurityAutoConfigure {
     @Bean
     @ConditionalOnMissingBean
     public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderUtils.getPasswordEncoder(securityJwtProperties.getIdForEncode());
+        return PasswordEncoderUtils.getPasswordEncoder(securityProperties.getIdForEncode());
     }
 
 
@@ -85,25 +80,8 @@ public class SecurityAutoConfigure {
     }
 
     @Bean
-    public MyBeanPostProcessor myBeanPostProcessor() {
-        return new MyBeanPostProcessor(securityStorage(), securityJwtProperties.isApiService(), securityJwtProperties.getAuthType());
-    }
-
-    @Bean
     public SecurityStorage securityStorage() {
         return new SecurityStorage();
-    }
-
-    @Bean
-    public IApiAuthService apiAuthService() {
-        return new ApiAuthServiceImpl(securityJwtProperties.getAuthType(), securityJwtProperties.isApiService());
-    }
-
-    @Bean
-//    @ConditionalOnBean({RedissonClient.class})
-    public RedissonServiceImpl redissonDistributeLocker(RedissonClient redissonClient) {
-        RedissonServiceImpl redissonService = new RedissonServiceImpl(redissonClient);
-        return redissonService;
     }
 
 }

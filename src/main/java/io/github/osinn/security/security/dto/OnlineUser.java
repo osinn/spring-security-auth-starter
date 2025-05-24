@@ -67,7 +67,7 @@ public class OnlineUser implements Serializable {
     /**
      * 刷新时间
      */
-    private Date refreshTime;
+    private Long refreshTime;
 
     /**
      * 登陆来源，可根据需要使用
@@ -87,7 +87,7 @@ public class OnlineUser implements Serializable {
     /**
      * 用户角色
      */
-    private List<JwtRoleInfo.BaseRoleInfo> roles = Collections.emptyList();
+    private List<AuthRoleInfo.BaseRoleInfo> roles = Collections.emptyList();
     //
 //    @JsonIgnore
     private Collection<? extends GrantedOfAuthority> authorities = Collections.emptyList();

@@ -1,9 +1,9 @@
 package io.github.osinn.security.security.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import jakarta.validation.constraints.NotBlank;
 
 /**
  * 登录请求信息
@@ -12,18 +12,18 @@ import jakarta.validation.constraints.NotBlank;
  */
 @Getter
 @Setter
-public class AuthUser {
+@NoArgsConstructor
+@AllArgsConstructor
+public class AuthLoginParam {
 
     /**
-     * 登录用户名
+     * 登录账号 - 不能为空
      */
-    @NotBlank(message = "登录账号不能为空")
-    private String username;
+    private String account;
 
     /**
-     * 登录密码
+     * 登录密码 - 不能为空
      */
-    @NotBlank(message = "登录密码不能为空")
     private String password;
 
     /**
@@ -36,8 +36,13 @@ public class AuthUser {
      */
     private String uuid = "";
 
+    public AuthLoginParam(String account, String password) {
+        this.account = account;
+        this.password = password;
+    }
+
     @Override
     public String toString() {
-        return "{username=" + username + ", password= ******}";
+        return "{account=" + account + ", password= ******}";
     }
 }

@@ -16,11 +16,6 @@ public enum AuthType {
     CODE,
 
     /**
-     * 基于服务名称请求权限编码认证方式
-     */
-    SERVICE,
-
-    /**
      * 关闭权限认证¸只认证登录，不认证权限
      */
     OFF

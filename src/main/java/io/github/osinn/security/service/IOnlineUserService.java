@@ -1,12 +1,14 @@
 package io.github.osinn.security.service;
 
 import io.github.osinn.security.security.dto.OnlineUser;
-import io.github.osinn.security.exception.SecurityJwtException;
-import io.github.osinn.security.security.dto.AuthUser;
-import io.github.osinn.security.security.dto.JwtUser;
+import io.github.osinn.security.exception.SecurityAuthException;
+import io.github.osinn.security.security.dto.AuthLoginParam;
+import io.github.osinn.security.security.dto.AuthUserInfo;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -19,10 +21,10 @@ public interface IOnlineUserService {
     /**
      * 生成token并缓存用户信息
      *
-     * @param jwtUser 用户信息
+     * @param authUserInfo 用户信息
      * @param request
      */
-    void generationToken(JwtUser jwtUser, HttpServletRequest request);
+    void generationToken(AuthUserInfo authUserInfo, HttpServletRequest request);
 
     /**
      * 自定义登录
@@ -31,23 +33,23 @@ public interface IOnlineUserService {
      * @param request
      * @return
      */
-    JwtUser customAuth(Object principal, HttpServletRequest request);
+    AuthUserInfo customAuth(Object principal, HttpServletRequest request);
 
     /**
      * 账号密码登录认证
      *
-     * @param authUser
+     * @param authLoginParam
      * @param request
      * @return
      */
-    JwtUser auth(AuthUser authUser, HttpServletRequest request, HttpServletResponse response) throws SecurityJwtException;
+    AuthUserInfo auth(AuthLoginParam authLoginParam, HttpServletRequest request, HttpServletResponse response) throws SecurityAuthException;
 
     /**
      * 退出登录删除token
      *
-     * @throws SecurityJwtException 请求头不携带token抛出异常
+     * @throws SecurityAuthException 请求头不携带token抛出异常
      */
-    void logout() throws SecurityJwtException;
+    void logout() throws SecurityAuthException;
 
     /**
      * 存储token
@@ -95,11 +97,6 @@ public interface IOnlineUserService {
     void deleteCacheByPrefix(String prefixKey);
 
     /**
-     * 删除所有缓存
-     */
-    void deleteCacheAll();
-
-    /**
      * 获取全部在线用户
      *
      * @return
@@ -119,5 +116,17 @@ public interface IOnlineUserService {
      * @param ids 用户id
      */
     void editUserInfoForciblyLogout(List<Object> ids);
+
+    /**
+     * 刷新用户权限
+     *
+     * @param userId
+     */
+    void refreshUserPermission(Serializable userId);
+
+    /**
+     * 删除全部缓存，如系统权限权限缓存(不会清理token、登录用户信息)
+     */
+    void deleteCacheAll();
 
 }

@@ -1,7 +1,7 @@
 package io.github.osinn.security.starter;
 
+import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.enums.AuthType;
-import io.github.osinn.security.utils.DesEncryptUtils;
 import com.google.common.collect.Sets;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,13 +11,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Jwt参数配置-token使用redis过期策略
+ * 参数配置-token使用redis过期策略
  *
  * @author wency_cai
  */
 @Data
-@ConfigurationProperties(prefix = SecurityJwtProperties.PREFIX)
-public class SecurityJwtProperties {
+@ConfigurationProperties(prefix = SecurityProperties.PREFIX)
+public class SecurityProperties {
 
     public final static String PREFIX = "security.config";
 
@@ -34,7 +34,7 @@ public class SecurityJwtProperties {
     /**
      * 可选-令牌过期时间 此处单位/秒。默认 4 时
      */
-    private Long tokenValidityInSeconds = 14400L;
+    private Long expireTime = 14400L;
 
     /**
      * 可选-额外自定义白名单路径
@@ -45,6 +45,11 @@ public class SecurityJwtProperties {
      * 可选-额外自定义黑名单路径
      */
     private Set<String> authUrlsPrefix = Sets.newLinkedHashSet();
+
+    /**
+     * 白名单token，完成的token,包括 tokenStartWith
+     */
+    private Set<String> ignoringToken = Sets.newLinkedHashSet();
 
     /**
      * 可选-密码加密的私钥
@@ -64,7 +69,7 @@ public class SecurityJwtProperties {
     /**
      * 可选-8位字节的DES加密密码-保存在线用户信息是toekn将通过des加密后保存
      */
-    private String desPassword;
+    private String desPassword = "aMQBIx+Yta0=";
 
     /**
      * 可选-禁用Http Basic
@@ -86,7 +91,7 @@ public class SecurityJwtProperties {
     private boolean enableXss = true;
 
     /**
-     * 权限不足或认证失败是否抛出异常，true 抛出SecurityJwtException异常
+     * 权限不足或认证失败是否抛出异常，true 抛出SecurityAuthException异常
      * false  http请求状态为200,输出以下格式内容
      * {
      * "path": "/api/index",
@@ -113,13 +118,13 @@ public class SecurityJwtProperties {
     /**
      * 自定义权限不足、认证失败、退出成功响应字段名
      * 例如
-     *  - message: msg # 默认message
-     *  - error: error_msg # error
-     *  - code: code # 默认code
-     *
-     *         jsonObject.set("message", message);
-     *         jsonObject.set("error", errorMessage);
-     *         jsonObject.set("code", statusCode);
+     * - message: msg # 默认message
+     * - error: error_msg # error
+     * - code: code # 默认code
+     * <p>
+     * jsonObject.set("message", message);
+     * jsonObject.set("error", errorMessage);
+     * jsonObject.set("code", statusCode);
      */
     private Map<String, String> responseBody = new HashMap<>();
 
@@ -134,7 +139,7 @@ public class SecurityJwtProperties {
     /**
      * 默认根据url认证
      */
-    private AuthType authType = AuthType.URL;
+    private AuthType authType = AuthType.CODE;
 
     /**
      * 登陆来源，可根据需要使用
@@ -152,26 +157,6 @@ public class SecurityJwtProperties {
     private CaptchaCode captchaCode = new CaptchaCode();
 
     /**
-     * 可选- @API： 前端传服务名称之属性名称
-     * 用于基于服务名称(@API)调用业务接口
-     */
-    private String serviceName = "service";
-
-    /**
-     * 可选- @API： 前端传服务接口方法名称之属性名称
-     * 用于基于服务名称(@API)调用业务接口
-     * 指定要调用的接口方法名称handlerMethod
-     */
-    private String serviceHandlerMethod = "";
-
-    /**
-     * 可选- 如果是api服务层,前端需要传参数：接口方法名称
-     * 如果设置为true，需要serviceHandlerMethod 指定前端要调用的方法的参数名称
-     * 这时前端不只是传serviceName 需要调用的服务，还要传 serviceHandlerMethod具体要调用服务下的哪个接口方法
-     */
-    private boolean apiService;
-
-    /**
      * 多环境值，用途：多环境下，请求头携带的值与设定的值一直请求放行，否则拦截请求，空则忽略
      * 应用场景：小程序多环境配置项目，上生产时，前端不小心使用测试环境打包发布上线，请求接口携带envTag值，服务端效验envTag拦截请求及时告知请求环境地址错误
      */
@@ -182,10 +167,15 @@ public class SecurityJwtProperties {
      */
     private String headerEnvTagName;
 
-    public void setDesPassword(String desPassword) {
-        this.desPassword = desPassword;
-        DesEncryptUtils.setDesPassword(desPassword);
-    }
+    /**
+     * 缓存在线用户信息key前缀
+     */
+    private String cacheOnlineUserInfoKeyPrefix = AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX;
+
+    /**
+     * 是否开启系统资源权限查询缓存，开启后，在查询系统全部权限时会缓存起来，如果系统权限有变动，需要请手动调用清理缓存方法
+     */
+    private boolean enableSysResourcePermissionAll = true;
 
     /**
      * 验证码

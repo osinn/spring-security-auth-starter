@@ -1,12 +1,12 @@
 package io.github.osinn.security.config;
 
-import io.github.osinn.security.starter.SecurityJwtProperties;
+import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.utils.ResponseUtils;
-import io.github.osinn.security.constants.JwtConstant;
+import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.security.dto.CustomizeResponseBodyField;
 import io.github.osinn.security.utils.SpringContextHolder;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import io.github.osinn.security.utils.RedisUtils;
 
@@ -16,26 +16,24 @@ import java.util.Map;
  * @author wency_cai
  **/
 @Slf4j
-public class JwtAppRun implements CommandLineRunner {
+public class AuthAppRun implements CommandLineRunner {
 
-    @Autowired
-    private SecurityJwtProperties securityJwtProperties;
+    @Resource
+    private SecurityProperties securityProperties;
 
     @Override
     public void run(String... args) {
-        if (securityJwtProperties.isAppRunDeleteHistoryToken()) {
+        if (securityProperties.isAppRunDeleteHistoryToken()) {
             log.debug("------>  删除旧token  <------");
             try {
                 RedisUtils redisUtils = SpringContextHolder.getBean(RedisUtils.class);
-                redisUtils.deleteCacheByPrefix(JwtConstant.ONLINE_TOKEN_KEY);
-                redisUtils.deleteCacheByPrefix(JwtConstant.ONLINE_USER_INFO_KEY);
-                redisUtils.deleteCacheByPrefix(JwtConstant.RESOURCE_PERMISSION);
+                redisUtils.deleteCacheByPrefix(securityProperties.getCacheOnlineUserInfoKeyPrefix());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
         }
 
-        Map<String, String> responseBody = securityJwtProperties.getResponseBody();
+        Map<String, String> responseBody = securityProperties.getResponseBody();
 
         CustomizeResponseBodyField customizeResponseBodyField = new CustomizeResponseBodyField();
         customizeResponseBodyField.setMessageField(responseBody.get("message") == null ? "message" : responseBody.get("message"));

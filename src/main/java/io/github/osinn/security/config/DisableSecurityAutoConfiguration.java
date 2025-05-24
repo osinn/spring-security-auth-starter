@@ -1,6 +1,8 @@
 package io.github.osinn.security.config;
 
+import org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 
 /**
  * 禁用自动配置
@@ -8,8 +10,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
  * @author wency_cai
  **/
 @EnableAutoConfiguration(exclude = {
-        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
-        org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration.class
+        SecurityAutoConfiguration.class,
+        ManagementWebSecurityAutoConfiguration.class
 })
 public class DisableSecurityAutoConfiguration {
 }

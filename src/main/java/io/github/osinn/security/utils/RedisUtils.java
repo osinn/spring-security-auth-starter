@@ -1,9 +1,7 @@
 package io.github.osinn.security.utils;
 
-import io.github.osinn.security.service.IRedissonService;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.*;
 import org.springframework.stereotype.Component;
 
@@ -15,16 +13,10 @@ import java.util.concurrent.TimeUnit;
  **/
 @Slf4j
 @Component
-@SuppressWarnings({"unchecked", "all"})
 public class RedisUtils {
 
-    private IRedissonService redissonService;
-
-    public RedisUtils(IRedissonService redissonService) {
-        this.redissonService = redissonService;
-    }
-
-    // =============================common============================
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 指定缓存失效时间
@@ -35,7 +27,7 @@ public class RedisUtils {
     public boolean expire(String key, long time) {
         try {
             if (time > 0) {
-                redissonService.getRedissonClient().getBucket(key).expire(time, TimeUnit.SECONDS);
+                stringRedisTemplate.expire(key, time, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -51,7 +43,7 @@ public class RedisUtils {
      * @return 时间(秒) 返回0代表为永久有效, 返回-2代表不存在
      */
     public long getExpire(String key) {
-        return redissonService.getRedissonClient().getBucket(key).getExpireTime();
+        return stringRedisTemplate.getExpire(key);
     }
 
     /**
@@ -61,7 +53,7 @@ public class RedisUtils {
      * @return /
      */
     public List<String> scan(String pattern) {
-        Iterable<String> keysByPattern = redissonService.getRedissonClient().getKeys().getKeysByPattern(pattern);
+        Iterable<String> keysByPattern = stringRedisTemplate.keys(pattern);
         List<String> keys = new ArrayList<>();
         for (String key : keysByPattern) {
             keys.add(key);
@@ -77,9 +69,9 @@ public class RedisUtils {
     public void del(String... key) {
         if (key != null && key.length > 0) {
             if (key.length == 1) {
-                redissonService.delete(key[0]);
+                stringRedisTemplate.delete(key[0]);
             } else {
-                redissonService.getRedissonClient().getKeys().delete(key);
+                stringRedisTemplate.delete(Arrays.asList(key));
             }
         }
     }
@@ -93,7 +85,19 @@ public class RedisUtils {
      * @return 值
      */
     public <T> T get(String key, Class<T> clazz) {
-        return redissonService.getValue(key);
+        String value = stringRedisTemplate.opsForValue().get(key);
+        return GsonMapper.toBean(value, clazz);
+    }
+
+    /**
+     * 普通缓存获取
+     *
+     * @param key 键
+     * @return 值
+     */
+    public <T> List<T> getList(String key, Class<T> clazz) {
+        String value = stringRedisTemplate.opsForValue().get(key);
+        return GsonMapper.toListBean(value, clazz);
     }
 
 
@@ -105,7 +109,7 @@ public class RedisUtils {
      * @return true成功 false失败
      */
     public boolean set(String key, Object value) {
-        redissonService.setValue(key, value);
+        stringRedisTemplate.opsForValue().set(key, GsonMapper.toJsonStr(value));
         return true;
     }
 
@@ -118,7 +122,7 @@ public class RedisUtils {
      * @return true成功 false 失败
      */
     public boolean set(String key, Object value, long time) {
-        redissonService.setValue(key, value, time);
+        stringRedisTemplate.opsForValue().set(key, GsonMapper.toJsonStr(value), time, TimeUnit.SECONDS);
         return true;
     }
 
@@ -132,9 +136,7 @@ public class RedisUtils {
     public void deleteCacheByPrefix(String prefix) {
         List<String> list = scan(prefix + "*");
         if (!list.isEmpty()) {
-            String[] array = new String[list.size()];
-            array = list.toArray(array);
-            redissonService.getRedissonClient().getKeys().delete(array);
+            stringRedisTemplate.delete(list);
         }
     }
 
@@ -143,11 +145,11 @@ public class RedisUtils {
      *
      * @param prefix 前缀
      */
-    public <T> List<T> fetchLike(String prefix) {
+    public List<String> fetchLike(String prefix) {
         List<String> keys = scan(prefix);
-        List<T> list = new ArrayList<>();
+        List<String> list = new ArrayList<>();
         for (String key : keys) {
-            list.add(redissonService.getValue(key));
+            list.add(stringRedisTemplate.opsForValue().get(key));
         }
         list.removeIf(x -> x == null);
         return list;

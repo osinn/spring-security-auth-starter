@@ -1,50 +1,11 @@
 package io.github.osinn.security.utils;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.extra.servlet.ServletUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 @Slf4j
 public class IpUtils {
-
-    /**
-     * 字节转kb/mb/gb
-     *
-     * @param size
-     * @return
-     */
-    public static String getPrintSize(long size) {
-        //如果字节数少于1024，则直接以B为单位，否则先除于1024，后3位因太少无意义
-        if (size < 1024) {
-            return String.valueOf(size) + "B";
-        } else {
-            size = size / 1024;
-        }
-        //如果原字节数除于1024之后，少于1024，则可以直接以KB作为单位
-        //因为还没有到达要使用另一个单位的时候
-        //接下去以此类推
-        if (size < 1024) {
-            return String.valueOf(size) + "KB";
-        } else {
-            size = size / 1024;
-        }
-        if (size < 1024) {
-            //因为如果以MB为单位的话，要保留最后1位小数，
-            //因此，把此数乘以100之后再取余
-            size = size * 100;
-            return String.valueOf((size / 100)) + "."
-                    + String.valueOf((size % 100)) + "MB";
-        } else {
-            //否则如果要以GB为单位的，先除于1024再作同样的处理
-            size = size * 100 / 1024;
-            return String.valueOf((size / 100)) + "."
-                    + String.valueOf((size % 100)) + "GB";
-        }
-    }
 
     /**
      * 判断是否是内网
@@ -164,21 +125,9 @@ public class IpUtils {
     }
 
     public static String getHostIp(HttpServletRequest request) {
-        // natapp穿透工具搭建的环境，通过header，X-Natapp-Ip，获取
-        String ipAddress = null;//ServletUtil.getClientIPByHeader(request, "X-Natapp-Ip");
-//        if (StrUtil.isBlank(ipAddress)) {
-//            ipAddress = ServletUtil.getClientIP(request);
-//        }
-        // 本地开发，客户端和服务器在同一台机器，获取到是0:0:0:0:0:0:0:1，ip6地址，需要进行转换
+        String ipAddress = null;
         ipAddress = "0:0:0:0:0:0:0:1".equals(ipAddress) ? "127.0.0.1" : ipAddress;
         return ipAddress;
     }
 
-    public static String getHostName() {
-        try {
-            return InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-        }
-        return "未知";
-    }
 }

@@ -3,8 +3,8 @@ package io.github.osinn.security.utils;
 import cn.hutool.json.JSONConfig;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import io.github.osinn.security.enums.JwtHttpStatus;
-import io.github.osinn.security.exception.SecurityJwtException;
+import io.github.osinn.security.enums.AuthHttpStatus;
+import io.github.osinn.security.exception.SecurityAuthException;
 import io.github.osinn.security.security.dto.CustomizeResponseBodyField;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.AuthenticationException;
@@ -38,30 +38,30 @@ public class ResponseUtils {
      * 认证失败抛出异常
      *
      * @param e
-     * @throws SecurityJwtException
+     * @throws SecurityAuthException
      */
-    public static void loginFailThrows(AuthenticationException e) throws SecurityJwtException {
+    public static void loginFailThrows(AuthenticationException e) throws SecurityAuthException {
         String message;
         int statusCode;
         if (e instanceof UsernameNotFoundException || e instanceof BadCredentialsException) {
-            message = JwtHttpStatus.TOKEN_UNAUTHORIZED.getMessage();
-            statusCode = JwtHttpStatus.TOKEN_UNAUTHORIZED.getCode();
+            message = AuthHttpStatus.TOKEN_UNAUTHORIZED.getMessage();
+            statusCode = AuthHttpStatus.TOKEN_UNAUTHORIZED.getCode();
         } else if (e instanceof LockedException) {
-            message = JwtHttpStatus.LOCK_ACCOUNT.getMessage();
-            statusCode = JwtHttpStatus.LOCK_ACCOUNT.getCode();
+            message = AuthHttpStatus.LOCK_ACCOUNT.getMessage();
+            statusCode = AuthHttpStatus.LOCK_ACCOUNT.getCode();
         } else if (e instanceof CredentialsExpiredException) {
-            message = JwtHttpStatus.CREDENTIALS_EXPIRED.getMessage();
-            statusCode = JwtHttpStatus.CREDENTIALS_EXPIRED.getCode();
+            message = AuthHttpStatus.CREDENTIALS_EXPIRED.getMessage();
+            statusCode = AuthHttpStatus.CREDENTIALS_EXPIRED.getCode();
         } else if (e instanceof AccountExpiredException) {
-            message = JwtHttpStatus.TOKEN_EXPIRE.getMessage();
-            statusCode = JwtHttpStatus.TOKEN_EXPIRE.getCode();
+            message = AuthHttpStatus.TOKEN_EXPIRE.getMessage();
+            statusCode = AuthHttpStatus.TOKEN_EXPIRE.getCode();
         } else if (e instanceof DisabledException) {
-            message = JwtHttpStatus.DISABLED_ACCOUNT.getMessage();
-            statusCode = JwtHttpStatus.DISABLED_ACCOUNT.getCode();
+            message = AuthHttpStatus.DISABLED_ACCOUNT.getMessage();
+            statusCode = AuthHttpStatus.DISABLED_ACCOUNT.getCode();
         } else {
-            message = JwtHttpStatus.LOGIN_FAIL.getMessage();
-            statusCode = JwtHttpStatus.LOGIN_FAIL.getCode();
+            message = AuthHttpStatus.LOGIN_FAIL.getMessage();
+            statusCode = AuthHttpStatus.LOGIN_FAIL.getCode();
         }
-        throw new SecurityJwtException(statusCode, message);
+        throw new SecurityAuthException(statusCode, message);
     }
 }
