@@ -42,6 +42,7 @@ security:
     des-password: 123456789
     expire-time: 14400 # 过期时间默认4小时
     expire-ratio: 0.5 # 过期时间剩余比例，0-1之间，默认 0.5 即时间过半时刷新token缓存过期时间
+    dynamic-refresh-token: true # 开启启动刷新token，默认是关闭的，不会自动刷新token过期时间，开启后，token会根据 expire-ratio 比例阀值计算是否需求重置token过期时间
     # 匿名访问url
     ignoring-urls:
       - /login # 登录接口忽略认证
