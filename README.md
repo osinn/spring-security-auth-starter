@@ -10,8 +10,6 @@
 - 基于`Spring boor v3.5.0`版本重构
 - 需要jdk17+
 
-- 这里的配置只是一部分的配置，更多配置请查看项目代码
-
 # 地址
 - 项目地址 ：[https://github.com/wency-cai/spring-security-auth-starter](https://github.com/wency-cai/spring-security-auth-starter)
 - demo 地址：[https://github.com/osinn/spring-security-auth-example](https://github.com/osinn/spring-security-auth-example)
@@ -48,6 +46,7 @@ security:
     ignoring-urls:
       - /login # 登录接口忽略认证
 ```
+- 这里的配置只是一部分的配置，更多配置请查看项目代码
 
 # 启动类
 - 在启动类添加如下注解启用`spring-security-auth-starter`安全认证
