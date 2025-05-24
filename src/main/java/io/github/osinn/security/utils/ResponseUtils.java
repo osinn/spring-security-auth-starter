@@ -1,8 +1,5 @@
 package io.github.osinn.security.utils;
 
-import cn.hutool.json.JSONConfig;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import io.github.osinn.security.enums.AuthHttpStatus;
 import io.github.osinn.security.exception.SecurityAuthException;
 import io.github.osinn.security.security.dto.CustomizeResponseBodyField;
@@ -15,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author wency_cai
@@ -24,14 +23,14 @@ public class ResponseUtils {
     public static CustomizeResponseBodyField customizeResponseBodyField;
 
     public static void outWriter(int statusCode, String message, String errorMessage, String path, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        JSONObject jsonObject = JSONUtil.createObj(JSONConfig.create().setIgnoreNullValue(false));
-        jsonObject.set(customizeResponseBodyField.getMessageField(), message);
-        jsonObject.set(customizeResponseBodyField.getErrorField(), errorMessage);
-        jsonObject.set(customizeResponseBodyField.getCodeField(), statusCode);
-        jsonObject.set("path", path);
-        jsonObject.set("timestamp", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        Map<String, Object> jsonObject = new HashMap<>();
+        jsonObject.put(customizeResponseBodyField.getMessageField(), message);
+        jsonObject.put(customizeResponseBodyField.getErrorField(), errorMessage);
+        jsonObject.put(customizeResponseBodyField.getCodeField(), statusCode);
+        jsonObject.put("path", path);
+        jsonObject.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(JSONUtil.toJsonStr(jsonObject));
+        response.getWriter().write(GsonMapper.toJsonStr(jsonObject));
     }
 
     /**

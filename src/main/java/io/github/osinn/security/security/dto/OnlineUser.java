@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -62,7 +63,7 @@ public class OnlineUser implements Serializable {
     /**
      * 登录时间
      */
-    private Date loginTime;
+    private LocalDateTime loginTime;
 
     /**
      * 刷新时间

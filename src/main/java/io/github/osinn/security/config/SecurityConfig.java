@@ -14,7 +14,6 @@ import com.google.common.collect.Sets;
 import io.github.osinn.security.utils.RedisUtils;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.endpoint.web.servlet.ControllerEndpointHandlerMapping;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -33,6 +32,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPattern;
 
 import java.util.HashSet;
@@ -80,6 +80,9 @@ public class SecurityConfig {
     @Value("${server.servlet.context-path:}")
     private String contextPath;
 
+    @Resource
+    private RequestMappingHandlerMapping requestMappingHandlerMapping;
+
     /**
      * 权限白名单urls
      */
@@ -88,7 +91,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
                                            AuthenticationManagerBuilder authenticationManagerBuilder,
-                                           ControllerEndpointHandlerMapping requestMappingHandlerMapping,
                                            PasswordEncoder passwordEncoder,
                                            ISecurityService securityService) throws Exception {
 
@@ -110,11 +112,12 @@ public class SecurityConfig {
             AuthIgnore authIgnore = handlerMethod.getMethodAnnotation(AuthIgnore.class);
             if (null != authIgnore) {
                 if (infoEntry.getKey().getPatternsCondition() == null) {
-                    assert infoEntry.getKey().getPathPatternsCondition() != null;
-                    Set<PathPattern> patterns = infoEntry.getKey().getPathPatternsCondition().getPatterns();
-                    patterns.forEach(p -> {
-                        anonymousUrls.add(contextPath + p.getPatternString());
-                    });
+                    if (infoEntry.getKey().getPathPatternsCondition() != null) {
+                        Set<PathPattern> patterns = infoEntry.getKey().getPathPatternsCondition().getPatterns();
+                        patterns.forEach(p -> {
+                            anonymousUrls.add(contextPath + p.getPatternString());
+                        });
+                    }
                 } else {
                     Set<String> patterns = infoEntry.getKey().getPatternsCondition().getPatterns();
                     patterns.forEach(p -> {

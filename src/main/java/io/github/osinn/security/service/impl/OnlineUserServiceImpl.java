@@ -26,6 +26,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -328,7 +329,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     browser,
                     ip,
                     CryptoUtils.desEncrypt(token, securityProperties.getDesPassword()),
-                    new Date(),
+                    LocalDateTime.now(),
                     System.currentTimeMillis(),
                     securityProperties.getLoginSource(),
                     authUserInfo.getExtendField(),

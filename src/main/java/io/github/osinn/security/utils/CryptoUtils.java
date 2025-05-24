@@ -168,7 +168,4 @@ public class CryptoUtils {
         private String privateKey;
     }
 
-    public static void main(String[] args) {
-        System.out.println(CryptoUtils.generateKey());
-    }
 }

@@ -1,13 +1,13 @@
 package io.github.osinn.security.service.impl;
 
-import cn.hutool.core.lang.Snowflake;
-import cn.hutool.core.util.IdUtil;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.security.dto.CaptchaCodeDTO;
 import io.github.osinn.security.service.ISecurityCaptchaCodeService;
 import io.github.osinn.security.utils.RedisUtils;
 import com.wf.captcha.SpecCaptcha;
 import jakarta.annotation.Resource;
+
+import java.util.UUID;
 
 /**
  * 图形验证码服务
@@ -29,12 +29,10 @@ public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeServi
      */
     @Override
     public CaptchaCodeDTO createCaptchaCode() {
-        Snowflake snowflake = IdUtil.getSnowflake(1, 1);
-        long id = snowflake.nextId();
 
         SpecCaptcha specCaptcha = new SpecCaptcha(111, 36, 4);
         String verCode = specCaptcha.text().toLowerCase();
-        String key = String.valueOf(id);
+        String key = UUID.randomUUID().toString().replace("-", "").toUpperCase();
         SecurityProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
         redisUtils.set(captchaCode.getCodeKey().concat(key), verCode, captchaCode.getCaptchaExpiration());
 

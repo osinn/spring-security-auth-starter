@@ -1,6 +1,5 @@
 package io.github.osinn.security.security;
 
-import cn.hutool.core.collection.CollUtil;
 import io.github.osinn.security.enums.AuthType;
 import io.github.osinn.security.security.dto.OnlineUser;
 import io.github.osinn.security.security.dto.SecurityStorage;
@@ -12,6 +11,7 @@ import org.springframework.security.authentication.InsufficientAuthenticationExc
 import org.springframework.security.core.Authentication;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -51,7 +51,7 @@ public class CustomAccessDecisionManager {
         }
 
         // 当系统没有配置权限资源时直接放行
-        if (CollUtil.isEmpty(configAttributes)) {
+        if (CollectionUtils.isEmpty(configAttributes)) {
             return true;
         }
 

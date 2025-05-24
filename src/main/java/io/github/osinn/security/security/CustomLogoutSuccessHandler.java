@@ -1,7 +1,5 @@
 package io.github.osinn.security.security;
 
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.CharsetUtil;
 import io.github.osinn.security.security.dto.OnlineUser;
 import io.github.osinn.security.enums.AuthHttpStatus;
 import io.github.osinn.security.service.ISecurityService;
@@ -19,6 +17,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 
 /**
@@ -43,14 +44,14 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
             log.info("ip：{}， 账号：{}，在{}退出了系统，在线时长：{}",
                     ipAddress,
                     loginUser.getAccount(),
-                    DateUtil.now(),
-                    DateUtil.formatBetween(loginUser.getLoginTime(), DateUtil.date()));
+                    LocalDateTime.now(),
+                    ChronoUnit.SECONDS.between(loginUser.getLoginTime(), LocalDateTime.now()));
             // 这里可以做入库日志处理 recordLogoutLog;
             securityService.logoutBeforeHandler(request, response, loginUser);
             TokenUtils.deleteToken();
         }
         if(securityProperties.isLoginOutResponse()) {
-            response.setCharacterEncoding(CharsetUtil.UTF_8);
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             String path = request.getRequestURI();
             ResponseUtils.outWriter(AuthHttpStatus.LOGOUT_SUCCESS.getCode(), AuthHttpStatus.LOGOUT_SUCCESS.getMessage(), null, path, request, response);
         }

@@ -104,7 +104,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
         String token = TokenUtils.getToken(request);
         if (!StrUtils.isEmpty(token) && securityProperties.getIgnoringToken().contains(securityProperties.getTokenStartWith() + token)) {
             OnlineUser onlineUser = onlineUserService.getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
-            if(onlineUser != null) {
+            if (onlineUser != null) {
                 request.setAttribute(AuthConstant.ONLINE_USER_ID, onlineUser.getId());
             }
         }
@@ -164,13 +164,13 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
     }
 
     private boolean updateRefreshTimeIfNeeded(long refreshTime, long expireTime) {
-        long expireMillis = expireTime * 1000; //秒转换为毫秒
-        long halfExpireMillis = expireMillis / 2; // 一半时间
+        //秒转换为毫秒
+        long expireMillis = expireTime * 1000;
         long nowTime = System.currentTimeMillis();
         // 计算时间差
         long timeDifference = nowTime - refreshTime;
-        // 如果时间差小于等于阈值一半的时间，则更新refreshTime为当前时间
-        return timeDifference > halfExpireMillis;
+        // 判断续租时间阈值
+        return timeDifference > expireMillis * securityProperties.getExpireRatio();
     }
 
 }

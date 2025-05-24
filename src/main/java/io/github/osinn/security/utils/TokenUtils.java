@@ -1,6 +1,5 @@
 package io.github.osinn.security.utils;
 
-import cn.hutool.core.util.IdUtil;
 import io.github.osinn.security.security.dto.OnlineUser;
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.starter.SecurityProperties;
@@ -14,6 +13,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * token工具类
@@ -39,7 +39,7 @@ public class TokenUtils {
      * @return
      */
     public static String createToken() {
-        return IdUtil.simpleUUID().toUpperCase();
+        return UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }
 
     /**

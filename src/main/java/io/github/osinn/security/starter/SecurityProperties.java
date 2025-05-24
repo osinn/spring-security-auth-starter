@@ -27,14 +27,19 @@ public class SecurityProperties {
     private String header = "Authorization";
 
     /**
-     * 可选-令牌前缀，最后留个空格 Bearer
+     * 可选-token前缀
      */
-    private String tokenStartWith = "Bearer ";
+    private String tokenStartWith = "";
 
     /**
      * 可选-令牌过期时间 此处单位/秒。默认 4 时
      */
     private Long expireTime = 14400L;
+
+    /**
+     * 过期时间剩余比例，0-1之间，默认 0.5 即时间过半时刷新token缓存过期时间
+     */
+    private double expireRatio = 0.5;
 
     /**
      * 可选-额外自定义白名单路径
@@ -67,6 +72,7 @@ public class SecurityProperties {
     private boolean singleLogin;
 
     /**
+     * 生产建议换成自己的
      * 可选-8位字节的DES加密密码-保存在线用户信息是toekn将通过des加密后保存
      */
     private String desPassword = "aMQBIx+Yta0=";
