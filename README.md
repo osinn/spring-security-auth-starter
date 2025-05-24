@@ -7,7 +7,7 @@
 - `@AuthIgnore` 注解，用于标识接口是否需要认证
 
 # Spring Boot 版本
-- 基于`Spring boor v3.5.0`版本重构
+- 基于`Spring boot v3.x`版本重构
 - 需要jdk17+
 
 # 地址
