@@ -23,6 +23,9 @@ public class ResponseUtils {
     public static CustomizeResponseBodyField customizeResponseBodyField;
 
     public static void outWriter(int statusCode, String message, String errorMessage, String path, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (AuthHttpStatus.TOKEN_EXPIRE.getCode() == statusCode) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        }
         Map<String, Object> jsonObject = new HashMap<>();
         jsonObject.put(customizeResponseBodyField.getMessageField(), message);
         jsonObject.put(customizeResponseBodyField.getErrorField(), errorMessage);
@@ -30,7 +33,7 @@ public class ResponseUtils {
         jsonObject.put("path", path);
         jsonObject.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(GsonMapper.toJsonStr(jsonObject));
+        response.getWriter().write(JsonMapper.toJsonStr(jsonObject));
     }
 
     /**

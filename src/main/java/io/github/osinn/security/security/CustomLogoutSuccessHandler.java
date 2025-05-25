@@ -38,7 +38,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
 
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        OnlineUser loginUser = TokenUtils.fetchOnlineUserInfo();
+        OnlineUser loginUser = TokenUtils.getOnlineUserInfo();
         if (loginUser != null) {
             String ipAddress = IpUtils.getHostIp(request);
             log.info("ip：{}， 账号：{}，在{}退出了系统，在线时长：{}",
@@ -48,7 +48,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
                     ChronoUnit.SECONDS.between(loginUser.getLoginTime(), LocalDateTime.now()));
             // 这里可以做入库日志处理 recordLogoutLog;
             securityService.logoutBeforeHandler(request, response, loginUser);
-            TokenUtils.deleteToken();
+            TokenUtils.logout();
         }
         if(securityProperties.isLoginOutResponse()) {
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());

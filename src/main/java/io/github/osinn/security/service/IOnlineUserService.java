@@ -8,7 +8,6 @@ import io.github.osinn.security.security.dto.AuthUserInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -65,21 +64,21 @@ public interface IOnlineUserService {
      * @param filterUserId
      * @return
      */
-    List<OnlineUser> fetchOnlineUserAllByUserId(Object filterUserId);
+    List<OnlineUser> getOnlineUserAllByUserId(Object filterUserId);
 
     /**
      * 获取当前在线用户
      *
      * @return
      */
-    OnlineUser fetchOnlineUserCompleteInfo();
+    OnlineUser getOnlineUserInfo();
 
     /**
      * 根据token获取当前在线用户
      *
      * @return
      */
-    OnlineUser fetchOnlineUserCompleteInfoByToken(String token);
+    OnlineUser getOnlineUserInfoByToken(String token);
 
     /**
      * 根据指定的key查询在线用户
@@ -101,7 +100,7 @@ public interface IOnlineUserService {
      *
      * @return
      */
-    List<OnlineUser> fetchOnlineUserAll();
+    List<OnlineUser> getOnlineUserAll();
 
     /**
      * 刷新token缓存过期时间
@@ -115,14 +114,14 @@ public interface IOnlineUserService {
      *
      * @param ids 用户id
      */
-    void editUserInfoForciblyLogout(List<Object> ids);
+    void logoutForcibly(List<?> ids);
 
     /**
      * 刷新用户权限
      *
      * @param userId
      */
-    void refreshUserPermission(Serializable userId);
+    void refreshUserPermission(Object userId);
 
     /**
      * 删除全部缓存，如系统权限权限缓存(不会清理token、登录用户信息)

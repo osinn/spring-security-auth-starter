@@ -49,7 +49,6 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @EnableMethodSecurity(
-        prePostEnabled = true, // 启用注解授权
         securedEnabled = true,
         jsr250Enabled = true
 )
@@ -76,17 +75,11 @@ public class SecurityConfig {
     @Resource
     private RedisUtils redisUtils;
 
-
     @Value("${server.servlet.context-path:}")
     private String contextPath;
 
     @Resource
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
-
-    /**
-     * 权限白名单urls
-     */
-    private Set<String> anonymousUrs = Sets.newHashSet();
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
@@ -94,17 +87,9 @@ public class SecurityConfig {
                                            PasswordEncoder passwordEncoder,
                                            ISecurityService securityService) throws Exception {
 
-
-        // 搜寻匿名标记 url： @AnonymousAccess
         Map<RequestMappingInfo, HandlerMethod> handlerMethodMap = requestMappingHandlerMapping.getHandlerMethods();
         Set<String> anonymousUrls = new HashSet<>();
-        Set<String> authUrlsPrefix = new HashSet<>();
 
-        // 默认拦截 /** 下所有路径
-        authUrlsPrefix.add("/*");
-        if ("/".equals(contextPath)) {
-            contextPath = "";
-        }
         for (Map.Entry<RequestMappingInfo, HandlerMethod> infoEntry : handlerMethodMap.entrySet()) {
             HandlerMethod handlerMethod = infoEntry.getValue();
 
@@ -132,10 +117,7 @@ public class SecurityConfig {
         anonymousUrls.addAll(ignoringUrls);
 
         // 基于配置url拦截路径
-        Set<String> authUrls = securityProperties.getAuthUrlsPrefix();
-        authUrlsPrefix.addAll(authUrls);
-
-        //        anonymousUrlList.add("");
+        Set<String> authUrlsPrefix = securityProperties.getAuthorizedUrlPrefix();
 
         // 不需要认证的静态资源
         String[] staticFileUrl = {
@@ -152,14 +134,15 @@ public class SecurityConfig {
                 "/webjars/*",
                 "/*/api-docs",
                 "/avatar/*",
-                "/file/*",
                 "/druid/*"
         };
-        anonymousUrs.addAll(Lists.newArrayList(staticFileUrl));
+
+        // 权限白名单urls
+        Set<String> anonymousUrs = Sets.newHashSet();
+        anonymousUrs.addAll(Lists.newArrayList());
         anonymousUrs.addAll(Lists.newArrayList(pageAnonymousUrl));
         anonymousUrs.addAll(Lists.newArrayList(anonymousUrls));
         securityStorage.setPermissionAnonymousUrlList(anonymousUrs);
-
 
         if (securityProperties.isDisableHttpBasic()) {
             // 禁用Http Basic
@@ -185,10 +168,7 @@ public class SecurityConfig {
                                 authorize
                                         // 匿名
                                         // 静态资源等等
-                                        .requestMatchers(
-                                                HttpMethod.GET,
-                                                staticFileUrl
-                                        ).permitAll()
+                                        .requestMatchers(HttpMethod.GET, staticFileUrl).permitAll()
                                         .requestMatchers("/favicon.ico", "/resources/**", "/error").permitAll()
                                         .requestMatchers(pageAnonymousUrl).permitAll()
                                         .requestMatchers(HttpMethod.OPTIONS, "/*").permitAll()
@@ -196,14 +176,12 @@ public class SecurityConfig {
                                         .requestMatchers(authUrlsPrefix.toArray(new String[0])).permitAll()
                                         // 其余都需要认证
                                         .anyRequest()
-                                        // 自定义拦截路径
                                         .authenticated();
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                )
-                .httpBasic(withDefaults());
+                );
         httpSecurity.addFilterBefore(new SecurityAuthenticationFilter(authenticationManagerBuilder.getObject(),
                         securityStorage,
                         onlineUserService,
@@ -216,7 +194,7 @@ public class SecurityConfig {
             httpSecurity.addFilterBefore(new MyRequestFilter(securityProperties.isEnableCors(), securityProperties.isEnableXss()), CorsFilter.class);
         }
 
-        httpSecurity.addFilterAfter(new CustomAuthorizationFilter(new AccessDecisionAuthorizationManager(accessDecisionManager(), securityMetadataSource())), AuthorizationFilter.class);
+        httpSecurity.addFilterAfter(new CustomAuthorizationFilter(new AccessDecisionAuthorizationManager<>(accessDecisionManager(), securityMetadataSource())), AuthorizationFilter.class);
         return httpSecurity.build();
     }
 

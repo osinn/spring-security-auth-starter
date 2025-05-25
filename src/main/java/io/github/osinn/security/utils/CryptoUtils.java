@@ -1,6 +1,5 @@
 package io.github.osinn.security.utils;
 
-import com.google.common.base.Charsets;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import lombok.Data;
@@ -40,7 +39,7 @@ public class CryptoUtils {
      */
     public static RsaSecretKey genKeyPair() throws NoSuchAlgorithmException {
         // KeyPairGenerator类用于生成公钥和私钥对，基于RSA算法生成对象
-        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(ALGORITHM);
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(RSA_ALGORITHM);
         // 初始化密钥对生成器，密钥大小为96-1024位
         keyPairGen.initialize(KEY_SIZE, new SecureRandom());
         // 生成一个密钥对，保存在keyPair中
@@ -62,7 +61,6 @@ public class CryptoUtils {
         return rsaSecretKey;
     }
 
-
     /**
      * RSA公钥加密
      *
@@ -78,7 +76,7 @@ public class CryptoUtils {
         //RSA加密
         Cipher cipher = Cipher.getInstance(RSA_ALGORITHM);
         cipher.init(Cipher.ENCRYPT_MODE, pubKey);
-        return Base64.getEncoder().encodeToString(cipher.doFinal(str.getBytes(Charsets.UTF_8)));
+        return Base64.getEncoder().encodeToString(cipher.doFinal(str.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
@@ -98,12 +96,11 @@ public class CryptoUtils {
         //RSA解密
         Cipher cipher = Cipher.getInstance(RSA_ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, priKey);
-        String outStr = new String(cipher.doFinal(inputByte));
-        return outStr;
+        return new String(cipher.doFinal(inputByte));
     }
 
     // 生成 DES 密钥
-    public static String generateKey() {
+    public static String generateDesKey() {
         KeyGenerator keyGenerator;
         try {
             keyGenerator = KeyGenerator.getInstance(ALGORITHM);
@@ -153,7 +150,7 @@ public class CryptoUtils {
      */
     public static String md5Sha512Password(String password) {
         Hasher hasher = Hashing.sha512().newHasher();
-        hasher.putString("boot.api.security.osinn" + password, Charsets.UTF_8);
+        hasher.putString("boot.api.security.osinn" + password, StandardCharsets.UTF_8);
         password = hasher.hash().toString().toUpperCase();
         return md5DigestAsHex(password);
     }

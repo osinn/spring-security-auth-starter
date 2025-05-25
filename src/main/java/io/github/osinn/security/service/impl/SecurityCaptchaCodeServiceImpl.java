@@ -49,7 +49,7 @@ public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeServi
     public String getCaptchaCode(String codeKey) {
         SecurityProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
         // 从redis取出验证码
-        String code = redisUtils.get(captchaCode.getCodeKey().concat(codeKey), String.class);
+        String code = redisUtils.get(captchaCode.getCodeKey().concat(codeKey));
         return code;
     }
 

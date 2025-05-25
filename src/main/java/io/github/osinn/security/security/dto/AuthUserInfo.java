@@ -23,7 +23,7 @@ public class AuthUserInfo implements UserDetails, Serializable {
     /**
      * 用户ID
      */
-    private Serializable id;
+    private Object id;
 
     /**
      * 登录账号

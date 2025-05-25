@@ -106,7 +106,7 @@ public class PermissionService {
         for (AuthRoleInfo.BaseRoleInfo sysRole : onlineUser.getRoles()) {
             String roleCode = sysRole.getRoleCode();
             if (!StrUtils.isEmpty(roleCode)) {
-                if (AuthConstant.SUPER_ADMIN_ROLE.equals(roleCode)) {
+                if (securityProperties.getSuperAdminRole().equals(roleCode)) {
                     return true;
                 }
             }

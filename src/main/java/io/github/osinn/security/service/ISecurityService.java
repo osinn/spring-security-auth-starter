@@ -8,7 +8,6 @@ import io.github.osinn.security.security.dto.ResourcePermission;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -34,7 +33,7 @@ public interface ISecurityService {
      * @param userId 用户id
      * @return
      */
-    AuthRoleInfo fetchRolePermissionInfo(Serializable userId);
+    AuthRoleInfo getRolePermissionInfo(Object userId);
 
     /**
      * 登录接口根据账号查询用户信息

@@ -110,7 +110,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
         }
 
         // 获取令牌并根据令牌获取登录认证信息
-        Authentication authentication = this.getAuthenticationFromToken(request);
+        Authentication authentication = this.getAuthenticationFromToken(request, response);
         // 设置登录认证信息到上下文
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -123,16 +123,17 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
      *
      * @return 用户名
      */
-    private Authentication getAuthenticationFromToken(HttpServletRequest request) {
+    private Authentication getAuthenticationFromToken(HttpServletRequest request, HttpServletResponse response) {
         String token = TokenUtils.getToken(request);
         if (StrUtils.isEmpty(token)) {
             request.setAttribute(AuthHttpStatus.TOKEN_EXPIRE.name(), AuthHttpStatus.TOKEN_EXPIRE.getMessage());
             throw new AuthenticationCredentialsNotFoundException(AuthHttpStatus.TOKEN_EXPIRE.getMessage());
         } else {
             // 验证 token 是否存在
-            OnlineUser onlineUser = null;
+            OnlineUser onlineUser;
             onlineUser = onlineUserService.getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
             if (onlineUser == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 request.setAttribute(AuthHttpStatus.TOKEN_EXPIRE.name(), AuthHttpStatus.TOKEN_EXPIRE.getMessage());
                 throw new AuthenticationCredentialsNotFoundException(AuthHttpStatus.TOKEN_EXPIRE.getMessage());
             } else {

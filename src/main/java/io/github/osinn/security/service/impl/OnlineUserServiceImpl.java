@@ -25,7 +25,6 @@ import org.springframework.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -145,12 +144,12 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      * @return
      */
     @Override
-    public List<OnlineUser> fetchOnlineUserAllByUserId(Object filterUserId) {
+    public List<OnlineUser> getOnlineUserAllByUserId(Object filterUserId) {
         List<String> keys = redisUtils.scan(securityProperties.getCacheOnlineUserInfoKeyPrefix() + "*");
         Collections.reverse(keys);
         List<OnlineUser> onlineUsers = new ArrayList<>();
         for (String key : keys) {
-            OnlineUser onlineUser = redisUtils.get(key, OnlineUser.class);
+            OnlineUser onlineUser = redisUtils.get(key);
             if (onlineUser == null) {
                 continue;
             }
@@ -173,7 +172,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      * @return Object 需要自行转Entity对象
      */
     @Override
-    public OnlineUser fetchOnlineUserCompleteInfo() {
+    public OnlineUser getOnlineUserInfo() {
         String token = TokenUtils.getToken();
         if (StrUtils.isEmpty(token)) {
             return null;
@@ -183,7 +182,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     }
 
     @Override
-    public OnlineUser fetchOnlineUserCompleteInfoByToken(String token) {
+    public OnlineUser getOnlineUserInfoByToken(String token) {
         if (StrUtils.isEmpty(token)) {
             return null;
         }
@@ -202,7 +201,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      */
     @Override
     public OnlineUser getOne(String key) {
-        return redisUtils.get(key, OnlineUser.class);
+        return redisUtils.get(key);
     }
 
     /**
@@ -217,14 +216,9 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     }
 
     @Override
-    public List<OnlineUser> fetchOnlineUserAll() {
-        List<String> onlineUserList = redisUtils.fetchLike(securityProperties.getCacheOnlineUserInfoKeyPrefix() + "*");
-        List<OnlineUser> onlineUsers = Lists.newArrayList();
-        for (String onlineUserStr : onlineUserList) {
-            OnlineUser onlineUser = GsonMapper.toBean(onlineUserStr, OnlineUser.class);
-            onlineUsers.add(onlineUser);
-        }
-        return onlineUsers;
+    public List<OnlineUser> getOnlineUserAll() {
+        List<OnlineUser> onlineUserList = redisUtils.fetchLike(securityProperties.getCacheOnlineUserInfoKeyPrefix() + "*");
+        return onlineUserList;
     }
 
     @Override
@@ -246,8 +240,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      */
     @Override
     @Async
-    public void editUserInfoForciblyLogout(List<Object> ids) {
-        List<OnlineUser> onlineUserAll = fetchOnlineUserAll();
+    public void logoutForcibly(List<?> ids) {
+        List<OnlineUser> onlineUserAll = getOnlineUserAll();
         onlineUserAll.forEach(onlineUser -> {
             if (ids.contains(onlineUser.getId())) {
                 try {
@@ -286,10 +280,10 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     /**
      * @param userId     用户名
-     * @param igoreToken 生成的token令牌
+     * @param ignoreToken 生成的token令牌
      */
-    private void checkLoginOnUser(Object userId, String igoreToken) {
-        List<OnlineUser> onlineUsers = fetchOnlineUserAllByUserId(userId);
+    private void checkLoginOnUser(Object userId, String ignoreToken) {
+        List<OnlineUser> onlineUsers = getOnlineUserAllByUserId(userId);
         if (onlineUsers == null || onlineUsers.isEmpty()) {
             return;
         }
@@ -297,7 +291,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             if (userId.equals(onlineUser.getId())) {
                 try {
                     String token = CryptoUtils.desDecrypt(onlineUser.getKey(), securityProperties.getDesPassword());
-                    if (!StrUtils.isEmpty(igoreToken) && !igoreToken.equals(token)) {
+                    if (!StrUtils.isEmpty(ignoreToken) && !ignoreToken.equals(token)) {
                         // 踢出用户
                         redisUtils.del(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
                     }
@@ -346,8 +340,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     }
 
     @Override
-    public void refreshUserPermission(Serializable userId) {
-        List<OnlineUser> onlineUsers = fetchOnlineUserAllByUserId(userId);
+    public void refreshUserPermission(Object userId) {
+        List<OnlineUser> onlineUsers = getOnlineUserAllByUserId(userId);
         if (CollectionUtils.isEmpty(onlineUsers)) {
             return;
         }
@@ -393,7 +387,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         Set<String> permissions = new HashSet<>();
         Set<ResourcePermission> resourcePermissions = new HashSet<>();
         // 用户权限列表，根据用户拥有的权限标识与如 @PreAuthorize("hasAuthority('sys:menu:view')") 标注的接口对比，决定是否可以调用接口
-        AuthRoleInfo authRoleInfo = securityService.fetchRolePermissionInfo(authUserInfo.getId());
+        AuthRoleInfo authRoleInfo = securityService.getRolePermissionInfo(authUserInfo.getId());
 
         for (AuthRoleInfo.BaseRoleInfo role : authRoleInfo.getRoles()) {
             for (ResourcePermission resourcePermission : role.getResourcePermission()) {

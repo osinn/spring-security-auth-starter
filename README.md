@@ -1,8 +1,9 @@
 # spring-security-auth-starter
-- 目标 spring-security 权限认证自动配置，开箱即用，减少开发成本
+- 目标 基于Spring Security 封装权限认证自动配置，开箱即用，减少开发成本，简化集成
 - 支持动态续租token过期时间
 - 支持基于`@PreAuthorize`注解方式授权认证
-- 支持基于URL路径权限认证。登录接口前端可对密码进行rsa加密(前端公钥加密，后端私钥解密)
+- 支持基于URL路径权限认证
+- 登录接口前端可对密码进行rsa加密(前端公钥加密，后端私钥解密)
 - 支持自定义登录接口(微信公众授权/小程序授权可选自定义登录接口)
 - `@AuthIgnore` 注解，用于标识接口是否需要认证
 
@@ -11,7 +12,7 @@
 - 需要jdk17+
 
 # 地址
-- 项目地址 ：[https://github.com/wency-cai/spring-security-auth-starter](https://github.com/wency-cai/spring-security-auth-starter)
+- 项目地址 ：[https://github.com/osinn/spring-security-auth-starter](https://github.com/osinn/spring-security-auth-starter)
 - demo 地址：[https://github.com/osinn/spring-security-auth-example](https://github.com/osinn/spring-security-auth-example)
 
 
@@ -35,11 +36,12 @@
 ```
 
 #### yml 简易配置
+- 如果都是使用默认的，以下配置都可以不用配，登陆接口匿名访问可直接使用`@AuthIgnore`注解
+
 ```
 security:
   config:
-    # 建议换成自己的密码
-    des-password: 123456789
+    des-password: aMQBIx+Yta0= # 默认的des加密密码，建议换成自己的，可调用 CryptoUtils.generateDesKey() 方法生成
     expire-time: 14400 # 过期时间默认4小时
     expire-ratio: 0.5 # 过期时间剩余比例，0-1之间，默认 0.5 即时间过半时刷新token缓存过期时间
     dynamic-refresh-token: true # 开启启动刷新token，默认是关闭的，不会自动刷新token过期时间，开启后，token会根据 expire-ratio 比例阀值计算是否需求重置token过期时间
@@ -53,7 +55,15 @@ security:
 - 在启动类添加如下注解启用`spring-security-auth-starter`安全认证
 
 ```
-@EnableSecurityAuth
+@EnableSecurityAuth // 添加此注解启用权限认证
+@SpringBootApplication
+public class SpringSecurityAuthExampleApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SpringSecurityAuthExampleApplication.class, args);
+    }
+}
+
 ```
 
 #### 实现 ISecurityService 接口
@@ -173,7 +183,7 @@ public class SecurityServiceImpl implements ISecurityService {
      * @return
      */
     @Override
-    public AuthRoleInfo fetchRolePermissionInfo(Serializable userId) {
+    public AuthRoleInfo fetchRolePermissionInfo(Object userId) {
         AuthRoleInfo jwtRoleInfo = new AuthRoleInfo();
 
         List<ResourcePermission> resourcePermissionList = new ArrayList<>();

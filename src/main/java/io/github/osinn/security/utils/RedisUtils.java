@@ -1,8 +1,9 @@
 package io.github.osinn.security.utils;
 
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.*;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -15,8 +16,14 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class RedisUtils {
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    private final RedisTemplate<String, Object> stringRedisTemplate;
+
+    public RedisUtils(RedisConnectionFactory factory) {
+        stringRedisTemplate = new RedisTemplate<>();
+        stringRedisTemplate.setConnectionFactory(factory);
+        stringRedisTemplate.setKeySerializer(new StringRedisSerializer());
+        stringRedisTemplate.afterPropertiesSet();
+    }
 
     /**
      * 指定缓存失效时间
@@ -84,9 +91,8 @@ public class RedisUtils {
      * @param key 键
      * @return 值
      */
-    public <T> T get(String key, Class<T> clazz) {
-        String value = stringRedisTemplate.opsForValue().get(key);
-        return GsonMapper.toBean(value, clazz);
+    public <T> T get(String key) {
+        return (T) stringRedisTemplate.opsForValue().get(key);
     }
 
     /**
@@ -95,11 +101,9 @@ public class RedisUtils {
      * @param key 键
      * @return 值
      */
-    public <T> List<T> getList(String key, Class<T> clazz) {
-        String value = stringRedisTemplate.opsForValue().get(key);
-        return GsonMapper.toListBean(value, clazz);
+    public <T> List<T> getList(String key) {
+        return (List<T>) stringRedisTemplate.opsForValue().get(key);
     }
-
 
     /**
      * 普通缓存放入
@@ -109,7 +113,7 @@ public class RedisUtils {
      * @return true成功 false失败
      */
     public boolean set(String key, Object value) {
-        stringRedisTemplate.opsForValue().set(key, GsonMapper.toJsonStr(value));
+        stringRedisTemplate.opsForValue().set(key, value);
         return true;
     }
 
@@ -122,11 +126,13 @@ public class RedisUtils {
      * @return true成功 false 失败
      */
     public boolean set(String key, Object value, long time) {
-        stringRedisTemplate.opsForValue().set(key, GsonMapper.toJsonStr(value), time, TimeUnit.SECONDS);
+        if (time <= 0) {
+            stringRedisTemplate.opsForValue().set(key, value, time);
+        } else {
+            stringRedisTemplate.opsForValue().set(key, value, time, TimeUnit.SECONDS);
+        }
         return true;
     }
-
-    // ===============================list=================================
 
     /**
      * 根据前缀删除缓存
@@ -141,17 +147,20 @@ public class RedisUtils {
     }
 
     /**
-     * 根据前缀删除缓存
+     * 根据前缀获取缓存
      *
      * @param prefix 前缀
      */
-    public List<String> fetchLike(String prefix) {
+    public <T> List<T> fetchLike(String prefix) {
         List<String> keys = scan(prefix);
-        List<String> list = new ArrayList<>();
+        List<T> list = new ArrayList<>();
         for (String key : keys) {
-            list.add(stringRedisTemplate.opsForValue().get(key));
+            Object object = stringRedisTemplate.opsForValue().get(key);
+            if (object != null) {
+                list.add((T) object);
+            }
         }
-        list.removeIf(x -> x == null);
+        list.removeIf(Objects::isNull);
         return list;
     }
 }

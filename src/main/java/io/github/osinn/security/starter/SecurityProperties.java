@@ -27,6 +27,11 @@ public class SecurityProperties {
     private String header = "Authorization";
 
     /**
+     * 超级管理员角色编码
+     */
+    private String superAdminRole = AuthConstant.SUPER_ADMIN_ROLE;
+
+    /**
      * 可选-token前缀
      */
     private String tokenStartWith = "";
@@ -47,9 +52,9 @@ public class SecurityProperties {
     private Set<String> ignoringUrls = Sets.newLinkedHashSet();
 
     /**
-     * 可选-额外自定义黑名单路径
+     * 拦截路径前缀，默认拦截 /** 下所有路径
      */
-    private Set<String> authUrlsPrefix = Sets.newLinkedHashSet();
+    private Set<String> authorizedUrlPrefix = Set.of("/**");
 
     /**
      * 白名单token，完成的token,包括 tokenStartWith
@@ -138,9 +143,9 @@ public class SecurityProperties {
      * 可选-加密方式：
      * <p> bcrypt </p>
      * <p> pbkdf2 </p>
-     * <p> md5sha512 先sha512在md5然后字母转大写 </p>
+     * <p> md5sha512 </p>
      */
-    private String idForEncode = "md5sha512";
+    private String idForEncode = "bcrypt";
 
     /**
      * 默认根据url认证
@@ -155,7 +160,7 @@ public class SecurityProperties {
     /**
      * 是否动态刷新token,若果要动态刷新token,需要在缓存对象OnlineUser中设置登录时间
      */
-    private boolean dynamicRefreshToken;
+    private boolean dynamicRefreshToken = true;
 
     /**
      * 验证码

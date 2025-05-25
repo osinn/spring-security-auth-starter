@@ -117,7 +117,7 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
     private List<ResourcePermission> getSysResourcePermissionAll() {
         List<ResourcePermission> resourcePermissionList;
         if (securityProperties.isEnableSysResourcePermissionAll()) {
-            resourcePermissionList = redisUtils.getList(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY, ResourcePermission.class);
+            resourcePermissionList = redisUtils.getList(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY);
             if (CollectionUtils.isEmpty(resourcePermissionList)) {
                 resourcePermissionList = securityService.getSysResourcePermissionAll();
                 redisUtils.set(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY, resourcePermissionList);
