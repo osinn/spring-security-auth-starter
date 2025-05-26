@@ -9,8 +9,6 @@ import io.github.osinn.security.annotation.AuthIgnore;
 import io.github.osinn.security.security.dto.SecurityStorage;
 import io.github.osinn.security.security.filter.SecurityAuthenticationFilter;
 import io.github.osinn.security.service.ISecurityService;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import io.github.osinn.security.utils.RedisUtils;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +23,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -38,8 +35,6 @@ import org.springframework.web.util.pattern.PathPattern;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 
 /**
@@ -84,7 +79,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
                                            AuthenticationManagerBuilder authenticationManagerBuilder,
-                                           PasswordEncoder passwordEncoder,
                                            ISecurityService securityService) throws Exception {
 
         Map<RequestMappingInfo, HandlerMethod> handlerMethodMap = requestMappingHandlerMapping.getHandlerMethods();
@@ -138,11 +132,10 @@ public class SecurityConfig {
         };
 
         // 权限白名单urls
-        Set<String> anonymousUrs = Sets.newHashSet();
-        anonymousUrs.addAll(Lists.newArrayList());
-        anonymousUrs.addAll(Lists.newArrayList(pageAnonymousUrl));
-        anonymousUrs.addAll(Lists.newArrayList(anonymousUrls));
-        securityStorage.setPermissionAnonymousUrlList(anonymousUrs);
+        anonymousUrls.addAll(Set.of(staticFileUrl));
+        anonymousUrls.addAll(Set.of(pageAnonymousUrl));
+        securityStorage.setPermissionAnonymousUrlList(anonymousUrls);
+
 
         if (securityProperties.isDisableHttpBasic()) {
             // 禁用Http Basic
@@ -172,7 +165,7 @@ public class SecurityConfig {
                                         .requestMatchers("/favicon.ico", "/resources/**", "/error").permitAll()
                                         .requestMatchers(pageAnonymousUrl).permitAll()
                                         .requestMatchers(HttpMethod.OPTIONS, "/*").permitAll()
-                                        .requestMatchers(anonymousUrs.toArray(new String[0])).permitAll()
+                                        .requestMatchers(anonymousUrls.toArray(new String[0])).permitAll()
                                         .requestMatchers(authUrlsPrefix.toArray(new String[0])).permitAll()
                                         // 其余都需要认证
                                         .anyRequest()

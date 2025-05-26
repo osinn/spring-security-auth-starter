@@ -2,13 +2,10 @@ package io.github.osinn.security.starter;
 
 import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.enums.AuthType;
-import com.google.common.collect.Sets;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 参数配置-token使用redis过期策略
@@ -49,7 +46,7 @@ public class SecurityProperties {
     /**
      * 可选-额外自定义白名单路径
      */
-    private Set<String> ignoringUrls = Sets.newLinkedHashSet();
+    private Set<String> ignoringUrls = new HashSet<>();
 
     /**
      * 拦截路径前缀，默认拦截 /** 下所有路径
@@ -59,7 +56,7 @@ public class SecurityProperties {
     /**
      * 白名单token，完成的token,包括 tokenStartWith
      */
-    private Set<String> ignoringToken = Sets.newLinkedHashSet();
+    private Set<String> ignoringToken = new HashSet<>();
 
     /**
      * 可选-密码加密的私钥

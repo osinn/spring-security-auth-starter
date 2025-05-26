@@ -1,6 +1,5 @@
 package io.github.osinn.security.service.impl;
 
-import com.google.common.collect.Lists;
 import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.security.dto.*;
 import io.github.osinn.security.starter.SecurityProperties;

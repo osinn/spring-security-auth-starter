@@ -1,7 +1,5 @@
 package io.github.osinn.security.utils;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import lombok.Data;
 import org.springframework.util.DigestUtils;
 
@@ -149,9 +147,7 @@ public class CryptoUtils {
      * @return
      */
     public static String md5Sha512Password(String password) {
-        Hasher hasher = Hashing.sha512().newHasher();
-        hasher.putString("boot.api.security.osinn" + password, StandardCharsets.UTF_8);
-        password = hasher.hash().toString().toUpperCase();
+        password = password.toUpperCase();
         return md5DigestAsHex(password);
     }
 
