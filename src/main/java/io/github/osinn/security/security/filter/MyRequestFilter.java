@@ -1,6 +1,6 @@
 package io.github.osinn.security.security.filter;
 
-import io.github.osinn.security.security.filter.request.MyXssHttpServletRequestWrapper;
+import io.github.osinn.security.security.filter.request.XssHttpServletRequestWrapper;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,7 +45,7 @@ public class MyRequestFilter implements Filter {
             response.setStatus(HttpServletResponse.SC_OK);
         } else {
             if (enableXss) {
-                filterChain.doFilter(new MyXssHttpServletRequestWrapper(request), servletResponse);
+                filterChain.doFilter(new XssHttpServletRequestWrapper(request), servletResponse);
             } else {
                 filterChain.doFilter(request, servletResponse);
             }

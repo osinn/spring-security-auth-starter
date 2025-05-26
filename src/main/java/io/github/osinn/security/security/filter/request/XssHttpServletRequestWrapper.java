@@ -14,13 +14,13 @@ import java.util.*;
 
 
 /**
- * XSS防护请求包装类
+ * xss
  *
  * @author wency_cai
  */
-public class MyXssHttpServletRequestWrapper extends HttpServletRequestWrapper {
+public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
-    public MyXssHttpServletRequestWrapper(HttpServletRequest request) {
+    public XssHttpServletRequestWrapper(HttpServletRequest request) {
         super(request);
     }
 
@@ -33,7 +33,7 @@ public class MyXssHttpServletRequestWrapper extends HttpServletRequestWrapper {
         value = value.replaceAll("<script(.*?)>", "#script#");
         value = value.replaceAll("eval\\((.*?)\\)", "#eval#");
         value = value.replaceAll("expression\\((.*?)\\)", "#expression#");
-        value = value.replaceAll("javascript:", "#javascript#");
+        value = value.replaceAll("javascript:", "#javascript:#");
         value = value.replaceAll("vbscript:", "#vbscript#");
         value = value.replaceAll("onload(.*?)=", "#onload#");
         return value;
@@ -75,14 +75,14 @@ public class MyXssHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        IOUtils.copy(super.getInputStream(), byteArrayOutputStream);
-
-        String content = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
-        if (!content.isEmpty()) {
-            content = cleanXss(content);
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+            IOUtils.copy(super.getInputStream(), byteArrayOutputStream);
+            String content = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
+            if (!content.isEmpty()) {
+                content = cleanXss(content);
+            }
+            return new XssServletInputStream(content.getBytes(StandardCharsets.UTF_8));
         }
-        return new XssServletInputStream(content.getBytes(StandardCharsets.UTF_8));
     }
 
     private static class XssServletInputStream extends ServletInputStream {
