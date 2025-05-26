@@ -30,18 +30,18 @@ import java.util.List;
 public class CustomSecurityMetadataSource implements FilterInvocationSecurityMetadataSource {
 
 
-    private ISecurityService securityService;
+    private final ISecurityService securityService;
 
     private final AuthType authType;
 
     /**
      * 白名单
      */
-    private SecurityStorage securityStorage;
+    private final SecurityStorage securityStorage;
 
-    private SecurityProperties securityProperties;
+    private final SecurityProperties securityProperties;
 
-    private RedisUtils redisUtils;
+    private final RedisUtils redisUtils;
 
     @Override
     public Collection<ConfigAttribute> getAllConfigAttributes() {

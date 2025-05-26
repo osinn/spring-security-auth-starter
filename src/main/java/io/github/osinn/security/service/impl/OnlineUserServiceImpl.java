@@ -317,7 +317,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             String browser = StrUtils.getBrowser(request);
             OnlineUser onlineUser = new OnlineUser(authUserInfo.getId(),
                     authUserInfo.getAccount(),
-                    authUserInfo.getPassword(),
+                    null,
                     authUserInfo.getNickname(),
                     browser,
                     ip,

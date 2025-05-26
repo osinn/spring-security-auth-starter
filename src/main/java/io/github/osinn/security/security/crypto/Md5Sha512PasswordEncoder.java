@@ -20,6 +20,7 @@ public class Md5Sha512PasswordEncoder implements PasswordEncoder {
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
         // 加密转换对应数据库加密方式
         rawPassword = CryptoUtils.md5Sha512Password(rawPassword.toString());
-        return encodedPassword.equals(rawPassword);
+        return encodedPassword.contentEquals(rawPassword);
     }
+
 }

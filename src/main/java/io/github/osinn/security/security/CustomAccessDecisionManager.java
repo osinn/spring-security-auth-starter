@@ -18,8 +18,6 @@ import java.util.Objects;
 
 
 /**
- * 使用 @PreAuthorize("hasAnyAuthority('xxx:xxx:xxx')") 访问权限控制会触发此认证校验
- *
  * @author wency_cai
  */
 @Slf4j

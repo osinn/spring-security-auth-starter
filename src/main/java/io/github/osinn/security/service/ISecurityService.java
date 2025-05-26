@@ -64,15 +64,6 @@ public interface ISecurityService {
     }
 
     /**
-     * 退出(删除token)前处理方法
-     *
-     * @param loginUser
-     */
-    default void logoutBeforeHandler(HttpServletRequest request, HttpServletResponse response, OnlineUser loginUser) {
-
-    }
-
-    /**
      * 每次校验权限都会调用此方法获取系统全部权限，如果需要缓存自行处理，默认会缓存，如果配置 enableSysResourcePermissionAll = false,需要自行处理缓存，避免频繁查询数据库获取系统所有权限权限
      *
      * @return 返回系统全部权限
