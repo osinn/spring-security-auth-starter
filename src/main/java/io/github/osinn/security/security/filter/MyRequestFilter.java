@@ -1,6 +1,5 @@
 package io.github.osinn.security.security.filter;
 
-import io.github.osinn.security.enums.AuthType;
 import io.github.osinn.security.security.filter.request.MyXssHttpServletRequestWrapper;
 
 import jakarta.servlet.*;

@@ -1,64 +1,116 @@
 package io.github.osinn.security.security.filter.request;
 
-import io.github.osinn.security.utils.StrUtils;
-import lombok.extern.slf4j.Slf4j;
-
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 
-import static org.springframework.web.util.HtmlUtils.htmlEscape;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
 
 /**
- * xss 处理,流不可重复读取
+ * XSS防护请求包装类
  *
  * @author wency_cai
  */
-@Slf4j
 public class MyXssHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
     public MyXssHttpServletRequestWrapper(HttpServletRequest request) {
         super(request);
     }
 
-    @Override
-    public String getQueryString() {
-        String value = super.getQueryString();
-        if (StrUtils.isEmpty(value)) {
+    private String cleanXss(String value) {
+        if (value == null || value.isEmpty()) {
             return value;
         }
-        return xssHtmlEscape(value);
+        value = value.replaceAll("<script>", "#script#");
+        value = value.replaceAll("</script>", "#/script#");
+        value = value.replaceAll("<script(.*?)>", "#script#");
+        value = value.replaceAll("eval\\((.*?)\\)", "#eval#");
+        value = value.replaceAll("expression\\((.*?)\\)", "#expression#");
+        value = value.replaceAll("javascript:", "#javascript#");
+        value = value.replaceAll("vbscript:", "#vbscript#");
+        value = value.replaceAll("onload(.*?)=", "#onload#");
+        return value;
     }
+
 
     @Override
     public String getParameter(String name) {
         String value = super.getParameter(name);
-        if (StrUtils.isEmpty(value)) {
-            return value;
-        }
-        return xssHtmlEscape(value);
+        return cleanXss(value);
     }
 
     @Override
     public String[] getParameterValues(String name) {
         String[] values = super.getParameterValues(name);
-        if (StrUtils.isEmpty(values)) {
-            return values;
+        if (values == null) {
+            return null;
         }
-        int length = values.length;
-        String[] escapeValues = new String[length];
-        for (int i = 0; i < length; i++) {
-            String value = values[i];
-            if (StrUtils.isEmpty(value)) {
-                escapeValues[i] = value;
-            } else {
-                escapeValues[i] = xssHtmlEscape(value);
+        String[] encodedValues = new String[values.length];
+        for (int i = 0; i < values.length; i++) {
+            encodedValues[i] = cleanXss(values[i]);
+        }
+        return encodedValues;
+    }
+
+    @Override
+    public Map<String, String[]> getParameterMap() {
+        Map<String, String[]> parameterMap = super.getParameterMap();
+        Map<String, String[]> encodedParameterMap = new HashMap<>();
+        for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+            String[] encodedValues = new String[entry.getValue().length];
+            for (int i = 0; i < entry.getValue().length; i++) {
+                encodedValues[i] = cleanXss(entry.getValue()[i]);
             }
+            encodedParameterMap.put(entry.getKey(), encodedValues);
         }
-        return escapeValues;
+        return encodedParameterMap;
     }
 
-    private String xssHtmlEscape(String value) {
-        return htmlEscape(value);
+    @Override
+    public ServletInputStream getInputStream() throws IOException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        IOUtils.copy(super.getInputStream(), byteArrayOutputStream);
+
+        String content = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
+        if (!content.isEmpty()) {
+            content = cleanXss(content);
+        }
+        return new XssServletInputStream(content.getBytes(StandardCharsets.UTF_8));
     }
 
+    private static class XssServletInputStream extends ServletInputStream {
+
+        private final ByteArrayInputStream buffer;
+
+        public XssServletInputStream(byte[] contents) {
+            this.buffer = new ByteArrayInputStream(contents);
+        }
+
+        @Override
+        public int read() throws IOException {
+            return buffer.read();
+        }
+
+        @Override
+        public boolean isFinished() {
+            return buffer.available() == 0;
+        }
+
+        @Override
+        public boolean isReady() {
+            return true;
+        }
+
+        @Override
+        public void setReadListener(ReadListener listener) {
+            throw new UnsupportedOperationException();
+        }
+    }
 }

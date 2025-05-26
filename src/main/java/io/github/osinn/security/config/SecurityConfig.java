@@ -162,7 +162,6 @@ public class SecurityConfig {
                                         // 匿名
                                         // 静态资源等等
                                         .requestMatchers(HttpMethod.GET, staticFileUrl).permitAll()
-                                        .requestMatchers("/favicon.ico", "/resources/**", "/error").permitAll()
                                         .requestMatchers(pageAnonymousUrl).permitAll()
                                         .requestMatchers(HttpMethod.OPTIONS, "/*").permitAll()
                                         .requestMatchers(anonymousUrls.toArray(new String[0])).permitAll()

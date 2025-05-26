@@ -56,7 +56,7 @@ public class SecurityProperties {
     /**
      * 白名单token，完成的token,包括 tokenStartWith
      */
-    private Set<String> ignoringToken = new HashSet<>();
+    private Set<String> ignoringToken = Set.of("/favicon.ico");
 
     /**
      * 可选-密码加密的私钥
@@ -91,12 +91,12 @@ public class SecurityProperties {
     /**
      * 是否启用跨域请求配置
      */
-    private boolean enableCors = true;
+    private boolean enableCors = false;
 
     /**
      * 是否开启xss()
      */
-    private boolean enableXss = true;
+    private boolean enableXss = false;
 
     /**
      * 权限不足或认证失败是否抛出异常，true 抛出SecurityAuthException异常
