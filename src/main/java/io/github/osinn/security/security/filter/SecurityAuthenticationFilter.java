@@ -5,6 +5,7 @@ import io.github.osinn.security.enums.AuthHttpStatus;
 import io.github.osinn.security.exception.SecurityAuthException;
 import io.github.osinn.security.security.SecurityAuthenticationEntryPoint;
 import io.github.osinn.security.security.dto.OnlineUser;
+import io.github.osinn.security.security.filter.request.XssHttpServletRequestWrapper;
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.service.ISecurityService;
 import io.github.osinn.security.starter.SecurityProperties;
@@ -29,27 +30,22 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * token的校验
- * 该类继承自BasicAuthenticationFilter，在doFilterInternal方法中，
- * 如果校验通过，就认为这是一个取得授权的合法请求
+ * token 校验
  *
  * @author wency_cai
  */
 @Slf4j
 public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
 
-    private SecurityProperties securityProperties;
+    private final SecurityProperties securityProperties;
 
-    private IOnlineUserService onlineUserService;
+    private final IOnlineUserService onlineUserService;
 
-    /**
-     * 白名单
-     */
-    private SecurityStorage securityStorage;
+    private final SecurityStorage securityStorage;
 
-    private SecurityAuthenticationEntryPoint authenticationEntryPoint;
+    private final SecurityAuthenticationEntryPoint authenticationEntryPoint;
 
-    private ISecurityService securityService;
+    private final ISecurityService securityService;
 
 
     public SecurityAuthenticationFilter(AuthenticationManager authenticationManager,
@@ -70,8 +66,17 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         try {
-            this.checkAuthentication(request, response);
-            chain.doFilter(request, response);
+            // 跨域会发起预校验的OPTIONS请求，所以OPTIONS预校验请求，直接跳过
+            if (AuthConstant.OPTIONS.equals(request.getMethod())) {
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                this.checkAuthentication(request, response);
+                if (securityProperties.isEnableXss()) {
+                    chain.doFilter(new XssHttpServletRequestWrapper(request), response);
+                } else {
+                    chain.doFilter(request, response);
+                }
+            }
         } catch (AuthenticationException e) {
             this.authenticationEntryPoint.commence(request, response, e);
         } catch (Exception e) {

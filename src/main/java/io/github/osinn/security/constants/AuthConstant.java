@@ -5,7 +5,7 @@ package io.github.osinn.security.constants;
  **/
 public class AuthConstant {
 
-
+    public static final String OPTIONS = "OPTIONS";
     public static final String UNKNOWN = "unknown";
     public static final String PROXY_CLIENT_IP = "Proxy-Client-IP";
     public static final String X_FORWARDED_FOR = "x-forwarded-for";

@@ -2,7 +2,6 @@ package io.github.osinn.security.config;
 
 import io.github.osinn.security.security.*;
 import io.github.osinn.security.security.filter.CustomAuthorizationFilter;
-import io.github.osinn.security.security.filter.MyRequestFilter;
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.annotation.AuthIgnore;
@@ -26,7 +25,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -163,7 +161,7 @@ public class SecurityConfig {
                                         // 静态资源等等
                                         .requestMatchers(HttpMethod.GET, staticFileUrl).permitAll()
                                         .requestMatchers(pageAnonymousUrl).permitAll()
-                                        .requestMatchers(HttpMethod.OPTIONS, "/*").permitAll()
+                                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                         .requestMatchers(anonymousUrls.toArray(new String[0])).permitAll()
                                         .requestMatchers(authUrlsPrefix.toArray(new String[0])).permitAll()
                                         // 其余都需要认证
@@ -181,10 +179,6 @@ public class SecurityConfig {
                         authenticationEntryPoint,
                         securityService),
                 UsernamePasswordAuthenticationFilter.class);
-
-        if (securityProperties.isEnableCors() || securityProperties.isEnableXss()) {
-            httpSecurity.addFilterBefore(new MyRequestFilter(securityProperties.isEnableCors(), securityProperties.isEnableXss()), CorsFilter.class);
-        }
 
         httpSecurity.addFilterAfter(new CustomAuthorizationFilter(new AccessDecisionAuthorizationManager<>(accessDecisionManager(), securityMetadataSource())), AuthorizationFilter.class);
         return httpSecurity.build();
