@@ -150,23 +150,17 @@ public class SecurityConfig {
                     e.accessDeniedHandler(securityAccessDeniedHandler);
                     e.authenticationEntryPoint(authenticationEntryPoint);
                 })
-                .authorizeHttpRequests(authorize -> {
-                            try {
-                                authorize
-                                        // 匿名
-                                        // 静态资源等等
-                                        .requestMatchers(HttpMethod.GET, staticFileUrl).permitAll()
-                                        .requestMatchers(pageAnonymousUrl).permitAll()
-                                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                        .requestMatchers(anonymousUrls.toArray(new String[0])).permitAll()
-                                        .requestMatchers(authUrlsPrefix.toArray(new String[0])).permitAll()
-                                        // 其余都需要认证
-                                        .anyRequest()
-                                        .authenticated();
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
+                .authorizeHttpRequests(authorize -> authorize
+                        // 匿名
+                        // 静态资源等等
+                        .requestMatchers(HttpMethod.GET, staticFileUrl).permitAll()
+                        .requestMatchers(pageAnonymousUrl).permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(anonymousUrls.toArray(new String[0])).permitAll()
+                        .requestMatchers(authUrlsPrefix.toArray(new String[0])).permitAll()
+                        // 其余都需要认证
+                        .anyRequest()
+                        .authenticated()
                 );
         httpSecurity.addFilterBefore(new SecurityAuthenticationFilter(authenticationManagerBuilder.getObject(),
                         securityStorage,
