@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -13,16 +12,16 @@ import java.util.concurrent.TimeUnit;
  * @author wency_cai
  **/
 @Slf4j
-@Component
 public class RedisUtils {
 
-    private final RedisTemplate<String, Object> stringRedisTemplate;
+    private static RedisTemplate<String, Object> redisTemplate;
 
-    public RedisUtils(RedisConnectionFactory factory) {
-        stringRedisTemplate = new RedisTemplate<>();
-        stringRedisTemplate.setConnectionFactory(factory);
-        stringRedisTemplate.setKeySerializer(new StringRedisSerializer());
-        stringRedisTemplate.afterPropertiesSet();
+    public static void initAfterPropertiesSet(RedisConnectionFactory factory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(factory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.afterPropertiesSet();
+        RedisUtils.redisTemplate = redisTemplate;
     }
 
     /**
@@ -31,10 +30,10 @@ public class RedisUtils {
      * @param key  键
      * @param time 时间(秒)
      */
-    public boolean expire(String key, long time) {
+    public static boolean expire(String key, long time) {
         try {
             if (time > 0) {
-                stringRedisTemplate.expire(key, time, TimeUnit.SECONDS);
+                redisTemplate.expire(key, time, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -49,8 +48,8 @@ public class RedisUtils {
      * @param key 键 不能为null
      * @return 时间(秒) 返回0代表为永久有效, 返回-2代表不存在
      */
-    public long getExpire(String key) {
-        return stringRedisTemplate.getExpire(key);
+    public static long getExpire(String key) {
+        return redisTemplate.getExpire(key);
     }
 
     /**
@@ -59,8 +58,8 @@ public class RedisUtils {
      * @param pattern key
      * @return /
      */
-    public List<String> scan(String pattern) {
-        Iterable<String> keysByPattern = stringRedisTemplate.keys(pattern);
+    public static List<String> scan(String pattern) {
+        Iterable<String> keysByPattern = redisTemplate.keys(pattern);
         List<String> keys = new ArrayList<>();
         for (String key : keysByPattern) {
             keys.add(key);
@@ -73,12 +72,12 @@ public class RedisUtils {
      *
      * @param key 可以传一个值 或多个
      */
-    public void del(String... key) {
+    public static void del(String... key) {
         if (key != null && key.length > 0) {
             if (key.length == 1) {
-                stringRedisTemplate.delete(key[0]);
+                redisTemplate.delete(key[0]);
             } else {
-                stringRedisTemplate.delete(Arrays.asList(key));
+                redisTemplate.delete(Arrays.asList(key));
             }
         }
     }
@@ -91,8 +90,8 @@ public class RedisUtils {
      * @param key 键
      * @return 值
      */
-    public <T> T get(String key) {
-        return (T) stringRedisTemplate.opsForValue().get(key);
+    public static <T> T get(String key) {
+        return (T) redisTemplate.opsForValue().get(key);
     }
 
     /**
@@ -101,8 +100,8 @@ public class RedisUtils {
      * @param key 键
      * @return 值
      */
-    public <T> List<T> getList(String key) {
-        return (List<T>) stringRedisTemplate.opsForValue().get(key);
+    public static <T> List<T> getList(String key) {
+        return (List<T>) redisTemplate.opsForValue().get(key);
     }
 
     /**
@@ -112,8 +111,8 @@ public class RedisUtils {
      * @param value 值
      * @return true成功 false失败
      */
-    public boolean set(String key, Object value) {
-        stringRedisTemplate.opsForValue().set(key, value);
+    public static boolean set(String key, Object value) {
+        redisTemplate.opsForValue().set(key, value);
         return true;
     }
 
@@ -125,11 +124,11 @@ public class RedisUtils {
      * @param time  时间(秒) time要大于0 如果time小于等于0 将设置无限期
      * @return true成功 false 失败
      */
-    public boolean set(String key, Object value, long time) {
+    public static boolean set(String key, Object value, long time) {
         if (time <= 0) {
-            stringRedisTemplate.opsForValue().set(key, value, time);
+            redisTemplate.opsForValue().set(key, value, time);
         } else {
-            stringRedisTemplate.opsForValue().set(key, value, time, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(key, value, time, TimeUnit.SECONDS);
         }
         return true;
     }
@@ -139,10 +138,10 @@ public class RedisUtils {
      *
      * @param prefix 前缀
      */
-    public void deleteCacheByPrefix(String prefix) {
+    public static void deleteCacheByPrefix(String prefix) {
         List<String> list = scan(prefix + "*");
         if (!list.isEmpty()) {
-            stringRedisTemplate.delete(list);
+            redisTemplate.delete(list);
         }
     }
 
@@ -151,11 +150,11 @@ public class RedisUtils {
      *
      * @param prefix 前缀
      */
-    public <T> List<T> fetchLike(String prefix) {
+    public static <T> List<T> fetchLike(String prefix) {
         List<String> keys = scan(prefix);
         List<T> list = new ArrayList<>();
         for (String key : keys) {
-            Object object = stringRedisTemplate.opsForValue().get(key);
+            Object object = redisTemplate.opsForValue().get(key);
             if (object != null) {
                 list.add((T) object);
             }

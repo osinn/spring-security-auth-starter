@@ -14,6 +14,7 @@ import org.springframework.util.PatternMatchUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * 描述
@@ -57,8 +58,8 @@ public class PermissionService {
 
         for (String permission : permissionArray) {
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-            boolean anyMatch = permission.contains(AuthConstant.ALL_PERMISSION) || authorities.stream().map(GrantedAuthority::getAuthority).filter(StringUtils::hasText)
-                    .anyMatch(x -> PatternMatchUtils.simpleMatch(permission, x));
+            boolean anyMatch = authorities.stream().map(GrantedAuthority::getAuthority).filter(StringUtils::hasText)
+                    .anyMatch(x -> PatternMatchUtils.simpleMatch(permission.trim(), x));
             if (anyMatch) {
                 return true;
             }
@@ -72,27 +73,8 @@ public class PermissionService {
      * @param roles 角色，多个以｜分割
      * @return {boolean}
      */
-    public boolean hasRoles(String roles) {
+    public boolean hasRole(String roles) {
         if (StrUtils.isEmpty(roles)) {
-            return false;
-        }
-        String[] roleArray = roles.split(AuthConstant.DELIMETER);
-        for (String role : roleArray) {
-            if (hasRole(role)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 判断用户是否拥有此角色
-     *
-     * @param role 角色字符串
-     * @return {boolean}
-     */
-    public boolean hasRole(String role) {
-        if (StrUtils.isEmpty(role)) {
             return false;
         }
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -103,15 +85,16 @@ public class PermissionService {
         if (onlineUser == null || StrUtils.isEmpty(onlineUser.getRoles())) {
             return false;
         }
-        for (AuthRoleInfo.BaseRoleInfo sysRole : onlineUser.getRoles()) {
-            String roleCode = sysRole.getRoleCode();
-            if (!StrUtils.isEmpty(roleCode)) {
-                if (securityProperties.getSuperAdminRole().equals(roleCode)) {
-                    return true;
-                }
-            }
+
+        List<AuthRoleInfo.BaseRoleInfo> onlineUserRoles = onlineUser.getRoles();
+        if (StrUtils.isEmpty(onlineUserRoles)) {
+            return false;
+        }
+
+        String[] roleArray = roles.split(AuthConstant.DELIMETER);
+        for (String role : roleArray) {
+            return onlineUserRoles.stream().map(AuthRoleInfo.BaseRoleInfo::getRoleCode).anyMatch(x -> x.equals(role.trim()));
         }
         return false;
     }
-
 }

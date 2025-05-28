@@ -1,20 +1,24 @@
 package io.github.osinn.security.utils;
 
 import io.github.osinn.security.security.dto.OnlineUser;
+import io.github.osinn.security.security.dto.ResourcePermission;
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.security.dto.AuthRoleInfo;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.PatternMatchUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * token工具类
@@ -22,14 +26,12 @@ import java.util.UUID;
  * @author wency_cai
  **/
 @Slf4j
-@Component
 public class TokenUtils {
 
     private static SecurityProperties securityProperties;
     private static IOnlineUserService onlineUserService;
 
-
-    public TokenUtils(SecurityProperties securityProperties, IOnlineUserService onlineUserService) {
+    public static void initAfterPropertiesSet(SecurityProperties securityProperties, IOnlineUserService onlineUserService) {
         TokenUtils.securityProperties = securityProperties;
         TokenUtils.onlineUserService = onlineUserService;
     }
@@ -189,4 +191,63 @@ public class TokenUtils {
         onlineUserService.deleteCacheAll();
     }
 
+    /**
+     * 判断用户是否拥有此角色
+     *
+     * @param roles 角色字符串
+     * @return {boolean}
+     */
+    public static boolean checkUserRole(String... roles) {
+        if (StrUtils.isEmpty(roles)) {
+            return false;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        OnlineUser onlineUser = (OnlineUser) authentication.getPrincipal();
+        if (onlineUser == null || StrUtils.isEmpty(onlineUser.getRoles())) {
+            return false;
+        }
+        List<AuthRoleInfo.BaseRoleInfo> onlineUserRoles = onlineUser.getRoles();
+        if (StrUtils.isEmpty(onlineUserRoles)) {
+            return false;
+        }
+        return Arrays.stream(roles).anyMatch(role -> onlineUserRoles.stream().anyMatch(sysRole -> role.equals(sysRole.getRoleCode())));
+    }
+
+    public static boolean checkUserPermission(String... permissions) {
+        if (StrUtils.isEmpty(permissions)) {
+            return false;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        return Arrays.stream(permissions).anyMatch(permission -> authorities.stream().map(GrantedAuthority::getAuthority).filter(StringUtils::hasText)
+                .anyMatch(x -> PatternMatchUtils.simpleMatch(permission, x)));
+    }
+
+    /**
+     * 获取当前用户所有角色编码集合
+     */
+    public static Set<String> getCurrentUserRoleCodeAll() {
+        List<AuthRoleInfo.BaseRoleInfo> roles = getOnlineUserInfo().getRoles();
+        // 返回角色编码集合
+        return roles == null ? Collections.emptySet() : roles.stream().map(AuthRoleInfo.BaseRoleInfo::getRoleCode).collect(Collectors.toSet());
+    }
+
+    /**
+     * 获取当前用户所有权限编码集合
+     */
+    public static Set<String> getCurrentUserPermissionCodeAll() {
+        List<AuthRoleInfo.BaseRoleInfo> roles = getOnlineUserInfo().getRoles();
+        // 返回用户所有权限编码
+        if (roles == null) {
+            return Collections.emptySet();
+        }
+        return roles.stream().map(AuthRoleInfo.BaseRoleInfo::getResourcePermission).flatMap(Collection::stream)
+                .map(ResourcePermission::getPermissionCode).collect(Collectors.toSet());
+    }
 }

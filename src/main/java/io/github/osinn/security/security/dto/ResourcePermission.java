@@ -31,8 +31,4 @@ public class ResourcePermission implements Serializable {
      */
     private String permissionCode;
 
-    /**
-     * 菜单名称【可选】，在没有权限情况下，如果空只提示“权限不足”，否则带上菜单名称
-     */
-    private String menuName;
 }

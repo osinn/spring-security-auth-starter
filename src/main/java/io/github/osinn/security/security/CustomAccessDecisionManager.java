@@ -43,22 +43,12 @@ public class CustomAccessDecisionManager {
 
     public boolean decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes) throws AccessDeniedException, InsufficientAuthenticationException {
 
-        if (AuthType.OFF.equals(authType)) {
-            // 权限认证关闭状态¸不需要认证权限，放行
-            return true;
-        }
-
         // 当系统没有配置权限资源时直接放行
         if (CollectionUtils.isEmpty(configAttributes)) {
             return true;
         }
 
         HttpServletRequest request = (HttpServletRequest) object;
-
-        if (securityStorage.isAnonymousUri(request)) {
-            // 放行白名单
-            return true;
-        }
 
         if (authentication == null) {
             throw new AccessDeniedException("当前访问没有权限");

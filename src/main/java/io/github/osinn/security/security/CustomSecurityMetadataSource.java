@@ -41,7 +41,6 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
 
     private final SecurityProperties securityProperties;
 
-    private final RedisUtils redisUtils;
 
     @Override
     public Collection<ConfigAttribute> getAllConfigAttributes() {
@@ -51,12 +50,10 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
     public CustomSecurityMetadataSource(ISecurityService securityService,
                                         SecurityStorage securityStorage,
                                         SecurityProperties securityProperties,
-                                        RedisUtils redisUtils,
                                         AuthType authType) {
         this.securityService = securityService;
         this.securityStorage = securityStorage;
         this.securityProperties = securityProperties;
-        this.redisUtils = redisUtils;
         this.authType = authType;
     }
 
@@ -64,6 +61,11 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
 
     @Override
     public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
+
+        if (AuthType.OFF.equals(authType)) {
+            // 权限认证关闭状态¸不需要认证权限，放行
+            return SecurityConfig.createList();
+        }
 
         HttpServletRequest request = (HttpServletRequest) object;
 
@@ -82,9 +84,7 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
         List<ResourcePermission> resourcePermissionList = this.getSysResourcePermissionAll();
 
         if (resourcePermissionList != null && !resourcePermissionList.isEmpty()) {
-            if (AuthType.OFF.equals(authType)) {
-                return SecurityConfig.createList();
-            } else if (AuthType.CODE.equals(authType)) {
+            if (AuthType.CODE.equals(authType)) {
                 List<String> permissionCodes = new ArrayList<>();
                 for (ResourcePermission resourcePermission : resourcePermissionList) {
                     // 对比系统权限资源
@@ -117,10 +117,10 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
     private List<ResourcePermission> getSysResourcePermissionAll() {
         List<ResourcePermission> resourcePermissionList;
         if (securityProperties.isEnableSysResourcePermissionAll()) {
-            resourcePermissionList = redisUtils.getList(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY);
+            resourcePermissionList = RedisUtils.getList(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY);
             if (CollectionUtils.isEmpty(resourcePermissionList)) {
                 resourcePermissionList = securityService.getSysResourcePermissionAll();
-                redisUtils.set(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY, resourcePermissionList);
+                RedisUtils.set(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY, resourcePermissionList);
             }
         } else {
             resourcePermissionList = securityService.getSysResourcePermissionAll();

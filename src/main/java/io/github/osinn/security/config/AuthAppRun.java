@@ -1,14 +1,16 @@
 package io.github.osinn.security.config;
 
+import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.utils.ResponseUtils;
-import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.security.dto.CustomizeResponseBodyField;
 import io.github.osinn.security.utils.SpringContextHolder;
+import io.github.osinn.security.utils.TokenUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import io.github.osinn.security.utils.RedisUtils;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 import java.util.Map;
 
@@ -23,11 +25,14 @@ public class AuthAppRun implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        RedisConnectionFactory factory = SpringContextHolder.getBean(RedisConnectionFactory.class);
+        IOnlineUserService onlineUserService = SpringContextHolder.getBean(IOnlineUserService.class);
+        RedisUtils.initAfterPropertiesSet(factory);
+        TokenUtils.initAfterPropertiesSet(securityProperties, onlineUserService);
         if (securityProperties.isAppRunDeleteHistoryToken()) {
             log.debug("------>  删除旧token  <------");
             try {
-                RedisUtils redisUtils = SpringContextHolder.getBean(RedisUtils.class);
-                redisUtils.deleteCacheByPrefix(securityProperties.getCacheOnlineUserInfoKeyPrefix());
+                RedisUtils.deleteCacheByPrefix(securityProperties.getCacheOnlineUserInfoKeyPrefix());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }

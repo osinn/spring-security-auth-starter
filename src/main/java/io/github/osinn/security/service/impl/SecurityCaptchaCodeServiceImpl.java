@@ -17,9 +17,6 @@ import java.util.UUID;
 public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeService {
 
     @Resource
-    private RedisUtils redisUtils;
-
-    @Resource
     private SecurityProperties securityService;
 
     /**
@@ -34,7 +31,7 @@ public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeServi
         String verCode = specCaptcha.text().toLowerCase();
         String key = UUID.randomUUID().toString().replace("-", "").toUpperCase();
         SecurityProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
-        redisUtils.set(captchaCode.getCodeKey().concat(key), verCode, captchaCode.getCaptchaExpiration());
+        RedisUtils.set(captchaCode.getCodeKey().concat(key), verCode, captchaCode.getCaptchaExpiration());
 
         return new CaptchaCodeDTO(key, specCaptcha.toBase64());
     }
@@ -49,7 +46,7 @@ public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeServi
     public String getCaptchaCode(String codeKey) {
         SecurityProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
         // 从redis取出验证码
-        String code = redisUtils.get(captchaCode.getCodeKey().concat(codeKey));
+        String code = RedisUtils.get(captchaCode.getCodeKey().concat(codeKey));
         return code;
     }
 
@@ -61,6 +58,6 @@ public class SecurityCaptchaCodeServiceImpl implements ISecurityCaptchaCodeServi
     @Override
     public void delete(String codeKey) {
         SecurityProperties.CaptchaCode captchaCode = securityService.getCaptchaCode();
-        redisUtils.del(captchaCode.getCodeKey().concat(codeKey));
+        RedisUtils.del(captchaCode.getCodeKey().concat(codeKey));
     }
 }

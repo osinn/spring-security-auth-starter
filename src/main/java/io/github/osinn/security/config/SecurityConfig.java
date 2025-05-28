@@ -8,7 +8,6 @@ import io.github.osinn.security.annotation.AuthIgnore;
 import io.github.osinn.security.security.dto.SecurityStorage;
 import io.github.osinn.security.security.filter.SecurityAuthenticationFilter;
 import io.github.osinn.security.service.ISecurityService;
-import io.github.osinn.security.utils.RedisUtils;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -64,9 +63,6 @@ public class SecurityConfig {
 
     @Resource
     private IOnlineUserService onlineUserService;
-
-    @Resource
-    private RedisUtils redisUtils;
 
     @Value("${server.servlet.context-path:}")
     private String contextPath;
@@ -194,7 +190,6 @@ public class SecurityConfig {
                 securityService,
                 securityStorage,
                 securityProperties,
-                redisUtils,
                 securityProperties.getAuthType());
     }
 
