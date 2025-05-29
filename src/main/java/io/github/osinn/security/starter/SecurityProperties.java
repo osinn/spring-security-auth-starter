@@ -186,6 +186,28 @@ public class SecurityProperties {
     private boolean enableSysResourcePermissionAll = true;
 
     /**
+     * IP地址拦截
+     */
+    private IpIntercept ipIntercept = new IpIntercept();
+
+    @Data
+    public static class IpIntercept {
+
+        private boolean enable = false;
+
+        /**
+         * 允许访问-IP段
+         */
+        private Set<String> allow = new HashSet<>();
+
+        /**
+         * 阻止访问-IP段
+         */
+        private Set<String> deny = new HashSet<>();
+
+    }
+
+    /**
      * 验证码
      */
     @Data

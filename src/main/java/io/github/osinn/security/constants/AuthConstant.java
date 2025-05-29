@@ -14,8 +14,6 @@ public class AuthConstant {
 
     public static final String LOCALHOST = "127.0.0.1";
 
-    public static final String CACHE_ONLINE_USER_INFO_KEY_PREFIX = "osinn.security:online_user_info:key_";
-
     /**
      * 超级管理管理，角色编码
      */
@@ -40,4 +38,9 @@ public class AuthConstant {
      * 缓存系统所有资源权限 key
      */
     public static final String SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY = "osinn.security:sys_resource_permission_all";
+
+    public static final String CACHE_ONLINE_USER_INFO_KEY_PREFIX = "osinn.security:online_user_info:key_";
+
+    public static final String CACHE_IP_INTERCEPT_ALLOW = "osinn.security:ip-intercept:allow";
+    public static final String CACHE_IP_INTERCEPT_DENY = "osinn.security:ip-intercept:deny";
 }

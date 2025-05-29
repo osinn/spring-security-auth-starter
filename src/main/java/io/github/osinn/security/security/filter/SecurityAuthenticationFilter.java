@@ -9,12 +9,11 @@ import io.github.osinn.security.security.filter.request.XssHttpServletRequestWra
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.service.ISecurityService;
 import io.github.osinn.security.starter.SecurityProperties;
-import io.github.osinn.security.utils.CryptoUtils;
-import io.github.osinn.security.utils.StrUtils;
-import io.github.osinn.security.utils.TokenUtils;
+import io.github.osinn.security.utils.*;
 import io.github.osinn.security.security.dto.SecurityStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -70,11 +69,20 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
             if (AuthConstant.OPTIONS.equals(request.getMethod())) {
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
-                this.checkAuthentication(request, response);
-                if (securityProperties.isEnableXss()) {
-                    chain.doFilter(new XssHttpServletRequestWrapper(request), response);
+                boolean checkInterceptor = true;
+                if (securityProperties.getIpIntercept().isEnable()) {
+                    checkInterceptor = IpRangeCheckerUtils.checkInterceptor(request, securityProperties.getIpIntercept());
+                }
+
+                if (!checkInterceptor) {
+                    ResponseUtils.outWriter(HttpStatus.UNAUTHORIZED.value(), AuthHttpStatus.SC_FORBIDDEN.getMessage(), HttpStatus.UNAUTHORIZED.getReasonPhrase(), request.getRequestURI(), request, response);
                 } else {
-                    chain.doFilter(request, response);
+                    this.checkAuthentication(request, response);
+                    if (securityProperties.isEnableXss()) {
+                        chain.doFilter(new XssHttpServletRequestWrapper(request), response);
+                    } else {
+                        chain.doFilter(request, response);
+                    }
                 }
             }
         } catch (AuthenticationException e) {

@@ -369,6 +369,8 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     @Override
     public void deleteCacheAll() {
         this.deleteCacheByPrefix(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY);
+        this.deleteCacheByPrefix(AuthConstant.CACHE_IP_INTERCEPT_ALLOW);
+        this.deleteCacheByPrefix(AuthConstant.CACHE_IP_INTERCEPT_DENY);
     }
 
     private void saveLoginInfo(OnlineUser onlineUser, String token) {

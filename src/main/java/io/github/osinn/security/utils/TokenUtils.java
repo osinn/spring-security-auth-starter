@@ -1,5 +1,6 @@
 package io.github.osinn.security.utils;
 
+import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.security.dto.OnlineUser;
 import io.github.osinn.security.security.dto.ResourcePermission;
 import io.github.osinn.security.service.IOnlineUserService;
@@ -249,5 +250,24 @@ public class TokenUtils {
         }
         return roles.stream().map(AuthRoleInfo.BaseRoleInfo::getResourcePermission).flatMap(Collection::stream)
                 .map(ResourcePermission::getPermissionCode).collect(Collectors.toSet());
+    }
+
+    /**
+     * 设置拦截IP段
+     */
+    public static void setIpIntercept(SecurityProperties.IpIntercept ipIntercept) {
+        if (ipIntercept != null) {
+            Set<String> allow = securityProperties.getIpIntercept().getAllow();
+            if (ipIntercept.getAllow() != null) {
+                allow.addAll(ipIntercept.getAllow());
+            }
+
+            Set<String> deny = securityProperties.getIpIntercept().getDeny();
+            if (ipIntercept.getDeny() != null) {
+                deny.addAll(ipIntercept.getDeny());
+            }
+            RedisUtils.set(AuthConstant.CACHE_IP_INTERCEPT_ALLOW, allow);
+            RedisUtils.set(AuthConstant.CACHE_IP_INTERCEPT_DENY, deny);
+        }
     }
 }
