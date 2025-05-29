@@ -3,12 +3,11 @@ package io.github.osinn.security.security;
 import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.enums.AuthType;
 import io.github.osinn.security.security.dto.ResourcePermission;
-import io.github.osinn.security.security.dto.SecurityStorage;
+import io.github.osinn.security.utils.PermissionUtils;
 import io.github.osinn.security.service.ISecurityService;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.utils.RedisUtils;
 import io.github.osinn.security.utils.StrUtils;
-import io.github.osinn.security.utils.TokenUtils;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.access.SecurityConfig;
 import org.springframework.security.web.FilterInvocation;
@@ -34,11 +33,6 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
 
     private final AuthType authType;
 
-    /**
-     * 白名单
-     */
-    private final SecurityStorage securityStorage;
-
     private final SecurityProperties securityProperties;
 
 
@@ -48,11 +42,9 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
     }
 
     public CustomSecurityMetadataSource(ISecurityService securityService,
-                                        SecurityStorage securityStorage,
                                         SecurityProperties securityProperties,
                                         AuthType authType) {
         this.securityService = securityService;
-        this.securityStorage = securityStorage;
         this.securityProperties = securityProperties;
         this.authType = authType;
     }
@@ -62,21 +54,9 @@ public class CustomSecurityMetadataSource implements FilterInvocationSecurityMet
     @Override
     public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
 
-        if (AuthType.OFF.equals(authType)) {
-            // 权限认证关闭状态¸不需要认证权限，放行
-            return SecurityConfig.createList();
-        }
-
         HttpServletRequest request = (HttpServletRequest) object;
 
-        if (securityStorage.isAnonymousUri(request)) {
-            // 放行白名单
-            return SecurityConfig.createList();
-        }
-
-        String token = TokenUtils.getToken();
-        if (token != null && securityProperties.getIgnoringToken().contains(securityProperties.getTokenStartWith() + token)) {
-            // 白名单token放行
+        if (PermissionUtils.isAnonymous(securityProperties, request)) {
             return SecurityConfig.createList();
         }
 

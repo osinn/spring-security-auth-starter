@@ -5,7 +5,7 @@ import io.github.osinn.security.security.filter.CustomAuthorizationFilter;
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.annotation.AuthIgnore;
-import io.github.osinn.security.security.dto.SecurityStorage;
+import io.github.osinn.security.utils.PermissionUtils;
 import io.github.osinn.security.security.filter.SecurityAuthenticationFilter;
 import io.github.osinn.security.service.ISecurityService;
 import jakarta.annotation.Resource;
@@ -54,9 +54,6 @@ public class SecurityConfig {
 
     @Resource
     private SecurityProperties securityProperties;
-
-    @Resource
-    private SecurityStorage securityStorage;
 
     @Resource
     private ISecurityService securityService;
@@ -128,7 +125,7 @@ public class SecurityConfig {
         // 权限白名单urls
         anonymousUrls.addAll(Set.of(staticFileUrl));
         anonymousUrls.addAll(Set.of(pageAnonymousUrl));
-        securityStorage.setPermissionAnonymousUrlList(anonymousUrls);
+        PermissionUtils.setPermissionAnonymousUrlList(anonymousUrls);
 
 
         if (securityProperties.isDisableHttpBasic()) {
@@ -163,7 +160,6 @@ public class SecurityConfig {
                         .authenticated()
                 );
         httpSecurity.addFilterBefore(new SecurityAuthenticationFilter(authenticationManagerBuilder.getObject(),
-                        securityStorage,
                         onlineUserService,
                         securityProperties,
                         authenticationEntryPoint,
@@ -176,13 +172,12 @@ public class SecurityConfig {
 
     @Bean
     public CustomAccessDecisionManager accessDecisionManager() {
-        return new CustomAccessDecisionManager(securityStorage, securityProperties.getAuthType());
+        return new CustomAccessDecisionManager(securityProperties.getAuthType());
     }
 
     private CustomSecurityMetadataSource securityMetadataSource() {
         return new CustomSecurityMetadataSource(
                 securityService,
-                securityStorage,
                 securityProperties,
                 securityProperties.getAuthType());
     }

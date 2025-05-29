@@ -10,7 +10,7 @@ import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.service.ISecurityService;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.utils.*;
-import io.github.osinn.security.security.dto.SecurityStorage;
+import io.github.osinn.security.utils.PermissionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -40,21 +40,17 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
 
     private final IOnlineUserService onlineUserService;
 
-    private final SecurityStorage securityStorage;
-
     private final SecurityAuthenticationEntryPoint authenticationEntryPoint;
 
     private final ISecurityService securityService;
 
 
     public SecurityAuthenticationFilter(AuthenticationManager authenticationManager,
-                                        SecurityStorage securityStorage,
                                         IOnlineUserService onlineUserService,
                                         SecurityProperties securityProperties,
                                         SecurityAuthenticationEntryPoint authenticationEntryPoint,
                                         ISecurityService securityService) {
         super(authenticationManager);
-        this.securityStorage = securityStorage;
         this.onlineUserService = onlineUserService;
         this.securityProperties = securityProperties;
         this.authenticationEntryPoint = authenticationEntryPoint;
@@ -108,7 +104,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
             }
         }
 
-        boolean anonymousUrs = securityStorage.isAnonymousUri(request);
+        boolean anonymousUrs = PermissionUtils.isAnonymousUri(request);
         //OPTIONS请求或白名单直接放行
         if (request.getMethod().equals(HttpMethod.OPTIONS.toString()) || anonymousUrs) {
             return;

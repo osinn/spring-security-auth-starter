@@ -2,7 +2,7 @@ package io.github.osinn.security.security;
 
 import io.github.osinn.security.enums.AuthType;
 import io.github.osinn.security.security.dto.OnlineUser;
-import io.github.osinn.security.security.dto.SecurityStorage;
+import io.github.osinn.security.utils.PermissionUtils;
 import io.github.osinn.security.utils.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,21 +23,13 @@ import java.util.Objects;
 @Slf4j
 public class CustomAccessDecisionManager {
 
-
-    /**
-     * 白名单
-     */
-    private SecurityStorage securityStorage;
-
     private AuthType authType;
 
     public CustomAccessDecisionManager() {
 
     }
 
-    public CustomAccessDecisionManager(SecurityStorage securityStorage,
-                                       AuthType authType) {
-        this.securityStorage = securityStorage;
+    public CustomAccessDecisionManager(AuthType authType) {
         this.authType = authType;
     }
 

@@ -2,7 +2,6 @@ package io.github.osinn.security.starter;
 
 import io.github.osinn.security.security.SecurityAccessDeniedHandler;
 import io.github.osinn.security.security.SecurityAuthenticationEntryPoint;
-import io.github.osinn.security.security.dto.SecurityStorage;
 import io.github.osinn.security.service.ISecurityCaptchaCodeService;
 import io.github.osinn.security.service.impl.SecurityCaptchaCodeServiceImpl;
 import io.github.osinn.security.utils.PasswordEncoderUtils;
@@ -69,11 +68,6 @@ public class SecurityAutoConfigure {
     @Bean
     GrantedAuthorityDefaults grantedAuthorityDefaults() {
         return new GrantedAuthorityDefaults("");
-    }
-
-    @Bean
-    public SecurityStorage securityStorage() {
-        return new SecurityStorage();
     }
 
     @Bean
