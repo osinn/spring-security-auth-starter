@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,9 +23,9 @@ public class ResponseUtils {
 
     public static CustomizeResponseBodyField customizeResponseBodyField;
 
-    public static void outWriter(int statusCode, String message, String errorMessage, String path, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public static void outWriter(int statusCode, String message, String errorMessage, String path, int tokenExpireHttpResponseCode, HttpServletResponse response) throws IOException {
         if (AuthHttpStatus.TOKEN_EXPIRE.getCode() == statusCode) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setStatus(tokenExpireHttpResponseCode);
         }
         Map<String, Object> jsonObject = new HashMap<>();
         jsonObject.put(customizeResponseBodyField.getMessageField(), message);

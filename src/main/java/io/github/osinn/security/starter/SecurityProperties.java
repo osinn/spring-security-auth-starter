@@ -190,6 +190,11 @@ public class SecurityProperties {
      */
     private IpIntercept ipIntercept = new IpIntercept();
 
+    /**
+     * token过期返回http（HttpServletResponse）status 响应码 ，默认200，有些前端框架判断的是401，可以设置成401
+     */
+    private int tokenExpireHttpResponseCode = 200;
+
     @Data
     public static class IpIntercept {
 

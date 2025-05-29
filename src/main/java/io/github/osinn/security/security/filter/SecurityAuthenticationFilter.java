@@ -75,7 +75,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
                 }
 
                 if (!checkInterceptor) {
-                    ResponseUtils.outWriter(HttpStatus.UNAUTHORIZED.value(), AuthHttpStatus.SC_FORBIDDEN.getMessage(), HttpStatus.UNAUTHORIZED.getReasonPhrase(), request.getRequestURI(), request, response);
+                    ResponseUtils.outWriter(HttpStatus.UNAUTHORIZED.value(), AuthHttpStatus.SC_FORBIDDEN.getMessage(), HttpStatus.UNAUTHORIZED.getReasonPhrase(), request.getRequestURI(), securityProperties.getTokenExpireHttpResponseCode(), response);
                 } else {
                     this.checkAuthentication(request, response);
                     if (securityProperties.isEnableXss()) {

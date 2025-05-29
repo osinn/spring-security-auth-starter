@@ -37,15 +37,6 @@ public class PermissionService {
      */
     public boolean hasPermission(String hasPermission) {
 
-        String token = TokenUtils.getToken();
-        if (token != null && securityProperties.getIgnoringToken().contains(securityProperties.getTokenStartWith() + token)) {
-            // 白名单token放行
-            return true;
-        }
-
-        if (!AuthType.CODE.equals(securityProperties.getAuthType())) {
-            return true;
-        }
         if (StrUtils.isEmpty(hasPermission)) {
             return false;
         }

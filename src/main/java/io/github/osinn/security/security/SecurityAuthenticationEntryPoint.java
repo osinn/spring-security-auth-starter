@@ -49,7 +49,7 @@ public class SecurityAuthenticationEntryPoint implements AuthenticationEntryPoin
                 message = securityAuthException.getMessage();
                 statusCode = securityAuthException.getStatus();
             }
-            ResponseUtils.outWriter(statusCode, message, authException.getMessage(), path, request, response);
+            ResponseUtils.outWriter(statusCode, message, authException.getMessage(), path, securityProperties.getTokenExpireHttpResponseCode(), response);
         }
 
     }

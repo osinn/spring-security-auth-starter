@@ -37,7 +37,7 @@ public class SecurityAccessDeniedHandler implements AccessDeniedHandler {
         } else {
             response.setStatus(HttpStatus.OK.value());
             String path = request.getRequestURI();
-            ResponseUtils.outWriter(statusCode, tokenError, accessDeniedException.getMessage(), path, request, response);
+            ResponseUtils.outWriter(statusCode, tokenError, accessDeniedException.getMessage(), path, securityProperties.getTokenExpireHttpResponseCode(), response);
         }
     }
 
