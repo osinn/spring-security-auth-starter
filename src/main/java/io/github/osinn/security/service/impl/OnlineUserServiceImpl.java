@@ -166,16 +166,19 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      * @return Object 需要自行转Entity对象
      */
     @Override
-    public OnlineUser getOnlineUserInfo() {
+    public OnlineUser getOnlineUser(boolean throwEx) {
         String token = TokenUtils.getToken();
-        if (StrUtils.isEmpty(token)) {
-            return null;
+        if (!StrUtils.isEmpty(token)) {
+            OnlineUser onlineUserInfo = getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
+            if (onlineUserInfo != null) {
+                return onlineUserInfo;
+            }
         }
-        OnlineUser onlineUserInfo = getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
-        if (onlineUserInfo == null) {
+
+        if (throwEx) {
             throw new SecurityAuthException(AuthHttpStatus.TOKEN_EXPIRE);
         }
-        return onlineUserInfo;
+        return null;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package io.github.osinn.security.utils;
 
 import io.github.osinn.security.constants.AuthConstant;
+import io.github.osinn.security.exception.SecurityAuthException;
 import io.github.osinn.security.security.dto.OnlineUser;
 import io.github.osinn.security.security.dto.ResourcePermission;
 import io.github.osinn.security.service.IOnlineUserService;
@@ -97,9 +98,20 @@ public class TokenUtils {
      * 获取当前在线用户
      *
      * @return
+     * @throws SecurityAuthException 如果不存在会抛出异常
      */
     public static OnlineUser getOnlineUserInfo() {
         return onlineUserService.getOnlineUserInfo();
+    }
+
+    /**
+     * 获取当前在线用户
+     *
+     * @param throwEx 获取不到用户时是否抛出异常
+     * @return
+     */
+    public static OnlineUser getOnlineUser(boolean throwEx) {
+        return onlineUserService.getOnlineUser(throwEx);
     }
 
     /**

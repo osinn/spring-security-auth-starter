@@ -70,8 +70,20 @@ public interface IOnlineUserService {
      * 获取当前在线用户
      *
      * @return
+     * @throws SecurityAuthException 如果不存在会抛出异常
      */
-    OnlineUser getOnlineUserInfo();
+    default OnlineUser getOnlineUserInfo() {
+        return getOnlineUser(true);
+    }
+
+
+    /**
+     * 获取当前在线用户
+     *
+     * @param throwEx 获取不到用户时是否抛出异常
+     * @return
+     */
+    OnlineUser getOnlineUser(boolean throwEx);
 
     /**
      * 根据token获取当前在线用户
