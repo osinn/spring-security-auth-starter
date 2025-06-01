@@ -1,9 +1,6 @@
 package io.github.osinn.security.service;
 
-import io.github.osinn.security.security.dto.OnlineUser;
-import io.github.osinn.security.security.dto.AuthRoleInfo;
-import io.github.osinn.security.security.dto.AuthUserInfo;
-import io.github.osinn.security.security.dto.ResourcePermission;
+import io.github.osinn.security.security.dto.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -79,6 +76,18 @@ public interface ISecurityService {
      * @param response
      */
     default void doFilterBeforeHandler(HttpServletRequest request, HttpServletResponse response) {
+
+    }
+
+    /**
+     * 登录通知，非customAuth 登录方式
+     *
+     * @param loginStatus    登录状态，true 登录成功，false 登录失败
+     * @param authLoginParam 登录时提交的登录信息
+     * @param request
+     * @param response
+     */
+    default void loginNotification(boolean loginStatus, AuthLoginParam authLoginParam, String exceptionMsg, HttpServletRequest request, HttpServletResponse response) {
 
     }
 

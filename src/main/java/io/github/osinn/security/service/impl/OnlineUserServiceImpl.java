@@ -1,5 +1,7 @@
 package io.github.osinn.security.service.impl;
 
+import eu.bitwalker.useragentutils.Browser;
+import eu.bitwalker.useragentutils.UserAgent;
 import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.security.dto.*;
 import io.github.osinn.security.starter.SecurityProperties;
@@ -71,9 +73,11 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             // 清除验证码
             securityCaptchaCodeService.delete(authLoginParam.getUuid());
             if (StrUtils.isEmpty(code)) {
+                securityService.loginNotification(false, authLoginParam, AuthHttpStatus.NOT_FOUND_CODE.getMessage(), request, response);
                 throw new SecurityAuthException(AuthHttpStatus.NOT_FOUND_CODE.getCode(), AuthHttpStatus.NOT_FOUND_CODE.getMessage());
             }
             if (!code.equalsIgnoreCase(authLoginParam.getCode())) {
+                securityService.loginNotification(false, authLoginParam, AuthHttpStatus.CODE_UNAUTHORIZED.getMessage(), request, response);
                 throw new SecurityAuthException(AuthHttpStatus.CODE_UNAUTHORIZED.getCode(), AuthHttpStatus.CODE_UNAUTHORIZED.getMessage());
             }
         }
@@ -85,6 +89,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
+                securityService.loginNotification(false, authLoginParam, AuthHttpStatus.TOKEN_UNAUTHORIZED.getMessage(), request, response);
                 throw new SecurityAuthException(AuthHttpStatus.PASSWORD_ERROR.getCode(), AuthHttpStatus.TOKEN_UNAUTHORIZED.getMessage());
             }
         } else {
@@ -101,12 +106,16 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
             // 生成token
             this.generationToken(authUserInfo, request);
+            securityService.loginNotification(true, authLoginParam, null, request, response);
             return authUserInfo;
         } catch (AuthenticationException e) {
+            securityService.loginNotification(false, authLoginParam, e.getMessage(), request, response);
             ResponseUtils.loginFailThrows(e);
         } catch (Exception e) {
+            securityService.loginNotification(false, authLoginParam, e.getMessage(), request, response);
             throw new SecurityException(e.getMessage());
         }
+        securityService.loginNotification(false, authLoginParam, AuthHttpStatus.LOGIN_FAIL.getMessage(), request, response);
         throw new SecurityAuthException(AuthHttpStatus.LOGIN_FAIL);
     }
 
@@ -318,12 +327,14 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             // 用户权限赋值
             this.setUserPermission(authUserInfo);
             String ip = StrUtils.getIp(request);
-            String browser = StrUtils.getBrowser(request);
+            UserAgent userAgent = StrUtils.getUserAgent(request);
+            Browser browser = userAgent.getBrowser();
             OnlineUser onlineUser = new OnlineUser(authUserInfo.getId(),
                     authUserInfo.getAccount(),
                     null,
                     authUserInfo.getNickname(),
-                    browser,
+                    browser.getName(),
+                    userAgent.getOperatingSystem().getName(),
                     ip,
                     CryptoUtils.desEncrypt(token, securityProperties.getDesPassword()),
                     LocalDateTime.now(),

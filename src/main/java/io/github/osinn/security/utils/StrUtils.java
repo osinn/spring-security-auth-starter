@@ -51,10 +51,8 @@ public class StrUtils {
         return ip;
     }
 
-    public static String getBrowser(HttpServletRequest request) {
-        UserAgent userAgent = UserAgent.parseUserAgentString(request.getHeader(AuthConstant.UA));
-        Browser browser = userAgent.getBrowser();
-        return browser.getName();
+    public static UserAgent getUserAgent(HttpServletRequest request) {
+        return UserAgent.parseUserAgentString(request.getHeader(AuthConstant.UA));
     }
 
     /**

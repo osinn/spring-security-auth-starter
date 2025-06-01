@@ -50,6 +50,11 @@ public class OnlineUser implements Serializable {
     private String browser;
 
     /**
+     * 操作系统
+     */
+    private String operatingSystem;
+
+    /**
      * ip地址
      */
     private String ip;
