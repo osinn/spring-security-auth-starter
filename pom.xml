@@ -51,7 +51,7 @@
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <easy-captcha.version>1.6.2</easy-captcha.version>
         <spring-boot.version>3.5.0</spring-boot.version>
-        <gson-version>2.13.1</gson-version>
+        <commons-io-version>2.19.0</commons-io-version>
     </properties>
 
     <dependencies>
@@ -103,6 +103,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io-version}</version>
         </dependency>
     </dependencies>
 

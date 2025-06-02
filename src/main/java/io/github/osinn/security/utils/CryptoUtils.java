@@ -69,7 +69,7 @@ public class CryptoUtils {
      */
     public static String rsaEncrypt(String str, String publicKey) throws Exception {
         //base64编码的公钥
-        byte[] decoded = org.apache.tomcat.util.codec.binary.Base64.decodeBase64(publicKey);
+        byte[] decoded = Base64.getDecoder().decode(publicKey);
         RSAPublicKey pubKey = (RSAPublicKey) KeyFactory.getInstance(RSA_ALGORITHM).generatePublic(new X509EncodedKeySpec(decoded));
         //RSA加密
         Cipher cipher = Cipher.getInstance(RSA_ALGORITHM);
