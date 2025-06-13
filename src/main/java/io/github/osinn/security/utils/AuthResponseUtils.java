@@ -3,11 +3,11 @@ package io.github.osinn.security.utils;
 import io.github.osinn.security.enums.AuthHttpStatus;
 import io.github.osinn.security.exception.SecurityAuthException;
 import io.github.osinn.security.security.dto.CustomizeResponseBodyField;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * @author wency_cai
  **/
-public class ResponseUtils {
+public class AuthResponseUtils {
 
     public static CustomizeResponseBodyField customizeResponseBodyField;
 
@@ -43,28 +43,28 @@ public class ResponseUtils {
      * @param e
      * @throws SecurityAuthException
      */
-    public static void loginFailThrows(AuthenticationException e) throws SecurityAuthException {
-        String message;
-        int statusCode;
-        if (e instanceof UsernameNotFoundException || e instanceof BadCredentialsException) {
-            message = AuthHttpStatus.TOKEN_UNAUTHORIZED.getMessage();
-            statusCode = AuthHttpStatus.TOKEN_UNAUTHORIZED.getCode();
+    public static SecurityAuthException loginFailException(AuthenticationException e) {
+        AuthHttpStatus authHttpStatus = getAuthHttpStatus(e);
+        return new SecurityAuthException(authHttpStatus.getCode(), authHttpStatus.getMessage());
+    }
+
+    public static AuthHttpStatus getAuthHttpStatus(AccessDeniedException accessDeniedException) {
+        return AuthHttpStatus.SC_FORBIDDEN;
+    }
+
+    public static AuthHttpStatus getAuthHttpStatus(AuthenticationException e) {
+        if (e instanceof UsernameNotFoundException || e instanceof BadCredentialsException || e instanceof AuthenticationCredentialsNotFoundException) {
+            return AuthHttpStatus.TOKEN_UNAUTHORIZED;
         } else if (e instanceof LockedException) {
-            message = AuthHttpStatus.LOCK_ACCOUNT.getMessage();
-            statusCode = AuthHttpStatus.LOCK_ACCOUNT.getCode();
+            return AuthHttpStatus.LOCK_ACCOUNT;
         } else if (e instanceof CredentialsExpiredException) {
-            message = AuthHttpStatus.CREDENTIALS_EXPIRED.getMessage();
-            statusCode = AuthHttpStatus.CREDENTIALS_EXPIRED.getCode();
+            return AuthHttpStatus.CREDENTIALS_EXPIRED;
         } else if (e instanceof AccountExpiredException) {
-            message = AuthHttpStatus.TOKEN_EXPIRE.getMessage();
-            statusCode = AuthHttpStatus.TOKEN_EXPIRE.getCode();
+            return AuthHttpStatus.TOKEN_EXPIRE;
         } else if (e instanceof DisabledException) {
-            message = AuthHttpStatus.DISABLED_ACCOUNT.getMessage();
-            statusCode = AuthHttpStatus.DISABLED_ACCOUNT.getCode();
+            return AuthHttpStatus.DISABLED_ACCOUNT;
         } else {
-            message = AuthHttpStatus.LOGIN_FAIL.getMessage();
-            statusCode = AuthHttpStatus.LOGIN_FAIL.getCode();
+            return AuthHttpStatus.LOGIN_FAIL;
         }
-        throw new SecurityAuthException(statusCode, message);
     }
 }

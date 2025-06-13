@@ -19,9 +19,11 @@ public class SecurityProperties {
     public final static String PREFIX = "security.config";
 
     /**
-     * 可选- Request Headers ： Authorization
+     * 可选- 默认 Request Headers ： Authorization
+     * token 名称,内部支持从请求头、请求体、cookie读取token
+     * 因此token 名称即为 请求头、请求体、cookie 提交 token 时参数名称
      */
-    private String header = "Authorization";
+    private String tokenName = "Authorization";
 
     /**
      * 超级管理员角色编码

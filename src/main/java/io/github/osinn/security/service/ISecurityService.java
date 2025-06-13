@@ -91,4 +91,10 @@ public interface ISecurityService {
 
     }
 
+    /**
+     * 内部完成刷新token后触发
+     */
+    default void doRenewToken(OnlineUser onlineUser, HttpServletRequest request, HttpServletResponse response) {
+
+    }
 }

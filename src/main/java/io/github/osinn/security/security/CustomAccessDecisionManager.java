@@ -2,7 +2,6 @@ package io.github.osinn.security.security;
 
 import io.github.osinn.security.enums.AuthType;
 import io.github.osinn.security.security.dto.OnlineUser;
-import io.github.osinn.security.utils.PermissionUtils;
 import io.github.osinn.security.utils.TokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -43,14 +42,16 @@ public class CustomAccessDecisionManager {
         HttpServletRequest request = (HttpServletRequest) object;
 
         if (authentication == null) {
-            throw new AccessDeniedException("当前访问没有权限");
+            throw new AccessDeniedException("当前没有访问权限");
         }
 
-        OnlineUser onlineUser = (OnlineUser) authentication.getPrincipal();
+        if (authentication.getPrincipal() instanceof OnlineUser onlineUser) {
 
-        Boolean hasRoleAdmin = TokenUtils.hasRoleAdmin(onlineUser.getRoles());
-        if (Boolean.TRUE.equals(hasRoleAdmin)) {
-            return true;
+            Boolean hasRoleAdmin = TokenUtils.hasRoleAdmin(onlineUser.getRoles());
+
+            if (Boolean.TRUE.equals(hasRoleAdmin)) {
+                return true;
+            }
         }
 
         if (AuthType.URL.equals(authType)) {
@@ -70,7 +71,6 @@ public class CustomAccessDecisionManager {
             }
 
         }
-
         return true;
     }
 

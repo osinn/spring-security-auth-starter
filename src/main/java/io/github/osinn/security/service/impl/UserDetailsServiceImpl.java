@@ -4,7 +4,6 @@ import io.github.osinn.security.exception.SecurityAuthException;
 import io.github.osinn.security.security.dto.AuthUserInfo;
 import io.github.osinn.security.service.ISecurityService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UserDetails;

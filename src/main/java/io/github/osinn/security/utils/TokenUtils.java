@@ -7,6 +7,7 @@ import io.github.osinn.security.security.dto.ResourcePermission;
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.security.dto.AuthRoleInfo;
+import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -68,7 +69,24 @@ public class TokenUtils {
      * @return
      */
     public static String getToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader(securityProperties.getHeader());
+        // 从请求头尝试读取token
+        String bearerToken = request.getHeader(securityProperties.getTokenName());
+        // 如果请求头不存在token，尝试从 Cookie 里面读取
+        if (StrUtils.isEmpty(bearerToken)) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (securityProperties.getTokenName().equals(cookie.getName())) {
+                        bearerToken = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+        }
+        //  如果请求头、Cookie都不存在token，尝试从 请求体 里面读取
+        if (StrUtils.isEmpty(bearerToken)) {
+            bearerToken = request.getParameter(securityProperties.getTokenName());
+        }
         if (!StrUtils.isEmpty(bearerToken) && bearerToken.startsWith(securityProperties.getTokenStartWith())) {
             return bearerToken.replace(securityProperties.getTokenStartWith(), "");
         }

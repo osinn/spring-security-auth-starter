@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import io.github.osinn.security.enums.AuthHttpStatus;
-import io.github.osinn.security.utils.ResponseUtils;
+import io.github.osinn.security.utils.AuthResponseUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,7 +37,7 @@ public class SecurityAccessDeniedHandler implements AccessDeniedHandler {
         } else {
             response.setStatus(HttpStatus.OK.value());
             String path = request.getRequestURI();
-            ResponseUtils.outWriter(statusCode, tokenError, accessDeniedException.getMessage(), path, securityProperties.getTokenExpireHttpResponseCode(), response);
+            AuthResponseUtils.outWriter(statusCode, tokenError, accessDeniedException.getMessage(), path, securityProperties.getTokenExpireHttpResponseCode(), response);
         }
     }
 

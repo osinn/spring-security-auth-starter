@@ -21,7 +21,7 @@ public enum AuthHttpStatus {
     /**
      * 访问权限不足
      */
-    SC_FORBIDDEN(1003, "访问权限不足"),
+    SC_FORBIDDEN(1003, "当前没有访问权限"),
     /**
      * 找不到资源
      */

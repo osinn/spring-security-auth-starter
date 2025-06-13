@@ -1,12 +1,10 @@
 package io.github.osinn.security.security;
 
 import io.github.osinn.security.constants.AuthConstant;
-import io.github.osinn.security.enums.AuthType;
 import io.github.osinn.security.security.dto.AuthRoleInfo;
 import io.github.osinn.security.security.dto.OnlineUser;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.utils.StrUtils;
-import io.github.osinn.security.utils.TokenUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;

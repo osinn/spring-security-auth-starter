@@ -110,13 +110,13 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             return authUserInfo;
         } catch (AuthenticationException e) {
             securityService.loginNotification(false, authLoginParam, e.getMessage(), request, response);
-            ResponseUtils.loginFailThrows(e);
+            throw e;
         } catch (Exception e) {
             securityService.loginNotification(false, authLoginParam, e.getMessage(), request, response);
             throw new SecurityException(e.getMessage());
         }
-        securityService.loginNotification(false, authLoginParam, AuthHttpStatus.LOGIN_FAIL.getMessage(), request, response);
-        throw new SecurityAuthException(AuthHttpStatus.LOGIN_FAIL);
+//        securityService.loginNotification(false, authLoginParam, AuthHttpStatus.LOGIN_FAIL.getMessage(), request, response);
+//        throw new SecurityAuthException(AuthHttpStatus.LOGIN_FAIL);
     }
 
     /**
@@ -346,7 +346,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     authUserInfo.getAuthorities(),
                     authUserInfo.getResourcePermissions());
             saveLoginInfo(onlineUser, token);
-            request.setAttribute(securityProperties.getHeader(), securityProperties.getTokenStartWith() + token);
+            request.setAttribute(securityProperties.getTokenName(), securityProperties.getTokenStartWith() + token);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new SecurityAuthException(AuthHttpStatus.TOKEN_UNAUTHORIZED.getCode(), AuthHttpStatus.TOKEN_UNAUTHORIZED.getMessage());

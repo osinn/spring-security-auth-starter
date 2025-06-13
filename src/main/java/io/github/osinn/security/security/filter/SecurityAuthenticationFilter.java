@@ -71,7 +71,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
                 }
 
                 if (!checkInterceptor) {
-                    ResponseUtils.outWriter(HttpStatus.UNAUTHORIZED.value(), AuthHttpStatus.SC_FORBIDDEN.getMessage(), HttpStatus.UNAUTHORIZED.getReasonPhrase(), request.getRequestURI(), securityProperties.getTokenExpireHttpResponseCode(), response);
+                    AuthResponseUtils.outWriter(HttpStatus.UNAUTHORIZED.value(), AuthHttpStatus.SC_FORBIDDEN.getMessage(), HttpStatus.UNAUTHORIZED.getReasonPhrase(), request.getRequestURI(), securityProperties.getTokenExpireHttpResponseCode(), response);
                 } else {
                     this.checkAuthentication(request, response);
                     if (securityProperties.isEnableXss()) {
@@ -156,6 +156,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
                         if (flagRefreshTime) {
                             // 过期时间过半刷新token缓存过期时间
                             TokenUtils.refreshToken(onlineUser);
+                            securityService.doRenewToken(onlineUser, request, response);
                         }
                     }
                     return authentication;

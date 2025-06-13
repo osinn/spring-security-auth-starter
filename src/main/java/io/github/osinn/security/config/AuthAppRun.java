@@ -3,7 +3,7 @@ package io.github.osinn.security.config;
 import io.github.osinn.security.constants.AuthConstant;
 import io.github.osinn.security.service.IOnlineUserService;
 import io.github.osinn.security.starter.SecurityProperties;
-import io.github.osinn.security.utils.ResponseUtils;
+import io.github.osinn.security.utils.AuthResponseUtils;
 import io.github.osinn.security.security.dto.CustomizeResponseBodyField;
 import io.github.osinn.security.utils.SpringContextHolder;
 import io.github.osinn.security.utils.TokenUtils;
@@ -46,7 +46,7 @@ public class AuthAppRun implements CommandLineRunner {
         customizeResponseBodyField.setErrorField(responseBody.get("error") == null ? "error" : responseBody.get("error"));
         customizeResponseBodyField.setCodeField(responseBody.get("code") == null ? "code" : responseBody.get("code"));
 
-        ResponseUtils.customizeResponseBodyField = customizeResponseBodyField;
+        AuthResponseUtils.customizeResponseBodyField = customizeResponseBodyField;
 
         SecurityProperties.IpIntercept ipIntercept = securityProperties.getIpIntercept();
         RedisUtils.set(AuthConstant.CACHE_IP_INTERCEPT_ALLOW, ipIntercept.getAllow());

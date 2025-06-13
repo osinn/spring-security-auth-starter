@@ -8,6 +8,11 @@
 - `@AuthIgnore` 注解，用于标识接口是否需要认证
 - `TokenUtils` 提供了获取token信息，获取当前登录用户信息，获取当前登录用户权限等信息工具类
 
+# 内部获取token方式
+- 1、先从请求头尝试获取token
+- 2、如果请求头不存在token，尝试从 Cookie 里面读取
+- 3、如果请求头、Cookie中都不存在token，尝试从 get请求体 中读取token
+
 # Spring Boot 版本
 - 基于`Spring boot v3.x`版本重构
 - 需要jdk17+
@@ -43,9 +48,6 @@
 security:
   config:
     des-password: aMQBIx+Yta0= # 默认的des加密密码，建议换成自己的，可调用 CryptoUtils.generateDesKey() 方法生成
-    expire-time: 14400 # 过期时间默认4小时
-    expire-ratio: 0.5 # 过期时间剩余比例，0-1之间，默认 0.5 即时间过半时刷新token缓存过期时间
-    dynamic-refresh-token: true # 开启启动刷新token，默认是关闭的，不会自动刷新token过期时间，开启后，token会根据 expire-ratio 比例阀值计算是否需求重置token过期时间
     # 匿名访问url
     ignoring-urls:
       - /login # 登录接口忽略认证
@@ -163,18 +165,13 @@ public class SecurityServiceImpl implements ISecurityService {
         if (userEntity == null) {
             return null;
         }
-
-        return new AuthUserInfo(
-                userEntity.getId(),
-                userEntity.getAccount(),
-                userEntity.getUserName(),
-                userEntity.getPassword(),
-                null, // 如果需要额外扩展用户信息，请自赋值一个对象即可, 从在线用户信息中获取 -> onlineUser.getExtendField() 即为此处传入的对象
-                null, // 不需要赋值，内置会自行处理
-                null, // 不需要赋值，内置会自行处理
-                null, // 不需要赋值，内置会自行处理
-                null // 不需要赋值，内置会自行处理
-        );
+        AuthUserInfo authUserInfo = new AuthUserInfo();
+        authUserInfo.setId(userEntity.getId());
+        authUserInfo.setNickname(userEntity.getUserName());
+        authUserInfo.setAccount(userEntity.getAccount());
+        authUserInfo.setPassword(userEntity.getPassword());
+        authUserInfo.setExtendField(null); // 如果需要额外扩展用户信息，请自赋值一个对象即可, 从在线用户信息中获取 -> onlineUser.getExtendField() 即为此处传入的对象
+        return authUserInfo;
     }
 
     /**

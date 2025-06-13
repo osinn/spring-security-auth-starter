@@ -1,7 +1,6 @@
 package io.github.osinn.security.utils;
 
 import io.github.osinn.security.constants.AuthConstant;
-import eu.bitwalker.useragentutils.Browser;
 import eu.bitwalker.useragentutils.UserAgent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
