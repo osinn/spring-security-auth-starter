@@ -144,7 +144,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
             if (onlineUser == null) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 request.setAttribute(AuthHttpStatus.TOKEN_EXPIRE.name(), AuthHttpStatus.TOKEN_EXPIRE.getMessage());
-                throw new AuthenticationCredentialsNotFoundException(AuthHttpStatus.TOKEN_EXPIRE.getMessage());
+                throw new AccountExpiredException(AuthHttpStatus.TOKEN_EXPIRE.getMessage());
             } else {
                 try {
                     request.setAttribute(AuthConstant.ONLINE_USER_ID, onlineUser.getId());
