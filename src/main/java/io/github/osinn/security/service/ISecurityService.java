@@ -69,13 +69,24 @@ public interface ISecurityService {
 
     /**
      * 白名单路径不会被调用
-     * 检查登陆完成后，在调用 doFilter前执行一次此方法
+     * 检查登陆完成后，在调用登录认证 doFilter 过滤器前执行一次此方法
      * 可以使用此方法做额外处理
      *
      * @param request
      * @param response
      */
     default void doFilterBeforeHandler(HttpServletRequest request, HttpServletResponse response) {
+
+    }
+
+    /**
+     * 检查登陆完成并且执行登录认证 doFilter 过滤器后执行一次此方法
+     * 可以使用此方法做额外处理
+     *
+     * @param request
+     * @param response
+     */
+    default void doFilterAfterHandler(HttpServletRequest request, HttpServletResponse response) {
 
     }
 

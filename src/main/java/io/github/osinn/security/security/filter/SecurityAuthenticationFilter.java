@@ -79,6 +79,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
                     } else {
                         chain.doFilter(request, response);
                     }
+                    securityService.doFilterAfterHandler(request, response);
                 }
             }
         } catch (AuthenticationException e) {
@@ -136,7 +137,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
         String token = TokenUtils.getToken(request);
         if (StrUtils.isEmpty(token)) {
             request.setAttribute(AuthHttpStatus.TOKEN_EXPIRE.name(), AuthHttpStatus.TOKEN_EXPIRE.getMessage());
-            throw new AuthenticationCredentialsNotFoundException(AuthHttpStatus.TOKEN_EXPIRE.getMessage());
+            throw new AccountExpiredException(AuthHttpStatus.TOKEN_EXPIRE.getMessage());
         } else {
             // 验证 token 是否存在
             OnlineUser onlineUser;

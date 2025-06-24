@@ -113,7 +113,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             throw e;
         } catch (Exception e) {
             securityService.loginNotification(false, authLoginParam, e.getMessage(), request, response);
-            throw new SecurityException(e.getMessage());
+            throw new SecurityException(e.getMessage(), e);
         }
 //        securityService.loginNotification(false, authLoginParam, AuthHttpStatus.LOGIN_FAIL.getMessage(), request, response);
 //        throw new SecurityAuthException(AuthHttpStatus.LOGIN_FAIL);
