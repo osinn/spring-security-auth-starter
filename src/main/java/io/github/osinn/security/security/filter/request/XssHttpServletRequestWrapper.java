@@ -5,6 +5,9 @@ import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.apache.commons.io.IOUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -75,6 +78,9 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
+        if (!isJsonRequest()) {
+            return super.getInputStream();
+        }
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             IOUtils.copy(super.getInputStream(), byteArrayOutputStream);
             String content = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
@@ -83,6 +89,14 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
             }
             return new XssServletInputStream(content.getBytes(StandardCharsets.UTF_8));
         }
+    }
+
+    /**
+     * 是否是json请求
+     */
+    public boolean isJsonRequest() {
+        String header = super.getHeader(HttpHeaders.CONTENT_TYPE);
+        return StringUtils.startsWithIgnoreCase(header, MediaType.APPLICATION_JSON_VALUE);
     }
 
     private static class XssServletInputStream extends ServletInputStream {
