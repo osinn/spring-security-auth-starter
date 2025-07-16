@@ -67,6 +67,14 @@ public class AuthUserInfo implements UserDetails, Serializable {
 
     }
 
+    public AuthUserInfo(Object id, String account, String nickname, String password, Object extendField) {
+        this.id = id;
+        this.account = account;
+        this.nickname = nickname;
+        this.password = password;
+        this.extendField = extendField;
+    }
+
     @JsonIgnore
     @Override
     public boolean isAccountNonExpired() {
