@@ -3,6 +3,9 @@ package io.github.osinn.security.config;
 import io.github.osinn.security.security.*;
 import io.github.osinn.security.security.filter.CustomAuthorizationFilter;
 import io.github.osinn.security.service.IOnlineUserService;
+import io.github.osinn.security.service.IPathParserService;
+import io.github.osinn.security.service.impl.AntPathMatcherServiceImpl;
+import io.github.osinn.security.service.impl.PathParserParserServiceImpl;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.annotation.AuthIgnore;
 import io.github.osinn.security.utils.PermissionUtils;
@@ -10,6 +13,7 @@ import io.github.osinn.security.security.filter.SecurityAuthenticationFilter;
 import io.github.osinn.security.service.ISecurityService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.web.servlet.WebMvcProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -66,6 +70,10 @@ public class SecurityConfig {
 
     @Resource
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
+
+    @Value("${spring.mvc.pathmatch.matching-strategy:PATH_PATTERN_PARSER}")
+    private WebMvcProperties.MatchingStrategy matchingStrategy;
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
@@ -125,7 +133,9 @@ public class SecurityConfig {
         // 权限白名单urls
         anonymousUrls.addAll(Set.of(staticFileUrl));
         anonymousUrls.addAll(Set.of(pageAnonymousUrl));
-        PermissionUtils.setPermissionAnonymousUrlList(anonymousUrls);
+        IPathParserService pathParserService = WebMvcProperties.MatchingStrategy.ANT_PATH_MATCHER.equals(matchingStrategy)
+                ? new AntPathMatcherServiceImpl() : new PathParserParserServiceImpl();
+        PermissionUtils.setPermissionAnonymousUrlList(anonymousUrls, pathParserService);
 
 
         if (securityProperties.isDisableHttpBasic()) {

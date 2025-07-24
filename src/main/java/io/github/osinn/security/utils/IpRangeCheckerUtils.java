@@ -79,10 +79,10 @@ public class IpRangeCheckerUtils {
         return false;
     }
 
-    public static boolean checkInterceptor(HttpServletRequest request, SecurityProperties.IpIntercept ipIntercept) {
-        Set<String> allow = RedisUtils.get(AuthConstant.CACHE_IP_INTERCEPT_ALLOW);
-        Set<String> deny = RedisUtils.get(AuthConstant.CACHE_IP_INTERCEPT_DENY);
-
+    public static boolean checkInterceptor(HttpServletRequest request, SecurityProperties securityProperties) {
+        Set<String> allow = RedisUtils.get(securityProperties.getCodeKey(AuthConstant.CACHE_IP_INTERCEPT_ALLOW));
+        Set<String> deny = RedisUtils.get(securityProperties.getCodeKey(AuthConstant.CACHE_IP_INTERCEPT_DENY));
+        SecurityProperties.IpIntercept ipIntercept = securityProperties.getIpIntercept();
         if (StrUtils.isEmpty(allow) && StrUtils.isEmpty(deny)) {
             allow = ipIntercept.getAllow();
             deny = ipIntercept.getDeny();

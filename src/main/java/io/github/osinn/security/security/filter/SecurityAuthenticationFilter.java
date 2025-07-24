@@ -67,7 +67,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
             } else {
                 boolean checkInterceptor = true;
                 if (securityProperties.getIpIntercept().isEnable()) {
-                    checkInterceptor = IpRangeCheckerUtils.checkInterceptor(request, securityProperties.getIpIntercept());
+                    checkInterceptor = IpRangeCheckerUtils.checkInterceptor(request, securityProperties);
                 }
 
                 if (!checkInterceptor) {
@@ -113,7 +113,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
 
         String token = TokenUtils.getToken(request);
         if (!StrUtils.isEmpty(token) && securityProperties.getIgnoringToken().contains(securityProperties.getTokenStartWith() + token)) {
-            OnlineUser onlineUser = onlineUserService.getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
+            OnlineUser onlineUser = onlineUserService.getOne(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token));
             if (onlineUser != null) {
                 request.setAttribute(AuthConstant.ONLINE_USER_ID, onlineUser.getId());
             }
@@ -141,7 +141,7 @@ public class SecurityAuthenticationFilter extends BasicAuthenticationFilter {
         } else {
             // 验证 token 是否存在
             OnlineUser onlineUser;
-            onlineUser = onlineUserService.getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
+            onlineUser = onlineUserService.getOne(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token));
             if (onlineUser == null) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 request.setAttribute(AuthHttpStatus.TOKEN_EXPIRE.name(), AuthHttpStatus.TOKEN_EXPIRE.getMessage());

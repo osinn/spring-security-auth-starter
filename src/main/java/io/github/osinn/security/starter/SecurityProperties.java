@@ -178,9 +178,9 @@ public class SecurityProperties {
     private String headerEnvTagName;
 
     /**
-     * 缓存在线用户信息key前缀
+     * 缓存前缀
      */
-    private String cacheOnlineUserInfoKeyPrefix = AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX;
+    private String cachePrefix = "";
 
     /**
      * 是否开启系统资源权限查询缓存，开启后，在查询系统全部权限时会缓存起来，如果系统权限有变动，需要请手动调用清理缓存方法
@@ -239,5 +239,9 @@ public class SecurityProperties {
          * redis中验证码有效期3分钟（单位：秒）
          */
         private long captchaExpiration = 60 * 3;
+    }
+
+    public String getCodeKey(String key) {
+        return cachePrefix != null && cachePrefix.length() > 0 ? cachePrefix + AuthConstant.DO + key : key;
     }
 }

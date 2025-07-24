@@ -34,6 +34,8 @@ public class AuthConstant {
      */
     public static final String ALL_PERMISSION = "*:*:*";
 
+    public static final String DO = ".";
+
     /**
      * 缓存系统所有资源权限 key
      */

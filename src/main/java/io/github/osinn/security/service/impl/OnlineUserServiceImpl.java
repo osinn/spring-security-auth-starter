@@ -129,7 +129,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         //2 token不为空，移除token，从redis删除token
         String token = TokenUtils.getToken();
         if (token != null) {
-            RedisUtils.del(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
+            RedisUtils.del(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token));
         } else {
             throw new SecurityAuthException(AuthHttpStatus.LOGOUT_FAIL.getCode(), AuthHttpStatus.LOGOUT_FAIL.getMessage());
         }
@@ -138,7 +138,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     @Override
     public void saveToken(String token, OnlineUser onlineUser) {
         onlineUser.setHasAdmin(TokenUtils.hasRoleAdmin());
-        RedisUtils.set(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token), onlineUser, securityProperties.getExpireTime());
+        RedisUtils.set(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token), onlineUser, securityProperties.getExpireTime());
     }
 
     /**
@@ -149,7 +149,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
      */
     @Override
     public List<OnlineUser> getOnlineUserAllByUserId(Object filterUserId) {
-        List<String> keys = RedisUtils.scan(securityProperties.getCacheOnlineUserInfoKeyPrefix() + "*");
+        List<String> keys = RedisUtils.scan(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + "*");
         Collections.reverse(keys);
         List<OnlineUser> onlineUsers = new ArrayList<>();
         for (String key : keys) {
@@ -178,7 +178,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
     public OnlineUser getOnlineUser(boolean throwEx) {
         String token = TokenUtils.getToken();
         if (!StrUtils.isEmpty(token)) {
-            OnlineUser onlineUserInfo = getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
+            OnlineUser onlineUserInfo = getOne(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token));
             if (onlineUserInfo != null) {
                 return onlineUserInfo;
             }
@@ -198,7 +198,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         if (StringUtils.hasText(token) && token.startsWith(securityProperties.getTokenStartWith())) {
             token = token.replace(securityProperties.getTokenStartWith(), "");
         }
-        OnlineUser onlineUserInfo = getOne(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
+        OnlineUser onlineUserInfo = getOne(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token));
         if (onlineUserInfo == null) {
             throw new SecurityAuthException(AuthHttpStatus.TOKEN_EXPIRE);
         }
@@ -229,7 +229,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     @Override
     public List<OnlineUser> getOnlineUserAll() {
-        List<OnlineUser> onlineUserList = RedisUtils.fetchLike(securityProperties.getCacheOnlineUserInfoKeyPrefix() + "*");
+        List<OnlineUser> onlineUserList = RedisUtils.fetchLike(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + "*");
         return onlineUserList;
     }
 
@@ -239,7 +239,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
         if (token != null && onlineUser != null) {
             log.debug("token过期时间已刷新");
             onlineUser.setRefreshTime(System.currentTimeMillis());
-            RedisUtils.set(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token), onlineUser, securityProperties.getExpireTime());
+            RedisUtils.set(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token), onlineUser, securityProperties.getExpireTime());
         } else {
             log.error("无法刷新token过期时间，token【{}】onlineUser【{}】", token != null, onlineUser != null);
         }
@@ -258,7 +258,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
             if (ids.contains(onlineUser.getId())) {
                 try {
                     String token = CryptoUtils.desDecrypt(onlineUser.getKey(), securityProperties.getDesPassword());
-                    RedisUtils.del(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
+                    RedisUtils.del(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token));
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -305,7 +305,7 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
                     String token = CryptoUtils.desDecrypt(onlineUser.getKey(), securityProperties.getDesPassword());
                     if (!StrUtils.isEmpty(ignoreToken) && !ignoreToken.equals(token)) {
                         // 踢出用户
-                        RedisUtils.del(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token));
+                        RedisUtils.del(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token));
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -382,16 +382,16 @@ public class OnlineUserServiceImpl implements IOnlineUserService {
 
     @Override
     public void deleteCacheAll() {
-        this.deleteCacheByPrefix(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY);
-        this.deleteCacheByPrefix(AuthConstant.CACHE_IP_INTERCEPT_ALLOW);
-        this.deleteCacheByPrefix(AuthConstant.CACHE_IP_INTERCEPT_DENY);
+        this.deleteCacheByPrefix(securityProperties.getCodeKey(AuthConstant.SYS_RESOURCE_PERMISSION_ALL_CACHE_KEY));
+        this.deleteCacheByPrefix(securityProperties.getCodeKey(AuthConstant.CACHE_IP_INTERCEPT_ALLOW));
+        this.deleteCacheByPrefix(securityProperties.getCodeKey(AuthConstant.CACHE_IP_INTERCEPT_DENY));
     }
 
     private void saveLoginInfo(OnlineUser onlineUser, String token) {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(onlineUser, token, onlineUser.getAuthorities());
         // 设置登录认证信息到上下文
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        RedisUtils.set(securityProperties.getCacheOnlineUserInfoKeyPrefix() + CryptoUtils.md5DigestAsHex(token), onlineUser, securityProperties.getExpireTime());
+        RedisUtils.set(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX) + CryptoUtils.md5DigestAsHex(token), onlineUser, securityProperties.getExpireTime());
     }
 
     /**

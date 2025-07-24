@@ -1,10 +1,10 @@
 package io.github.osinn.security.utils;
 
 import io.github.osinn.security.enums.AuthType;
+import io.github.osinn.security.service.IPathParserService;
 import io.github.osinn.security.starter.SecurityProperties;
 import lombok.Data;
 import org.springframework.http.HttpMethod;
-import org.springframework.util.AntPathMatcher;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.util.Assert;
@@ -26,7 +26,7 @@ public class PermissionUtils {
      */
     private static Set<String> permissionAnonymousUrlList;
 
-    private static AntPathMatcher antPathMatcher = new AntPathMatcher();
+    private static IPathParserService pathParserService;
 
     /**
      * 判断是否是白名单
@@ -38,7 +38,7 @@ public class PermissionUtils {
         String requestUri = request.getRequestURI();
         // 放行白名单
         for (String url : permissionAnonymousUrlList) {
-            boolean match = antPathMatcher.match(url, requestUri);
+            boolean match = pathParserService.checkMatches(url, requestUri);
             if (match || requestUri.equals(url)) {
                 return true;
             }
@@ -74,7 +74,12 @@ public class PermissionUtils {
         return token != null && securityProperties.getIgnoringToken().contains(securityProperties.getTokenStartWith() + token);
     }
 
-    public static void setPermissionAnonymousUrlList(Set<String> anonymousUrls) {
+    public static void setPermissionAnonymousUrlList(Set<String> anonymousUrls, IPathParserService pathPatternParserService) {
         permissionAnonymousUrlList = anonymousUrls;
+        pathParserService = pathPatternParserService;
+    }
+
+    public static IPathParserService getPathParserService() {
+        return pathParserService;
     }
 }

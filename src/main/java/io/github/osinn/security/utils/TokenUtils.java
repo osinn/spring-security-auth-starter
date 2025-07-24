@@ -296,8 +296,8 @@ public class TokenUtils {
             if (ipIntercept.getDeny() != null) {
                 deny.addAll(ipIntercept.getDeny());
             }
-            RedisUtils.set(AuthConstant.CACHE_IP_INTERCEPT_ALLOW, allow);
-            RedisUtils.set(AuthConstant.CACHE_IP_INTERCEPT_DENY, deny);
+            RedisUtils.set(securityProperties.getCodeKey(AuthConstant.CACHE_IP_INTERCEPT_ALLOW), allow);
+            RedisUtils.set(securityProperties.getCodeKey(AuthConstant.CACHE_IP_INTERCEPT_DENY), deny);
         }
     }
 }

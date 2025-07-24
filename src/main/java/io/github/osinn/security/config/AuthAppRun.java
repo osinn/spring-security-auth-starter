@@ -33,7 +33,7 @@ public class AuthAppRun implements CommandLineRunner {
         if (securityProperties.isAppRunDeleteHistoryToken()) {
             log.debug("------>  删除旧token  <------");
             try {
-                RedisUtils.deleteCacheByPrefix(securityProperties.getCacheOnlineUserInfoKeyPrefix());
+                RedisUtils.deleteCacheByPrefix(securityProperties.getCodeKey(AuthConstant.CACHE_ONLINE_USER_INFO_KEY_PREFIX));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -49,7 +49,7 @@ public class AuthAppRun implements CommandLineRunner {
         AuthResponseUtils.customizeResponseBodyField = customizeResponseBodyField;
 
         SecurityProperties.IpIntercept ipIntercept = securityProperties.getIpIntercept();
-        RedisUtils.set(AuthConstant.CACHE_IP_INTERCEPT_ALLOW, ipIntercept.getAllow());
-        RedisUtils.set(AuthConstant.CACHE_IP_INTERCEPT_DENY, ipIntercept.getDeny());
+        RedisUtils.set(securityProperties.getCodeKey(AuthConstant.CACHE_IP_INTERCEPT_ALLOW), ipIntercept.getAllow());
+        RedisUtils.set(securityProperties.getCodeKey(AuthConstant.CACHE_IP_INTERCEPT_DENY), ipIntercept.getDeny());
     }
 }
