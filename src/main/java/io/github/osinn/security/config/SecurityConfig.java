@@ -176,13 +176,15 @@ public class SecurityConfig {
                         securityService),
                 UsernamePasswordAuthenticationFilter.class);
 
-        httpSecurity.addFilterAfter(new CustomAuthorizationFilter(new AccessDecisionAuthorizationManager<>(accessDecisionManager(), securityMetadataSource())), AuthorizationFilter.class);
+        httpSecurity.addFilterAfter(new CustomAuthorizationFilter(new AccessDecisionAuthorizationManager<>(
+                accessDecisionManager()
+        )), AuthorizationFilter.class);
         return httpSecurity.build();
     }
 
     @Bean
     public CustomAccessDecisionManager accessDecisionManager() {
-        return new CustomAccessDecisionManager(securityProperties.getAuthType());
+        return new CustomAccessDecisionManager(securityService, securityProperties);
     }
 
     private CustomSecurityMetadataSource securityMetadataSource() {

@@ -1,7 +1,6 @@
 package io.github.osinn.security.security;
 
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.Authentication;
@@ -18,23 +17,17 @@ public class AccessDecisionAuthorizationManager<HttpServletRequest> implements A
 
     private final CustomAccessDecisionManager accessDecisionManager;
 
-    private final CustomSecurityMetadataSource securityMetadataSource;
 
-
-    public AccessDecisionAuthorizationManager(CustomAccessDecisionManager accessDecisionManager,
-                                              CustomSecurityMetadataSource securityMetadataSource) {
+    public AccessDecisionAuthorizationManager(CustomAccessDecisionManager accessDecisionManager) {
         this.accessDecisionManager = accessDecisionManager;
-        this.securityMetadataSource = securityMetadataSource;
     }
 
 
     @Override
     public AuthorizationDecision check(Supplier<Authentication> authentication, HttpServletRequest httpServletRequest) {
         try {
-            // 获取系统安全数据源
-            Collection<ConfigAttribute> attributes = this.securityMetadataSource.getAttributes(httpServletRequest);
             // 检查用户是否拥有访问权限
-            boolean decide = this.accessDecisionManager.decide(authentication.get(), httpServletRequest, attributes);
+            boolean decide = this.accessDecisionManager.decide(authentication.get(), httpServletRequest);
             return new AuthorizationDecision(decide);
         } catch (AccessDeniedException ex) {
             return new AuthorizationDecision(false);
