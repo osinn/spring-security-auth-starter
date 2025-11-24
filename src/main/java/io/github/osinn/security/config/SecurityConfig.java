@@ -187,13 +187,6 @@ public class SecurityConfig {
         return new CustomAccessDecisionManager(securityService, securityProperties);
     }
 
-    private CustomSecurityMetadataSource securityMetadataSource() {
-        return new CustomSecurityMetadataSource(
-                securityService,
-                securityProperties,
-                securityProperties.getAuthType());
-    }
-
     @Bean("pms")
     public PermissionService permissionService() {
         return new PermissionService(securityProperties);
