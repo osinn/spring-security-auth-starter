@@ -8,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.authorization.AuthorizationResult;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
@@ -61,8 +62,8 @@ public class CustomAuthorizationFilter extends AuthorizationFilter {
         String alreadyFilteredAttributeName = getAlreadyFilteredAttributeName();
         request.setAttribute(alreadyFilteredAttributeName, Boolean.TRUE);
         try {
-            AuthorizationDecision decision = accessDecisionAuthorizationManager.check(this::getAuthentication, request);
-            if (decision != null && !decision.isGranted()) {
+            AuthorizationResult authorizationResult = accessDecisionAuthorizationManager.authorize(this::getAuthentication, request);
+            if (authorizationResult != null && !authorizationResult.isGranted()) {
                 throw new AccessDeniedException("Access Denied");
             }
             chain.doFilter(request, response);

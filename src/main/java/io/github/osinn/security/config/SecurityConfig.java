@@ -3,8 +3,6 @@ package io.github.osinn.security.config;
 import io.github.osinn.security.security.*;
 import io.github.osinn.security.security.filter.CustomAuthorizationFilter;
 import io.github.osinn.security.service.IOnlineUserService;
-import io.github.osinn.security.service.IPathParserService;
-import io.github.osinn.security.service.impl.AntPathMatcherServiceImpl;
 import io.github.osinn.security.service.impl.PathParserParserServiceImpl;
 import io.github.osinn.security.starter.SecurityProperties;
 import io.github.osinn.security.annotation.AuthIgnore;
@@ -13,17 +11,19 @@ import io.github.osinn.security.security.filter.SecurityAuthenticationFilter;
 import io.github.osinn.security.service.ISecurityService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.web.servlet.WebMvcProperties;
+import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
@@ -88,22 +88,11 @@ public class SecurityConfig {
 
             // 基于注解排除路径
             AuthIgnore authIgnore = handlerMethod.getMethodAnnotation(AuthIgnore.class);
-            if (null != authIgnore) {
-                if (infoEntry.getKey().getPatternsCondition() == null) {
-                    if (infoEntry.getKey().getPathPatternsCondition() != null) {
-                        Set<PathPattern> patterns = infoEntry.getKey().getPathPatternsCondition().getPatterns();
-                        patterns.forEach(p -> {
-                            anonymousUrls.add(contextPath + p.getPatternString());
-                        });
-                    }
-                } else {
-                    Set<String> patterns = infoEntry.getKey().getPatternsCondition().getPatterns();
-                    patterns.forEach(p -> {
-                        anonymousUrls.add(contextPath + p);
-                    });
+            if (null != authIgnore && infoEntry.getKey().getPathPatternsCondition() != null) {
+                    Set<PathPattern> patterns = infoEntry.getKey().getPathPatternsCondition().getPatterns();
+                    patterns.forEach(p -> anonymousUrls.add(contextPath + p.getPatternString()));
                 }
 
-            }
         }
         // 基于配置url排除路径
         Set<String> ignoringUrls = securityProperties.getIgnoringUrls();
@@ -133,25 +122,23 @@ public class SecurityConfig {
         // 权限白名单urls
         anonymousUrls.addAll(Set.of(staticFileUrl));
         anonymousUrls.addAll(Set.of(pageAnonymousUrl));
-        IPathParserService pathParserService = WebMvcProperties.MatchingStrategy.ANT_PATH_MATCHER.equals(matchingStrategy)
-                ? new AntPathMatcherServiceImpl() : new PathParserParserServiceImpl();
-        PermissionUtils.setPermissionAnonymousUrlList(anonymousUrls, pathParserService);
+        PermissionUtils.setPermissionAnonymousUrlList(anonymousUrls, new PathParserParserServiceImpl());
 
 
         if (securityProperties.isDisableHttpBasic()) {
             // 禁用Http Basic
-            httpSecurity.httpBasic().disable();
+            httpSecurity.httpBasic(AbstractHttpConfigurer::disable);
         }
         if (securityProperties.isDisableCsrf()) {
             // 禁用 CSRF
-            httpSecurity.csrf().disable();
+            httpSecurity.csrf(AbstractHttpConfigurer::disable);
         }
 
         httpSecurity
                 // 禁用默认登录页
-                .formLogin().disable()
+                .formLogin(AbstractHttpConfigurer::disable)
                 // 禁用默认登出页
-                .logout().disable()
+                .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(e -> {
                     e.accessDeniedHandler(securityAccessDeniedHandler);
